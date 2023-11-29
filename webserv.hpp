@@ -4,15 +4,20 @@
 #include <stdio.h>
 #include <iostream>
 #include <string.h>
+#include <cstring>
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/event.h>
 #include <vector>
 #include <list>
-#include "get_next_line.hpp"
+#include <map>
+#include <sstream>
+#include <fstream>
 
 #define MAX_SE_ELEM 64
 #define MAX_READ 17
+
+#define	DEL "{};"
 
 typedef struct seNode{
 	size_t			elem_n;
