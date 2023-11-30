@@ -1,89 +1,5 @@
 #include "webserv.hpp"
 
-size_t	countCharinStr(char *str, char c)
-{
-	int	count = 0;
-	
-	for (int i = 0; i < strlen(str); i++)
-		if	(str[i] == c)
-			count++;
-	return (count);
-}
-
-size_t	countCharinStr2(std::string str, char c)
-{
-	int	count = 0;
-	
-	for (int i = 0; i < str.length(); i++)
-		if	(str[i] == c)
-			count++;
-	return (count);
-}
-
-char	*readFileSeLst(int fd)
-{
-	seLst	lst = {newseNode(), lst.head, 0, 0};
-	int		lines = 0;
-	seNode 	*node = lst.head;
-	ssize_t	readBytes = read(fd, &node->elem, MAX_READ);
-	node->elem_n = readBytes;
-	lst.bytes = readBytes;
-	while (readBytes > 0)
-	{
-		if (node->elem_n + MAX_READ >= MAX_SE_ELEM)
-		{
-			node->elem[node->elem_n] = '\0';
-			seLstPushBack(lst, newseNode());
-			node = lst.tail;
-		}
-		if (readBytes < 0)
-		{
-			seLstFree(lst);
-			return (NULL);
-		}
-		lines += countCharinStr(&node->elem[node->elem_n], '\n');
-		readBytes = read(fd, &node->elem[node->elem_n], MAX_READ);
-		node->elem_n += readBytes;
-		lst.bytes += readBytes;
-	}
-	node->elem[node->elem_n] = '\0';
-	return (seLstToStr(lst));
-}
-
-
-typedef struct bTreeNode
-{
-	std::string					contextName;
-	size_t						contextType;
-	size_t						contextOperation;
-	size_t						contextArgs;
-	//cambiarlo contenido a <pair>: key-value, pero valores puede ser una lista, múltiples valores
-	std::vector<std::string>	keys;
-	std::vector<std::string>	values;
-	std::vector<int>	mapKeyValues;
-	std::map<std::string, std::string>	directivesMap;
-	std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
-	std::vector<bTreeNode*>		childs;
-} bTreeNode;
-
-//más "orientado a objetos" cada token un objeto con sus atributos "individuales"
-typedef struct	s_token
-{
-	size_t		line;
-	size_t		type;
-	std::string	value;
-}	t_token;
-
-//más "orientado a datos" una estructura que guarda en arrays las propiedades de todos los tokens
-typedef struct s_tokens
-{
-	int		n;
-	size_t	*line;
-	size_t	*type;
-	std::vector<std::string>	values;
-}	t_tokens;
-
-
 void	tokenizeFile(char *file, std::vector<t_token> &tokens, std::string &del)
 {
 	std::fstream	readTokens(file);
@@ -106,8 +22,6 @@ void	tokenizeFile(char *file, std::vector<t_token> &tokens, std::string &del)
 				if (tokenStr[i] == del[j])
 				{
 					end = i;
-					std::cout << "Encontró: " << del[j] << std::endl;
-					std::cout << "Start: " << tokenStr[start] << " , End: " << tokenStr[end] << std::endl;
 					//si lo anterior no es un símbolo especial, que ya está añadido, sino una palabra "normal"
 					if (start != end)
 					{
@@ -131,62 +45,125 @@ void	tokenizeFile(char *file, std::vector<t_token> &tokens, std::string &del)
 	}
 }
 
-bool	validTokensConfig(std::vector<t_token> &tokens)
+size_t	matrixLenChar(char const **matrix)
 {
+	size_t i;
 
-	return (1);
+	for (i = 0; matrix[i] != NULL; i++);
+	return (i);
 }
 
-/*void	parseContextLines(bTreeNode *root, std::vector<std::string> &file)
+void	fullValidTree(bTreeNode &root)
 {
-	int move = 0;
-	bTreeNode	*child;
-	//std::pair<std::string, std::string> keyVal;
-	std::list<bTreeNode *>	nodes; //stack de nodos - se añade cuando entra a un contexto, se borra cuando termina, vuelve al anterior, evitar recursividad
-	nodes.push_front(root);
-	while (move < file.size())
+	char const	*contextNames[] = {"main", "http", "server", "location", NULL};
+	char const	*httpKeys[] = {"include", NULL};
+	char const	*mainKeys[] = {"workers", NULL};
+	char const	*serverKeys[] = {"listen", "server_name", "error_page", "root", "index", NULL};
+	char const	*locationKeys[] = {"root", "alias", "try_files", NULL};
+	
+}
+
+bool	validTokensSyntax(std::vector<t_token> &tokens)
+{
+	char const	*contextNames[] = {"main", "http", "server", "location", NULL};
+	char const	*httpKeys[] = {"include", NULL};
+	char const	*mainKeys[] = {"workers", NULL};
+	char const	*serverKeys[] = {"listen", "server_name", "error_page", "root", "index", NULL};
+	char const	*locationKeys[] = {"root", "alias", "try_files", NULL};
+	char const	**contextPointers[] = {mainKeys, httpKeys, serverKeys, locationKeys, NULL}; //punteros a las matrices de keys de cada contexto
+
+	int			initDirective = 0;
+	int			endDirective = 0;
+	int			validContext;
+	std::string	currContext = "main";
+	int			currContextIndex = 0;
+	std::list<std::string>	contextsVisited;
+	char	**checkContext;
+
+	std::cout << "------------------Checkear sintaxis de tokens------------------" << std::endl << std::endl;
+	contextsVisited.push_front(currContext);
+	for (int i = 0;  i < tokens.size(); i++)
 	{
-		if (file[move].empty())
-			continue ;
-		if (countCharinStr2(file[move], '{') > 0)
+		
+		if (tokens[i].value == "{") //tiene que abrir contexto y saltar al siguiente
 		{
-			child = new bTreeNode();
-			child->contextName = file[move];
-			root->childs.push_back(child);
-			nodes.push_front(child);
-			root = nodes.front();
+			validContext = 0;
+			currContext = tokens[initDirective].value; //saber en qué contexto estoy
+			std::cout << "Entro en contexto: " << currContext << std::endl;
+			currContextIndex++;
+			contextsVisited.push_front(currContext);
+			for (int j = 0; j < matrixLenChar(contextNames); j++) //recorrer lista de posibles nombres de contexto, comparar si coincide con contexto actual
+			{
+				std::cout << "Compara contexto actual: " << currContext << " con: " << contextNames[j] << std::endl;
+				if (!currContext.compare(contextNames[j]))
+				{
+					validContext = 1;
+					break ;
+				}
+			}
+			if (validContext == 0)
+			{
+				std::cout << "No coincide el nombre del contexto con uno de los posibles" << std::endl;
+				return (false);
+			}
+			initDirective = i + 1;
 		}
-		else if (countCharinStr2(file[move], '}') > 0)
+		else if (tokens[i].value == "}") //tiene que cerrar contexto y volver al anterior
 		{
-			nodes.pop_front();
-			root = nodes.front();
+			std::cout << "Cierro contexto: " << currContext << std::endl;
+			contextsVisited.pop_front();
+			currContext = contextsVisited.front();
+			currContextIndex--;
+			initDirective = i + 1;
 		}
-		else
-			root->directives.push_back(file[move]);	
-		move++;
+		else if (tokens[i].value == ";") // final de directiva, añadir a lista
+		{
+			endDirective = i;
+			int	validKey = 0;
+			char const	**currContextPtr = contextPointers[currContextIndex];
+			for (int j = 0; j < matrixLenChar(currContextPtr); j++)
+			{
+				std::cout << "Checkear key: " << tokens[initDirective].value << " con: " << currContextPtr[j] << std::endl;
+				if (!tokens[initDirective].value.compare(currContextPtr[j]))
+				{
+					std::cout << "Coinciden: " << tokens[initDirective].value << " y " << currContextPtr[j] << std::endl;
+					validKey = 1;
+					break ;
+				}
+			}
+			if (validKey == 0)
+			{
+				std::cout << "No coincide la key con una de los posibles" << std::endl;
+				return (false);
+			}
+			initDirective = i + 1;
+		}
 	}
-}*/
+	std::cout << "Sintaxis válida" << std::endl;
+	return (true);
+}
 
 void	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 {
 	bTreeNode	*child;
-	//std::pair<std::string, std::string> keyVal;
 	std::list<bTreeNode *>	nodes; //stack de nodos - se añade cuando entra a un contexto, se borra cuando termina, vuelve al anterior, evitar recursividad
 	nodes.push_front(root);
 	int	initDirective = 0;
 	int	endDirective = 0;
 	for (int i = 0;  i < tokens.size(); i++)
 	{
-		if (tokens[i].value == "{") //tiene que abrir contexto
+		if (tokens[i].value == "{") //tiene que abrir contexto y saltar al siguiente
 		{
 			child = new bTreeNode();
-			child->contextName = tokens[i - 1].value;
+			child->contextName = tokens[initDirective].value;
+			for (int start = initDirective + 1; start < i; start++) //añade argumentos del contexto si los hay
+				child->contextArgs.push_back(tokens[start].value);
 			root->childs.push_back(child);
 			nodes.push_front(child);
 			root = nodes.front();
 			initDirective = i + 1;
 		}
-		else if (tokens[i].value == "}") //tiene que cerrar contexto
+		else if (tokens[i].value == "}") //tiene que cerrar contexto y volver al anterior
 		{
 			nodes.pop_front();
 			root = nodes.front();
@@ -195,13 +172,10 @@ void	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 		else if (tokens[i].value == ";") // final de directiva, añadir a lista
 		{
 			endDirective = i;
-			std::cout << "Primer token de directiva: " << tokens[initDirective].value << std::endl;
-			root->keys.push_back(tokens[initDirective].value);
-			std::cout << "Último token de directiva: " << tokens[endDirective - 1].value << std::endl;
+			root->keys.push_back(tokens[initDirective].value); //añade key
 			int	keysNum = root->keys.size() - 1;
-			for (int j = initDirective + 1; j < endDirective; j++)
+			for (int j = initDirective + 1; j < endDirective; j++) //añade values
 			{
-				std::cout << "Value a añadir de directiva: " << tokens[j].value << std::endl;
 				root->values.push_back(tokens[j].value);
 				root->mapKeyValues.push_back(keysNum);
 			}
@@ -213,6 +187,17 @@ void	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 void	printBTree(bTreeNode *root)
 {
 	std::cout << "Context: " << root->contextName << std::endl;
+	if (root->contextArgs.size() > 0)
+	{
+		std::cout << "Argumentos del contexto: {";
+		for (int i = 0; i < root->contextArgs.size(); i++)
+		{
+			std::cout << root->contextArgs[i];
+			if (i < root->contextArgs.size() - 1)
+				std::cout << ", ";
+		}
+		std::cout << "}" << std::endl;
+	}
 	std::cout << "Directivas: " << std::endl;
 	int j = 0;
 	for (int i = 0; i < root->keys.size(); i++)
@@ -236,20 +221,8 @@ void	printBTree(bTreeNode *root)
 	}
 }
 
-void	parseFile(char	*file)
+bool	parseFile(char	*file)
 {
-	std::ifstream	readFile(file);
-	std::vector<std::string>	lines;
-
-	std::string line;
-
-	while (getline(readFile, line, '\n'))
-	{
-		//if (!(line[0] == '\n'))
-		if (!line.empty())
-			lines.push_back(line);
-	}
-
 	std::string	del = "{};=";
 	std::vector<t_token>	tokens;
 	tokenizeFile(file, tokens, del);
@@ -257,9 +230,11 @@ void	parseFile(char	*file)
 		std::cout << "Token: " << tokens[i].value << std::endl;
 	bTreeNode *root = new bTreeNode();
 	root->contextName = "main";
-	//parseContextLines(root, lines);
+	//if (!validTokensSyntax(tokens))
+	//	return (false);
 	parseContextTokens(root, tokens);
 	printBTree(root);
+	return (true);
 }
 
 int	main(int argc, char **argv)
@@ -267,6 +242,10 @@ int	main(int argc, char **argv)
 	if (argc != 2)
 		return (1);
 	
-	parseFile(argv[1]);
+	if (!parseFile(argv[1]))
+	{
+		std::cout << "Hubo un error al parsear el fichero" << std::endl;
+		return (1);
+	}
 	return (0);
 }

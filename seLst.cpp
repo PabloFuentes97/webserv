@@ -51,3 +51,43 @@ char	*seLstToStr(seLst &lst)
 	std::cout << str << std::endl;
 	return (str);
 }
+
+size_t	countCharinStr(char *str, char c)
+{
+	int	count = 0;
+	
+	for (int i = 0; i < strlen(str); i++)
+		if	(str[i] == c)
+			count++;
+	return (count);
+}
+
+char	*readFileSeLst(int fd)
+{
+	seLst	lst = {newseNode(), lst.head, 0, 0};
+	int		lines = 0;
+	seNode 	*node = lst.head;
+	ssize_t	readBytes = read(fd, &node->elem, MAX_READ);
+	node->elem_n = readBytes;
+	lst.bytes = readBytes;
+	while (readBytes > 0)
+	{
+		if (node->elem_n + MAX_READ >= MAX_SE_ELEM)
+		{
+			node->elem[node->elem_n] = '\0';
+			seLstPushBack(lst, newseNode());
+			node = lst.tail;
+		}
+		if (readBytes < 0)
+		{
+			seLstFree(lst);
+			return (NULL);
+		}
+		lines += countCharinStr(&node->elem[node->elem_n], '\n');
+		readBytes = read(fd, &node->elem[node->elem_n], MAX_READ);
+		node->elem_n += readBytes;
+		lst.bytes += readBytes;
+	}
+	node->elem[node->elem_n] = '\0';
+	return (seLstToStr(lst));
+}
