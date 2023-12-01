@@ -1,16 +1,25 @@
 
-http {
+events
+{
+    prueba 2;}
 
-    server {
-        server_name   localhost;
+http{
+server{}
+    server{
+        server_name   serbre;
         listen        127.0.0.1:80;
 
-        error_page    500 502 503 504  /50x.html;
+        error_page    502 503 504  /50x.html;
 
-        location      / {
+        error_page    500  /50x.html;
+
+        location      /{
             root      html;
         }
-
+        location      /juan{
+            root      jeje;
+            alias     manolo;
+        }
     }
-
 }
+

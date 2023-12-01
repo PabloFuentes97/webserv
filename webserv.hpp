@@ -31,6 +31,27 @@ typedef struct	seLst{
 	size_t	bytes;
 } seLst;
 
+enum	contextType{main_c, events, http, server, location};
+
+typedef union context_types{
+		void	**matrix;
+		void	*array;
+		seLst	lst;	
+	}	context_types;
+
+typedef struct	context{
+	char						*contextName;
+	size_t						contextType;
+	size_t						contextOperation;
+	std::vector<std::string>	contextArgs;
+	//cambiar contenido a <pair>: key-value, pero valores puede ser una lista, múltiples valores
+	std::vector<std::string>	keys;
+	std::vector<std::string>	values;
+	std::vector<int>	mapKeyValues;
+	//std::map<std::string, std::string>	directivesMap;
+	//std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
+} context;
+
 typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores por estructuras de C - arrays, listas enlazadas,
 //evitar que haga copias innecesarias al añadir elementos a un contenedor
 {
@@ -44,8 +65,20 @@ typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores po
 	std::vector<int>	mapKeyValues;
 	//std::map<std::string, std::string>	directivesMap;
 	//std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
-	std::vector<bTreeNode*>		childs;
+	std::vector<std::string>	childsNames; //nombre del tipo de cada hijo añadido
+	std::vector<std::string>	allSubContexts; //nombres de todos los posibles subcontextos que puede tener
+	void						*_content;
+	std::vector<bTreeNode*>		childs; //punteros a los hijos
+	bTreeNode(){
+
+	}; //constructor por defecto
+	bTreeNode(void *content)
+	{
+
+	}; //constructor con parámetros
 } bTreeNode;
+
+enum	token_type{word, openBracket, closeBracket, endDeclare}; //enums para tipos de token
 
 //más "orientado a objetos" cada token un objeto con sus atributos "individuales"
 typedef struct	s_token
