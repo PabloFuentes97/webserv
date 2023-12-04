@@ -11,6 +11,11 @@ server{
     location    /{
         root    hola;
     }
+    location    /jose
+    {
+        root    hue;
+        alias   pepe;
+    }
 }
     server{
         server_name   serbre;
@@ -25,6 +30,10 @@ server{
         }
         location      /juan{
             root      jeje;
+            alias     juanito;
+        }
+        location      /manuel{
+            root      jejeje;
             alias     manolo;
         }
     }

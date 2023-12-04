@@ -3,7 +3,6 @@
 bool	tokenizeFile(char *file, std::vector<t_token> &tokens, std::string &del) //comprobar también aquí que lo anterior a un delimitador es un str
 {
 	std::fstream	readTokens(file);
-	
 	if (readTokens.fail())
 	{
 		std::cout << "Fichero erróneo" << std::endl;
@@ -17,40 +16,31 @@ bool	tokenizeFile(char *file, std::vector<t_token> &tokens, std::string &del) //
 	int	brackets = 0;
 	while (readTokens >> tokenStr) //!readTokens.eof()
 	{	
-		//readTokens >> tokenStr;
 		start = 0;
 		end = 0;
 		flag = 0;
-		std::cout << "Tokenstr: " << tokenStr << std::endl;
 		for (int i = 0; i < tokenStr.length(); i++)
 		{
-			for (int j = 0; j < del.length(); j++)
+			for (int j = 0; j < del.length(); j++) //quiza hacer una funcion aparte que busque un char en un str, como un "alfabeto"
 			{
 				if (tokenStr[i] == del[j])
 				{
 					if (del[j] == '{')
-					{
-						std::cout << "Abro bracket" << std::endl;
 						brackets++;
-					}
 					else if (del[j] == '}')
-					{
-						std::cout << "Cierro bracket" << std::endl;
 						brackets--;
-					}
 					if (brackets < 0)
-					{
-						std::cout << "Número y orden de brackets es erróneo" << std::endl;
 						return (false);
-					}
 					end = i;
 					//si lo anterior no es un símbolo especial, que ya está añadido, sino una palabra "normal"
 					if (start != end)
 					{
 						token.value = tokenStr.substr(start, end - start);
+						token.type = 0;
 						tokens.push_back(token);
 					}
 					token.value = del[j];
+					token.type = j + 1;
 					tokens.push_back(token);
 					end++;
 					start = end;
@@ -65,12 +55,8 @@ bool	tokenizeFile(char *file, std::vector<t_token> &tokens, std::string &del) //
 			tokens.push_back(token);
 		}
 	}
-	std::cout << "Diferencia entre brackets de apertura y cierre: " << brackets << std::endl;
 	if (brackets != 0)
-	{
-		std::cout << "Al final, número y orden de brackets es erróneo" << std::endl;
 		return (false);
-	}
 	return (true);
 }
 
@@ -81,88 +67,6 @@ size_t	matrixLenChar(char const **matrix)
 	for (i = 0; matrix[i] != NULL; i++);
 	return (i);
 }
-
-/*bool	validTokensSyntax(std::vector<t_token> &tokens)
-{
-	char const	*contextNames[] = {"main", "http", "server", "location", NULL};
-	char const	*mainKeys[] = {"workers", NULL};
-	char const	*eventsKeys[] = {"eee", NULL}; //main
-	char const	*httpKeys[] = {"include", NULL}; //main
-
-	char const	*serverKeys[] = {"listen", "server_name", "error_page", "root", "index", NULL};
-	char const	*locationKeys[] = {"root", "alias", "try_files", NULL};
-	char const	**contextPointers[] = {mainKeys, httpKeys, serverKeys, locationKeys, NULL}; //punteros a las matrices de keys de cada contexto
-	int			mapContextLevels[] = {0, 1, 1, 2, 3};
-	int			initDirective = 0;
-	int			endDirective = 0;
-	int			validContext;
-	std::string	currContext = "main";
-	int			currContextIndex = 0;
-	std::list<std::string>	contextsVisited;
-	char	**checkContext;
-
-	std::cout << "------------------Checkear sintaxis de tokens------------------" << std::endl << std::endl;
-	contextsVisited.push_front(currContext);
-	for (int i = 0;  i < tokens.size(); i++)
-	{
-		
-		if (tokens[i].value == "{") //tiene que abrir contexto y saltar al siguiente
-		{
-			validContext = 0;
-			currContext = tokens[initDirective].value; //saber en qué contexto estoy
-			std::cout << "Entro en contexto: " << currContext << std::endl;
-			currContextIndex++;
-			contextsVisited.push_front(currContext);
-			for (int j = 0; j < matrixLenChar(contextNames); j++) //recorrer lista de posibles nombres de contexto, comparar si coincide con contexto actual
-			{
-				std::cout << "Compara contexto actual: " << currContext << " con: " << contextNames[j] << std::endl;
-				if (!currContext.compare(contextNames[j]))
-				{
-					validContext = 1;
-					break ;
-				}
-			}
-			if (validContext == 0)
-			{
-				std::cout << "No coincide el nombre del contexto con uno de los posibles" << std::endl;
-				return (false);
-			}
-			initDirective = i + 1;
-		}
-		else if (tokens[i].value == "}") //tiene que cerrar contexto y volver al anterior
-		{
-			std::cout << "Cierro contexto: " << currContext << std::endl;
-			contextsVisited.pop_front();
-			currContext = contextsVisited.front();
-			currContextIndex--;
-			initDirective = i + 1;
-		}
-		else if (tokens[i].value == ";") // final de directiva, añadir a lista
-		{
-			endDirective = i;
-			int	validKey = 0;
-			char const	**currContextPtr = contextPointers[currContextIndex];
-			for (int j = 0; j < matrixLenChar(currContextPtr); j++)
-			{
-				std::cout << "Checkear key: " << tokens[initDirective].value << " con: " << currContextPtr[j] << std::endl;
-				if (!tokens[initDirective].value.compare(currContextPtr[j]))
-				{
-					std::cout << "Coinciden: " << tokens[initDirective].value << " y " << currContextPtr[j] << std::endl;
-					validKey = 1;
-					break ;
-				}
-			}
-			if (validKey == 0)
-			{
-				std::cout << "No coincide la key con una de los posibles" << std::endl;
-				return (false);
-			}
-			initDirective = i + 1;
-		}
-	}
-	std::cout << "Sintaxis válida" << std::endl;
-	return (true);
-}*/
 
 //cambiarlo a char ** para alocar la memoria exacta, no tener que realocar constantemente
 std::vector<std::string>	validContexts(std::string &context)
@@ -251,16 +155,12 @@ bool	parseContextTokens(bTreeNode *root, bTreeNode *check, std::vector<t_token> 
 				std::cout << "Token anterior es un delimitador" << std::endl;
 				return (false);
 			}
-			std::cout << "-----------------Detecto nuevo contexto a abrir: " << tokens[initDirective].value << std::endl;
-			std::cout << "Estoy en contexto: " << root->contextName << std::endl;
-			std::cout << "Estoy en contexto de checkeo: " << check->contextName << std::endl;
 			if (!strInVector(tokens[initDirective].value, check->allSubContexts)) //compruebo que el contexto está dentro de los válidos
 			{
 				std::cout << "Contexto pasado no está permitido en contexto actual" << std::endl;
 				//liberar árbol auxiliar -> crear función para liberar árbol
 				return (false);
 			}
-			std::cout << "Contexto sí es válido" << std::endl;
 			//está bien, creo nuevo hijo
 			child = new bTreeNode();
 			child->contextName = tokens[initDirective].value;
@@ -271,7 +171,7 @@ bool	parseContextTokens(bTreeNode *root, bTreeNode *check, std::vector<t_token> 
 			root->childsNames.push_back(child->contextName);
 			nodes.push_front(child);
 			root = child;
-			std::cout << "Asigno bien contexto hijo" << std::endl;
+			//parte de árbol extra para checkear
 			if (!strInVector(child->contextName, check->childsNames)) //checkeo si este tipo de contexto ya está en el nodo de checkeo
 			//si no está lo añado, si está no, para evitar redundancia
 			{
@@ -297,23 +197,15 @@ bool	parseContextTokens(bTreeNode *root, bTreeNode *check, std::vector<t_token> 
 					}
 				}
 			}
-			std::cout << "Entro en nuevo contexto: " << std::endl;
-			std::cout << "Estoy en contexto: " << root->contextName << std::endl;
-			std::cout << "Estoy en contexto de checkeo: " << check->contextName << std::endl;
 			initDirective = i + 1;
 		}
 		else if (tokens[i].value == "}") //tiene que cerrar contexto y volver al anterior
 		{
-			std::cout << "--------------------Cierro contexto: " << std::endl;
-			std::cout << "Contexto a cerrar: " << root->contextName << std::endl;
-			std::cout << "Contexto de checkeo a cerrar: " << check->contextName << std::endl;
 			nodes.pop_front();
 			root = nodes.front();
 			checkNodes.pop_front();
 			check = checkNodes.front();
 			initDirective = i + 1;
-			std::cout << "Estoy en contexto: " << root->contextName << std::endl;
-			std::cout << "Estoy en contexto de checkeo: " << check->contextName << std::endl;
 		}
 		else if (tokens[i].value == ";") // final de directiva, añadir a lista
 		{
@@ -330,9 +222,8 @@ bool	parseContextTokens(bTreeNode *root, bTreeNode *check, std::vector<t_token> 
 				std::cout << "Key no es válida" << std::endl;
 				return (false);
 			}
-			std::cout << "Key es válida" << std::endl;
 			root->keys.push_back(tokens[initDirective].value); //añade key
-			int	keysNum = root->keys.size() - 1;
+			int	keysNum = root->keys.size() - 1; //cambiar esto, que guarde un pair, borrar array para mapear values a key
 			for (int j = initDirective + 1; j < endDirective; j++) //añade values
 			{
 				root->values.push_back(tokens[j].value);
@@ -394,6 +285,78 @@ void	printBTree(bTreeNode *root, int type)
 	}
 }
 
+void	findNode(bTreeNode *root, bTreeNode **find_node, std::string	find)
+{
+	std::cout << "Estoy en contexto: " << root->contextName << std::endl;
+
+	if (root->contextName == find)
+	{
+		*find_node = root;
+		return ;
+	}
+	if (!root->childs.empty())
+	{
+		for (int i = 0; i < root->childs.size(); i++)
+			findNode(root->childs[i], find_node, find);
+	}
+}
+
+bool	findLocation(bTreeNode *server, std::string	&location)
+{
+	bTreeNode	*loc;
+
+	for (int i = 0; i < server->childs.size(); i++)
+	{
+		loc = server->childs[i];
+		std::cout << "Estoy en contexto location: " << loc->contextArgs[0] << std::endl;
+		if (loc->contextArgs[0] == location)
+		{
+			std::cout << "Encontró location: " << loc->contextArgs[0] << std::endl;
+			return (true);
+		}
+	}
+	std::cout << "No encontró location" << std::endl;
+	return (false);
+}
+
+int	pruebaMapTreeServers(bTreeNode *root)
+{
+	servers	prueba;
+
+	prueba.servers_n = 2;
+	//servidor
+	int	fd_num = 6;
+	int	servers_num = 0;
+	int	clients_num = 0;
+	for (int i = 0; i < prueba.servers_n; i++, servers_num++, fd_num += 3)
+	{
+		for (int j = fd_num; j < fd_num + 3; j++, clients_num++)
+			prueba.clients.addClient(j, i);
+	}
+	prueba.serversPtr = root->childs;
+	srand(time(NULL));
+	int	random;
+	for (int i = 0; i < prueba.clients.clientArray.size(); i++)
+	{
+		random = rand() % 3;
+		switch(random)
+		{
+			case 0: { prueba.clients.clientArray[i].request.url = "/juan"; break; };
+			case 1: { prueba.clients.clientArray[i].request.url = "/manuel"; break; };
+			case 2: { prueba.clients.clientArray[i].request.url = "/jose"; break; };
+		}
+	}
+	for (int i = 0; i < prueba.clients.clientArray.size(); i++)
+	{
+		std::cout << "Cliente: " << std::endl; 
+		std::cout << "Servidor: " << prueba.clients.clientArray[i].serverID << std::endl;
+		std::cout << "Socket de conexión: " << prueba.clients.clientArray[i].fd << std::endl;
+		std::cout << "URL: " << prueba.clients.clientArray[i].request.url << std::endl;
+		findLocation(prueba.serversPtr[prueba.clients.clientArray[i].serverID], prueba.clients.clientArray[i].request.url);		
+	}
+	return (0);
+}
+
 bool	parseFile(char	*file)
 {
 	std::string	del = "{};=";
@@ -419,6 +382,14 @@ bool	parseFile(char	*file)
 	printBTree(check, 0);
 	std::cout << "---------------Imprimir árbol de fichero de configuración---------------" << std::endl;
 	printBTree(root, 1);
+	bTreeNode	*find = NULL; //http como root
+	std::cout << "---------------BUSCAR NODO EN ÁRBOL-------------" << std::endl;
+	findNode(root, &find, "http");
+	if (find)
+		std::cout << "Lo encontró: " << find->contextName << std::endl;
+	else
+		std::cout << "No lo encontró " << std::endl;
+	pruebaMapTreeServers(find);
 	return (true);
 }
 
