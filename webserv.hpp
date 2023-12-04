@@ -1,5 +1,3 @@
-#pragma once
-
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -9,33 +7,36 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <poll.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <string.h>   
 #include <fstream>
 #include <iostream>
-<<<<<<< HEAD
 #include <sstream>
 #include <map>
 #include <dirent.h>
 #include <cstdio>
 #include <array>
 #include <vector>
-#define PORT 8080
-#define BUF_SIZE 2000
-=======
-#include <string.h>
-#include <cstring>
-#include <fcntl.h>
-#include <poll.h>
-#include <sys/event.h>
-#include <vector>
 #include <list>
-#include <map>
-#include <sstream>
-#include <fstream>
->>>>>>> af04e7393858c5426766403aa0afcd6441fe0011
 
+#define MAX_SE_ELEM 64
+#define MAX_READ 17
+
+typedef struct seNode{
+	size_t			elem_n;
+	char 			elem[MAX_SE_ELEM];
+	int				content_bytes;
+	struct seNode *next;
+} seNode;
+
+typedef struct	seLst{
+	seNode *head;
+	seNode *tail;
+	size_t	size;
+	size_t	bytes;
+} seLst;
 
 struct HttpRequest {
     std::string method;
@@ -46,13 +47,53 @@ struct HttpRequest {
 	int status;
 };
 
-<<<<<<< HEAD
 struct client {
     int fd;
+	int	serverID;
 	HttpRequest request;
 	//server *SocketServer;
 };
-=======
+
+struct HttpResponse {
+	std::string firstLine; //method, version
+    std::string body; //if empty, content-length
+    //std::map<std::string, std::string> headers;
+
+	//constructor y métodos
+};
+
+class	clientQueue {
+
+	public:
+		void clearRequest(int);
+		void addClient(int, int);
+		clientQueue();
+		~clientQueue();
+		std::vector<client> clientArray;
+		int getPos(int);
+};
+
+enum	contextType{main_c, events, http, server, location};
+
+typedef union context_types{
+		void	**matrix;
+		void	*array;
+		seLst	lst;	
+	}	context_types;
+
+typedef struct	context{
+	char						*contextName;
+	size_t						contextType;
+	size_t						contextOperation;
+	std::vector<std::string>	contextArgs;
+	//cambiar contenido a <pair>: key-value, pero valores puede ser una lista, múltiples valores
+	std::vector<std::string>	keys;
+	std::vector<std::string>	values;
+	std::vector<int>	mapKeyValues;
+	//std::map<std::string, std::string>	directivesMap;
+	std::vector<std::pair<std::string, std::vector<std::string> > >	directives; //hacerlo asi, no usar el vector de mapear valores con keys
+} context;
+
 typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores por estructuras de C - arrays, listas enlazadas,
 //evitar que haga copias innecesarias al añadir elementos a un contenedor
 {
@@ -66,8 +107,48 @@ typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores po
 	std::vector<int>	mapKeyValues;
 	//std::map<std::string, std::string>	directivesMap;
 	//std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
-	std::vector<bTreeNode*>		childs;
+	std::vector<std::string>	childsNames; //nombre del tipo de cada hijo añadido
+	std::vector<std::string>	allSubContexts; //nombres de todos los posibles subcontextos que puede tener
+	void						*_content;
+	std::vector<bTreeNode*>		childs; //punteros a los hijos
+	bTreeNode(){
+
+	}; //constructor por defecto
+	bTreeNode(void *content)
+	{
+
+	}; //constructor con parámetros
 } bTreeNode;
+
+typedef struct	servers{
+	
+	int			*serversFd;
+	int			servers_n;
+	clientQueue	clients;
+	std::vector<bTreeNode*>	serversPtr;
+}	servers ;
+
+/*typedef struct	Servers
+{
+	int			*serverSockets; // array de sockets de escucha
+	int			*connSockets; //array de sockets de conexión
+	int			*mapconnListen; //array con el socket de escucha del servidor al que esta ligado cada socket de conexión con cliente
+	char 		***requests; //triple puntero char a matrices de solicitudes de datos, también se mapean a sockets de conexión
+	bTreeNode	**serversPtr; //array de punteros al nodo de cada servidor en el árbol
+	int			*status; //array con el estado de la conexión del socket de conexión
+
+	EJEMPLO:
+		Programa que maneja 3 servidores: 
+		Sockets de escucha: [3, 4, 5]; se abren al principio del programa
+		Sockets de conexión: [6, 7, 8, 9, 10, ...]; número indefinido, socket por cada cliente
+		Mapear sockets de conexión a sockets de escucha: [3, 3, 4, 3, 5, ...]; número indefinido, pero el mismo que sockets de conexión:
+			a cada socket de conexión le corresponde un id al socket de escucha del servidor al que pertenece
+		Mapear requests a sockets de conexión: [request1, request2, request3, request4, request5, ...]
+	
+
+}	Servers;*/
+
+enum	token_type{word, openBracket, closeBracket, endDeclare}; //enums para tipos de token
 
 //más "orientado a objetos" cada token un objeto con sus atributos "individuales"
 typedef struct	s_token
@@ -85,42 +166,20 @@ typedef struct s_tokens
 	size_t	*type;
 	std::vector<std::string>	values;
 }	t_tokens;
->>>>>>> af04e7393858c5426766403aa0afcd6441fe0011
 
-class	clientQueue {
+//seLst functions
+seNode	*newseNode();
+void	seLstPushBack(seLst &lst, seNode *newNode);
+void	seLstFree(seLst &lst);
 
-<<<<<<< HEAD
-	public:
-		void clearRequest(int);
-		void addClient(int);
-		clientQueue();
-		~clientQueue();
-		std::vector<client> clientArray;
-		int getPos(int);
-};
-
-struct HttpResponse {
-	std::string firstLine; //method, version
-    std::string body; //if empty, content-length
-    //std::map<std::string, std::string> headers;
-=======
 //data structures transforms
 char	*seLstToStr(seLst &lst);
->>>>>>> af04e7393858c5426766403aa0afcd6441fe0011
 
-	//constructor y métodos
-};
+//str functions
+size_t	countCharinStr(char *str, char c);
 
-//--HTTP REQUEST---
-HttpRequest loadRequest(char *buffer);
-std::string getRequestedFile(HttpRequest *currentRequest);
-std::string getResponseBody(std::string fileToReturn);
-std::string	getStatus(int status);
-std::string getResponseFirstLine(HttpRequest currentRequest, std::string body);
-std::string GetResponse(HttpRequest *request);
-std::string ResponseToMethod(HttpRequest *request);
+//parse files
+char	*readFileSeLst(int fd);
+void	parseFile(int fd);
 
-//---SOCKET---
-void setNonBlocking(int fd);
-int	getServerSocket(sockaddr_in *addr);
-void	bindAndListen(int sock, sockaddr_in *addr);
+//socket funcs

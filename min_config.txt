@@ -1,0 +1,41 @@
+
+events
+{
+    prueba 2;}
+
+http{
+
+server{
+    server_name pfuentes.42;
+    listen 8080;
+    location    /{
+        root    hola;
+    }
+    location    /jose
+    {
+        root    hue;
+        alias   pepe;
+    }
+}
+    server{
+        server_name   serbre;
+        listen        127.0.0.1:80;
+
+        error_page    502 503 504  /50x.html;
+
+        error_page    500  /50x.html;
+
+        location      /{
+            root      html;
+        }
+        location      /juan{
+            root      jeje;
+            alias     juanito;
+        }
+        location      /manuel{
+            root      jejeje;
+            alias     manolo;
+        }
+    }
+}
+

@@ -1,25 +1,5 @@
 #include "webserv.hpp"
 
-typedef struct	Servers
-{
-	int			*serverSockets; // array de sockets de escucha
-	int			*connSockets; //array de sockets de conexión
-	int			*mapconnListen; //array con el socket de escucha del servidor al que esta ligado cada socket de conexión con cliente
-	char 		***requests; //triple puntero char a matrices de solicitudes de datos, también se mapean a sockets de conexión
-	bTreeNode	**serversPtr; //array de punteros al nodo de cada servidor en el árbol
-	int			*status; //array con el estado de la conexión del socket de conexión
-
-	/*EJEMPLO:
-		Programa que maneja 3 servidores: 
-		Sockets de escucha: [3, 4, 5]; se abren al principio del programa
-		Sockets de conexión: [6, 7, 8, 9, 10, ...]; número indefinido, socket por cada cliente
-		Mapear sockets de conexión a sockets de escucha: [3, 3, 4, 3, 5, ...]; número indefinido, pero el mismo que sockets de conexión:
-			a cada socket de conexión le corresponde un id al socket de escucha del servidor al que pertenece
-		Mapear requests a sockets de conexión: [request1, request2, request3, request4, request5, ...]
-	*/
-
-}	Servers;
-
 int	handle_connection(int fd)
 {
 	//leer solicitud del cliente
