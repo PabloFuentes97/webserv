@@ -106,6 +106,8 @@ std::string getResponseFirstLine(HttpRequest currentRequest, std::string body) {
 	line.append("\r\n");
 	line.append("Content-Length: ");
 	line.append(std::to_string((body).size()));
+	line.append("\r\n");
+	line.append("Connection: close");
 	line.append("\r\n\r\n");
 
 	return line;

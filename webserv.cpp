@@ -100,6 +100,7 @@ int	main() {
 				if (bytes_read == 0) {
 					std::cout << "CLOSE!" << std::endl;
 					close(event[i].ident);
+					usleep(100);
 					continue;
 				}
 				std::cout << "BYTES READ: " << bytes_read << std::endl;
