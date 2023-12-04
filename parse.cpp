@@ -4,6 +4,11 @@ bool	tokenizeFile(char *file, std::vector<t_token> &tokens, std::string &del) //
 {
 	std::fstream	readTokens(file);
 	
+	if (readTokens.fail())
+	{
+		std::cout << "Fichero erróneo" << std::endl;
+		return (false);
+	}
 	std::string	tokenStr;
 	t_token	token;
 	int	start;
@@ -77,7 +82,7 @@ size_t	matrixLenChar(char const **matrix)
 	return (i);
 }
 
-bool	validTokensSyntax(std::vector<t_token> &tokens)
+/*bool	validTokensSyntax(std::vector<t_token> &tokens)
 {
 	char const	*contextNames[] = {"main", "http", "server", "location", NULL};
 	char const	*mainKeys[] = {"workers", NULL};
@@ -157,7 +162,7 @@ bool	validTokensSyntax(std::vector<t_token> &tokens)
 	}
 	std::cout << "Sintaxis válida" << std::endl;
 	return (true);
-}
+}*/
 
 //cambiarlo a char ** para alocar la memoria exacta, no tener que realocar constantemente
 std::vector<std::string>	validContexts(std::string &context)
@@ -394,7 +399,10 @@ bool	parseFile(char	*file)
 	std::string	del = "{};=";
 	std::vector<t_token>	tokens;
 	if (!tokenizeFile(file, tokens, del))
+	{
+		std::cout << "Error al tokenizar" << std::endl;
 		return (false);
+	}
 	for (int i = 0; i < tokens.size(); i++)
 		std::cout << "Token: " << tokens[i].value << std::endl;
 	bTreeNode	*root = new bTreeNode();

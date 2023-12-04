@@ -67,7 +67,6 @@ typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores po
 	//std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
 	std::vector<std::string>	childsNames; //nombre del tipo de cada hijo añadido
 	std::vector<std::string>	allSubContexts; //nombres de todos los posibles subcontextos que puede tener
-	void						*_content;
 	std::vector<bTreeNode*>		childs; //punteros a los hijos
 	bTreeNode(){
 
@@ -77,6 +76,25 @@ typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores po
 
 	}; //constructor con parámetros
 } bTreeNode;
+
+
+
+typedef struct	Servers
+{
+	clientes	clientes;
+	bTreeNode	**ptr_Servers;
+	
+
+	/*EJEMPLO:
+		Programa que maneja 3 servidores: 
+		Sockets de escucha: [3, 4, 5]; se abren al principio del programa
+		Sockets de conexión: [6, 7, 8, 9, 10, ...]; número indefinido, socket por cada cliente
+		Mapear sockets de conexión a sockets de escucha: [3, 3, 4, 3, 5, ...]; número indefinido, pero el mismo que sockets de conexión:
+			a cada socket de conexión le corresponde un id al socket de escucha del servidor al que pertenece
+		Mapear requests a sockets de conexión: [request1, request2, request3, request4, request5, ...]
+	*/
+
+}	Servers;
 
 enum	token_type{word, openBracket, closeBracket, endDeclare}; //enums para tipos de token
 
