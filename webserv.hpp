@@ -1,8 +1,29 @@
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#pragma once
+
+#include <errno.h>
+#include <fcntl.h>
+#include <netinet/in.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/event.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <string.h>   
+#include <fstream>
 #include <iostream>
+<<<<<<< HEAD
+#include <sstream>
+#include <map>
+#include <dirent.h>
+#include <cstdio>
+#include <array>
+#include <vector>
+#define PORT 8080
+#define BUF_SIZE 2000
+=======
 #include <string.h>
 #include <cstring>
 #include <fcntl.h>
@@ -13,24 +34,25 @@
 #include <map>
 #include <sstream>
 #include <fstream>
+>>>>>>> af04e7393858c5426766403aa0afcd6441fe0011
 
-#define MAX_SE_ELEM 64
-#define MAX_READ 17
 
-typedef struct seNode{
-	size_t			elem_n;
-	char 			elem[MAX_SE_ELEM];
-	int				content_bytes;
-	struct seNode *next;
-} seNode;
+struct HttpRequest {
+    std::string method;
+    std::string url; //version
+    std::string body;
+    std::map<std::string, std::string> headers;
 
-typedef struct	seLst{
-	seNode *head;
-	seNode *tail;
-	size_t	size;
-	size_t	bytes;
-} seLst;
+	int status;
+};
 
+<<<<<<< HEAD
+struct client {
+    int fd;
+	HttpRequest request;
+	//server *SocketServer;
+};
+=======
 typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores por estructuras de C - arrays, listas enlazadas,
 //evitar que haga copias innecesarias al añadir elementos a un contenedor
 {
@@ -63,20 +85,42 @@ typedef struct s_tokens
 	size_t	*type;
 	std::vector<std::string>	values;
 }	t_tokens;
+>>>>>>> af04e7393858c5426766403aa0afcd6441fe0011
 
-//seLst functions
-seNode	*newseNode();
-void	seLstPushBack(seLst &lst, seNode *newNode);
-void	seLstFree(seLst &lst);
+class	clientQueue {
 
+<<<<<<< HEAD
+	public:
+		void clearRequest(int);
+		void addClient(int);
+		clientQueue();
+		~clientQueue();
+		std::vector<client> clientArray;
+		int getPos(int);
+};
+
+struct HttpResponse {
+	std::string firstLine; //method, version
+    std::string body; //if empty, content-length
+    //std::map<std::string, std::string> headers;
+=======
 //data structures transforms
 char	*seLstToStr(seLst &lst);
+>>>>>>> af04e7393858c5426766403aa0afcd6441fe0011
 
-//str functions
-size_t	countCharinStr(char *str, char c);
+	//constructor y métodos
+};
 
-//parse files
-char	*readFileSeLst(int fd);
-void	parseFile(int fd);
+//--HTTP REQUEST---
+HttpRequest loadRequest(char *buffer);
+std::string getRequestedFile(HttpRequest *currentRequest);
+std::string getResponseBody(std::string fileToReturn);
+std::string	getStatus(int status);
+std::string getResponseFirstLine(HttpRequest currentRequest, std::string body);
+std::string GetResponse(HttpRequest *request);
+std::string ResponseToMethod(HttpRequest *request);
 
-//socket funcs
+//---SOCKET---
+void setNonBlocking(int fd);
+int	getServerSocket(sockaddr_in *addr);
+void	bindAndListen(int sock, sockaddr_in *addr);
