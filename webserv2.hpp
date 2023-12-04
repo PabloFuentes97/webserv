@@ -21,7 +21,7 @@
 #include <array>
 #include <vector>
 #define PORT 8080
-#define BUF_SIZE 2000
+#define BUF_SIZE 20000
 
 
 struct HttpRequest {

@@ -1,4 +1,4 @@
-#include "webserv.hpp"
+#include "webserv2.hpp"
 
 HttpRequest loadRequest(char *buffer) {
 	
@@ -51,6 +51,12 @@ std::string getRequestedFile(HttpRequest *currentRequest) {
 	else if (access(filePath.c_str(), R_OK) != 0) {
 		filePath = path + "/error403.html"; 
 		currentRequest->status = 403;
+	}
+	if ((currentRequest->url).find('.') != std::string::npos) {
+		std::string checkRequest = (currentRequest->url).substr((currentRequest->url).find('.'));
+		std::cout << "CHECK REQUEST IS: " << checkRequest <<  std::endl;
+		if (checkRequest == ".jpeg")
+		filePath = "";
 	}
 	//si es un script (terminación) habrá q redirigir a CGI (ejecutar en un hijo);
 	
@@ -110,8 +116,11 @@ std::string GetResponse(HttpRequest *request) {
 	std::string fileToReturn = getRequestedFile(request);
 
 	HttpResponse Response;
-	// 
-	Response.body = getResponseBody(fileToReturn);
+	//
+	if (fileToReturn.empty())
+		Response.body = "";
+	else
+		Response.body = getResponseBody(fileToReturn);
 	Response.firstLine = getResponseFirstLine(*request, Response.body);
 	std::string finalRequest = Response.firstLine + Response.body;
 	

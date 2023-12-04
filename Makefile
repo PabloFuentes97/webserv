@@ -1,6 +1,6 @@
 NAME = webserv
 
-SRC = seLst.cpp parse.cpp socket.cpp
+SRC = socketConnection.cpp httpRequest.cpp clientQueue.cpp webserv.cpp 
 
 OBJ = $(SRC:.cpp=.o)
 
