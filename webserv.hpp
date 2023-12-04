@@ -1,48 +1,73 @@
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <iostream>
-#include <string.h>
+#pragma once
+
+#include <errno.h>
 #include <fcntl.h>
-#include <poll.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/event.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <string.h>   
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <map>
+#include <dirent.h>
+#include <cstdio>
+#include <array>
 #include <vector>
-#include <list>
-#include "get_next_line.hpp"
-
-#define MAX_SE_ELEM 64
-#define MAX_READ 17
-
-typedef struct seNode{
-	size_t			elem_n;
-	char 			elem[MAX_SE_ELEM];
-	int				content_bytes;
-	struct seNode *next;
-} seNode;
-
-typedef struct	seLst{
-	seNode *head;
-	seNode *tail;
-	size_t	size;
-	size_t	bytes;
-} seLst;
+#define PORT 8080
+#define BUF_SIZE 2000
 
 
-//seLst functions
-seNode	*newseNode();
-void	seLstPushBack(seLst &lst, seNode *newNode);
-void	seLstFree(seLst &lst);
+struct HttpRequest {
+    std::string method;
+    std::string url; //version
+    std::string body;
+    std::map<std::string, std::string> headers;
 
+	int status;
+};
 
-//data structures transforms
-char	*seLstToStr(seLst &lst);
+struct client {
+    int fd;
+	HttpRequest request;
+	//server *SocketServer;
+};
 
-//str functions
-size_t	countCharinStr(char *str, char c);
+class	clientQueue {
 
-//parse files
-char	*readFileSeLst(int fd);
-void	parseFile(int fd);
+	public:
+		void clearRequest(int);
+		void addClient(int);
+		clientQueue();
+		~clientQueue();
+		std::vector<client> clientArray;
+		int getPos(int);
+};
 
-//socket funcs
+struct HttpResponse {
+	std::string firstLine; //method, version
+    std::string body; //if empty, content-length
+    //std::map<std::string, std::string> headers;
+
+	//constructor y métodos
+};
+
+//--HTTP REQUEST---
+HttpRequest loadRequest(char *buffer);
+std::string getRequestedFile(HttpRequest *currentRequest);
+std::string getResponseBody(std::string fileToReturn);
+std::string	getStatus(int status);
+std::string getResponseFirstLine(HttpRequest currentRequest, std::string body);
+std::string GetResponse(HttpRequest *request);
+std::string ResponseToMethod(HttpRequest *request);
+
+//---SOCKET---
+void setNonBlocking(int fd);
+int	getServerSocket(sockaddr_in *addr);
+void	bindAndListen(int sock, sockaddr_in *addr);
