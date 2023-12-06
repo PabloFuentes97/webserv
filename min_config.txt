@@ -27,12 +27,13 @@ server{
 
         location      /{
             root      html;
+            index     index.html index.htm
         }
-        location      /juan{
+        location      /pepe/juan{
             root      jeje;
             alias     juanito;
         }
-        location      /manuel{
+        location      /pepe{
             root      jejeje;
             alias     manolo;
         }
