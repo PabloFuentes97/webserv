@@ -21,7 +21,7 @@
 #include <array>
 #include <vector>
 #define PORT 8080
-#define BUF_SIZE 20000
+#define BUF_SIZE 2000
 
 
 struct HttpRequest {
@@ -71,3 +71,7 @@ std::string ResponseToMethod(HttpRequest *request);
 void setNonBlocking(int fd);
 int	getServerSocket(sockaddr_in *addr);
 void	bindAndListen(int sock, sockaddr_in *addr);
+
+//---CGI---
+std::string getCgi(std::string script);
+

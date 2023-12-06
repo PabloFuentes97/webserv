@@ -1,4 +1,4 @@
-#include "webserv2.hpp"
+#include "webserv.hpp"
 
 HttpRequest loadRequest(char *buffer) {
 	
@@ -52,12 +52,6 @@ std::string getRequestedFile(HttpRequest *currentRequest) {
 		filePath = path + "/error403.html"; 
 		currentRequest->status = 403;
 	}
-	if ((currentRequest->url).find('.') != std::string::npos) {
-		std::string checkRequest = (currentRequest->url).substr((currentRequest->url).find('.'));
-		std::cout << "CHECK REQUEST IS: " << checkRequest <<  std::endl;
-		if (checkRequest == ".jpeg")
-		filePath = "";
-	}
 	//si es un script (terminación) habrá q redirigir a CGI (ejecutar en un hijo);
 	
 	struct stat info;
@@ -82,7 +76,7 @@ std::string getResponseBody(std::string fileToReturn) {
 	while (file.get(c))
 		fileLine.push_back(c);
 	file.close();
-	std::cout << std::endl << "RESPONSE BODY IS: " << fileLine << std::endl;
+	//std::cout << std::endl << "RESPONSE BODY IS: " << fileLine << std::endl;
 
 	return fileLine;
 }
@@ -104,10 +98,12 @@ std::string getResponseFirstLine(HttpRequest currentRequest, std::string body) {
 	std::string line = "HTTP/1.1 ";
 	line.append(getStatus(currentRequest.status));
 	line.append("\r\n");
-	line.append("Content-Length: ");
-	line.append(std::to_string((body).size()));
-	line.append("\r\n");
-	line.append("Connection: close");
+	if (!body.empty()) {
+		line.append("Content-Length: ");
+		line.append(std::to_string((body).size()));
+	}
+	//line.append("\r\n");
+	//line.append("Connection: close");
 	line.append("\r\n\r\n");
 
 	return line;
@@ -118,10 +114,10 @@ std::string GetResponse(HttpRequest *request) {
 	std::string fileToReturn = getRequestedFile(request);
 
 	HttpResponse Response;
-	//
-	if (fileToReturn.empty())
-		Response.body = "";
-	else
+	// 
+	// if (fileToReturn.substr(fileToReturn.find('.')) == ".php")
+	// 	Response.body = getCgi(fileToReturn);
+	// else
 		Response.body = getResponseBody(fileToReturn);
 	Response.firstLine = getResponseFirstLine(*request, Response.body);
 	std::string finalRequest = Response.firstLine + Response.body;
@@ -134,7 +130,7 @@ std::string ResponseToMethod(HttpRequest *request) {
 	std::string response = "";
 	if (request->method == "GET")
 		response = GetResponse(request);
-	// else if (request.method == "POST")
-	// 	response = PostResponse(request);
+	else if (request->method == "POST")
+		response = getResponseFirstLine(*request, "");
 	return response;
 }
