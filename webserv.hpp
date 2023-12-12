@@ -23,6 +23,9 @@
 
 #define MAX_SE_ELEM 64
 #define MAX_READ 17
+#define BUF_SIZE 20000
+#define PORT 8080
+
 
 typedef struct seNode{
 	size_t			elem_n;
@@ -66,7 +69,7 @@ class	clientQueue {
 
 	public:
 		void clearRequest(int);
-		void addClient(int, int);
+		void addClient(int);
 		clientQueue();
 		~clientQueue();
 		std::vector<client> clientArray;
@@ -199,3 +202,20 @@ bool	findFile(std::string &dirFind, std::string &file);
 
 
 //socket funcs
+
+//--HTTP REQUEST---
+HttpRequest loadRequest(char *buffer);
+std::string getRequestedFile(HttpRequest *currentRequest);
+std::string getResponseBody(std::string fileToReturn);
+std::string	getStatus(int status);
+std::string getResponseFirstLine(HttpRequest currentRequest, std::string body);
+std::string GetResponse(HttpRequest *request);
+std::string ResponseToMethod(HttpRequest *request);
+
+//---SOCKET---
+void setNonBlocking(int fd);
+int	getServerSocket(sockaddr_in *addr);
+void	bindAndListen(int sock, sockaddr_in *addr);
+
+//---CGI---
+std::string getCgi(std::string script);

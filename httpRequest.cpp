@@ -76,7 +76,7 @@ std::string getResponseBody(std::string fileToReturn) {
 	while (file.get(c))
 		fileLine.push_back(c);
 	file.close();
-	std::cout << std::endl << "RESPONSE BODY IS: " << fileLine << std::endl;
+	//std::cout << std::endl << "RESPONSE BODY IS: " << fileLine << std::endl;
 
 	return fileLine;
 }
@@ -98,9 +98,14 @@ std::string getResponseFirstLine(HttpRequest currentRequest, std::string body) {
 	std::string line = "HTTP/1.1 ";
 	line.append(getStatus(currentRequest.status));
 	line.append("\r\n");
-	line.append("Content-Length: ");
-	line.append(std::to_string((body).size()));
+	if (!body.empty()) {
+		line.append("Content-Length: ");
+		line.append(std::to_string((body).size()));
+		line.append("\r\n");
+	}
+	line.append("Connection: close");
 	line.append("\r\n\r\n");
+	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
 
 	return line;
 }
@@ -111,7 +116,10 @@ std::string GetResponse(HttpRequest *request) {
 
 	HttpResponse Response;
 	// 
-	Response.body = getResponseBody(fileToReturn);
+	// if (fileToReturn.substr(fileToReturn.find('.')) == ".php")
+	// 	Response.body = getCgi(fileToReturn);
+	// else
+		Response.body = getResponseBody(fileToReturn);
 	Response.firstLine = getResponseFirstLine(*request, Response.body);
 	std::string finalRequest = Response.firstLine + Response.body;
 	
@@ -123,7 +131,7 @@ std::string ResponseToMethod(HttpRequest *request) {
 	std::string response = "";
 	if (request->method == "GET")
 		response = GetResponse(request);
-	// else if (request.method == "POST")
-	// 	response = PostResponse(request);
+	else if (request->method == "POST")
+		response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";;
 	return response;
 }

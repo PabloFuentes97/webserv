@@ -20,12 +20,11 @@ void clientQueue::clearRequest(int clientFd) {
 	//server = NULL;
 }
 
-void clientQueue::addClient(int clientFd, int servID) {
+void clientQueue::addClient(int clientFd) {
 	if (getPos(clientFd) == -1 && clientFd <= SOMAXCONN)
 	{
 		struct client newClient;
 		newClient.fd = clientFd;
-		newClient.serverID = servID;
 		newClient.request.method = "";
 		newClient.request.url = "";
 		newClient.request.body = "";
