@@ -69,11 +69,12 @@ class	clientQueue {
 
 	public:
 		void clearRequest(int);
-		void addClient(int);
+		void addClient(int, int);
 		clientQueue();
 		~clientQueue();
 		std::vector<client> clientArray;
 		int getPos(int);
+		int getServerId(int);
 };
 
 enum	contextType{main_c, events, http, server, location};
@@ -199,22 +200,24 @@ bTreeNode	*parseFile(char	*file);
 void	findNode(bTreeNode *root, bTreeNode **find_node, std::string find);
 bTreeNode	*findLocation(bTreeNode *server, std::string	&location);
 bool	findFile(std::string &dirFind, std::string &file);
-
-
+bool	getValue(std::vector<std::pair<std::string, std::vector<std::string> > > keyValues, std::string key, std::vector<std::string>	*values_out);
 //socket funcs
+
+//directories-locations
+int	cmpDirectories(std::string &s1, std::string &s2);
 
 //--HTTP REQUEST---
 HttpRequest loadRequest(char *buffer);
-std::string getRequestedFile(HttpRequest *currentRequest);
+std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest);
 std::string getResponseBody(std::string fileToReturn);
 std::string	getStatus(int status);
 std::string getResponseFirstLine(HttpRequest currentRequest, std::string body);
-std::string GetResponse(HttpRequest *request);
-std::string ResponseToMethod(HttpRequest *request);
+std::string GetResponse(bTreeNode	*server, HttpRequest *request);
+std::string ResponseToMethod(bTreeNode *server, HttpRequest *request);
 
 //---SOCKET---
 void setNonBlocking(int fd);
-int	getServerSocket(sockaddr_in *addr);
+int	getServerSocket(sockaddr_in *addr, int port);
 void	bindAndListen(int sock, sockaddr_in *addr);
 
 //---CGI---
