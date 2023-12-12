@@ -13,7 +13,7 @@ int	delete_method(int	socket, bTreeNode	*server, std::string &loc)
 	return (200);
 }
 
-int	main(int argc, char **argv)
+/*int	main(int argc, char **argv)
 {
 	if (argc != 2)
 		return (1);
@@ -28,4 +28,4 @@ int	main(int argc, char **argv)
 	std::vector<bTreeNode*>	servers = http->childs;
 	delete_method(1, servers[0], loc);
 	return (0);
-}
+}*/
