@@ -75,49 +75,57 @@ class	clientQueue {
 
 enum	contextType{main_c, events, http, server, location};
 
-typedef union context_types{
+/*typedef union context_types{
 		void	**matrix;
 		void	*array;
 		seLst	lst;	
 	}	context_types;
 
+typedef struct	keyValue //utilizarla como contenido de lista o vector de claves-valor
+{
+	typedef	union	keyTypes
+	{
+		char	*str;
+		int		*arrInt;
+	};
+	typedef	union	valueTypes
+	{
+		char	**valMatrix;
+		//t_list	*valList;
+		//std::list<std::string>	valList;
+		//std::vector<std::string>	valVector;
+	};
+	keyTypes	key;
+	valueTypes	values;
+};*/
+/*typedef struct	s_char_matrix{
+	char	*str;
+	int		*indexes;
+	int		n;
+}	t_char_matrix;*/
+
 typedef struct	context{
-	char						*contextName;
+	std::string					_name;
 	size_t						contextType;
 	size_t						contextOperation;
-	std::vector<std::string>	contextArgs;
-	//cambiar contenido a <pair>: key-value, pero valores puede ser una lista, múltiples valores
-	std::vector<std::string>	keys;
-	std::vector<std::string>	values;
-	std::vector<int>	mapKeyValues;
-	//std::map<std::string, std::string>	directivesMap;
-	std::vector<std::pair<std::string, std::vector<std::string> > >	directives; //hacerlo asi, no usar el vector de mapear valores con keys
+	std::vector<std::string>	_args;
+	std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
 } context;
+
 
 typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores por estructuras de C - arrays, listas enlazadas,
 //evitar que haga copias innecesarias al añadir elementos a un contenedor
 {
 	std::string					contextName;
 	size_t						contextType;
-	size_t						contextOperation;
 	std::vector<std::string>	contextArgs;
 	//cambiar contenido a <pair>: key-value, pero valores puede ser una lista, múltiples valores
-	std::vector<std::string>	keys;
-	std::vector<std::string>	values;
-	std::vector<int>	mapKeyValues;
 	//std::map<std::string, std::string>	directivesMap;
-	//std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
+	std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
 	std::vector<std::string>	childsNames; //nombre del tipo de cada hijo añadido
-	std::vector<std::string>	allSubContexts; //nombres de todos los posibles subcontextos que puede tener
+	//int							*childsTypes; //tipos de cada hijo, id para saber donde moverse
 	void						*_content;
 	std::vector<bTreeNode*>		childs; //punteros a los hijos
-	bTreeNode(){
-
-	}; //constructor por defecto
-	bTreeNode(void *content)
-	{
-
-	}; //constructor con parámetros
 } bTreeNode;
 
 typedef struct	servers{
@@ -176,10 +184,18 @@ void	seLstFree(seLst &lst);
 char	*seLstToStr(seLst &lst);
 
 //str functions
-size_t	countCharinStr(char *str, char c);
+size_t	countCharinStr(const char *str, char c);
 
 //parse files
-char	*readFileSeLst(int fd);
-void	parseFile(int fd);
+bool		tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &del);
+char		*readFileSeLst(int fd);
+bTreeNode	*parseFile(char	*file);
+
+//tree funcs - find, search
+
+void	findNode(bTreeNode *root, bTreeNode **find_node, std::string find);
+bTreeNode	*findLocation(bTreeNode *server, std::string	&location);
+bool	findFile(std::string &dirFind, std::string &file);
+
 
 //socket funcs
