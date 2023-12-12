@@ -27,12 +27,11 @@ bTreeNode	*findLocation(bTreeNode *server, std::string	&location)
 		if (loc->contextArgs[0] == location)
 		{
 			std::cout << "Encontró location: " << loc->contextArgs[0] << std::endl;
-			break ;
+			return (loc);
 		}
 	}
-	if (!loc)
-		std::cout << "No encontró location" << std::endl;
-	return (loc);
+	std::cout << "No encontró location" << std::endl;
+	return (NULL);
 }
 
 bool	findFile(std::string &dirFind, std::string &file)
@@ -92,6 +91,24 @@ typedef	struct	Location{
 	std::vector<std::string>	uriTokens;
 	std::vector<std::pair<std::string, std::vector<std::string> > >	directives; 	
 }	Location;
+
+
+bool	cmpLocations(void *loc, void *cmp)
+{
+	context	*loc_cast = (context *)loc;
+	std::string	*cmp_cast = (std::string *)cmp;
+
+	for (int i = 1; i < loc_cast->_name.length() && i < (*cmp_cast).length(); i++)
+	{
+		if (loc_cast->_name[i] == '/' || cmp_cast[i] == '/')
+		{
+			
+		}
+	}
+	if (!loc_cast->_name.compare(loc_cast->_name.length(), 0, *cmp_cast))
+		return (true);
+	return (false);
+}
 
 void	parseURI(Location &loc, std::string &URI)
 {

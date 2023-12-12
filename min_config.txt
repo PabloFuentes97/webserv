@@ -7,12 +7,16 @@ http{
 
 server{
     server_name pfuentes.42;
-    listen 8080;
+    listen 127;
+    location    /about.html{
+        alias   /tour.html;
+    }
+
     location    /del_prueba{
         root    hola;
     }
     location    /{
-        root    hola;
+        alias    /about.html;
     }
     location    /jose
     {
@@ -22,12 +26,16 @@ server{
 }
     server{
         server_name   serbre;
-        listen        127.0.0.1:80;
+        listen        8080;
 
         error_page    502 503 504  /50x.html;
 
         error_page    500  /50x.html;
 
+        location        /manuel
+        {
+            alias /try.html;
+        }
         location      /{
             root      html;
             index     index.html index.htm
