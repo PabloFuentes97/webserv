@@ -68,22 +68,6 @@ size_t	matrixLenChar(char const **matrix)
 	return (i);
 }
 
-//cambiarlo a char ** para alocar la memoria exacta, no tener que realocar constantemente
-/*std::vector<std::string>	validContexts(std::string &context)
-{
-	std::vector<std::string>	contexts;
-	if (context == "main")
-	{
-		contexts.push_back("events");
-		contexts.push_back("http");
-	}
-	else if (context == "http")
-		contexts.push_back("server");
-	else if (context == "server")
-		contexts.push_back("location");
-	return (contexts);
-}*/
-
 bool	validSubContextsCmp(std::string &context, std::string &subcontext)
 {
 	const char	*main[] = {"events", "http", NULL};
@@ -135,35 +119,6 @@ bool	validDirectivesCmp(std::string	&context, std::string &directive)
 	}
 	return (false);
 }
-/*std::vector<std::string>	validDirectives(std::string	&context)
-{
-	std::vector<std::string>	directives;
-	
-	if (context == "main")
-		directives.push_back("workers");
-	else if (context == "events")
-		directives.push_back("prueba");
-	else if (context == "http")
-		directives.push_back("hola");
-	else if (context == "server")
-	{
-		directives.push_back("listen");
-		directives.push_back("server_name");
-		directives.push_back("error_page");
-		directives.push_back("root");
-		directives.push_back("index");
-	}
-	else if (context == "location")
-	{
-		directives.push_back("root");
-		directives.push_back("alias");
-		directives.push_back("try_files");	
-	}
-	return (directives);
-}*/
-
-
-
 bool	strInVector(std::string &str, std::vector<std::string> &vector) //usar para comparar tanto directivas como contextos
 //hacer que en vez de devolver un bool devuelva un puntero, si no está es NULL, si está puedo acceder a él directamente
 {
@@ -189,6 +144,7 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 	std::list<bTreeNode *>	nodes; //stack de nodos - se añade cuando entra a un contexto, se borra cuando termina, vuelve al anterior, evitar recursividad
 	bTreeNode	*child; //hijo del nodo del árbol a crear
 	context		*subcontext; // subcontexto a crear y añadir al arbol
+
 	nodes.push_front(root);
 	int	initDirective = 0;
 	int	endDirective = 0;
@@ -196,12 +152,8 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 	{
 		if (tokens[i].value == "{") //tiene que abrir contexto y saltar al siguiente
 		{
-			std::cout << "Abrir contexto" << std::endl;
 			if (!validSubContextsCmp(root->contextName, tokens[initDirective].value))
-			{
-				std::cout << "Subcontexto es inválido" << std::endl;
 				return (false);
-			}
 			child = new bTreeNode();
 			child->contextName = tokens[initDirective].value;
 			for (int start = initDirective + 1; start < i; start++) //añade argumentos del contexto si los hay
@@ -214,20 +166,15 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 		}
 		else if (tokens[i].value == "}") //tiene que cerrar contexto y volver al anterior
 		{
-			std::cout << "Cerrar contexto" << std::endl;
 			nodes.pop_front();
 			root = nodes.front();
 			initDirective = i + 1;
 		}
 		else if (tokens[i].value == ";") // final de directiva, añadir a lista
 		{
-			std::cout << "Generar directiva" << std::endl;
 			endDirective = i;
 			if (!validDirectivesCmp(root->contextName, tokens[initDirective].value))
-			{
-				std::cout << "Key no es válida" << std::endl;
 				return (false);
-			}
 			std::pair<std::string, std::vector<std::string> >	keyVal;
 			keyVal.first = tokens[initDirective].value;
 			for (int j = initDirective + 1; j < endDirective; j++) //añade values
@@ -238,7 +185,6 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 	}
 	return (true);
 }
-
 void	printBTree(bTreeNode *root)
 {
 	std::cout << "Context: " << root->contextName << std::endl;
@@ -274,25 +220,24 @@ void	printBTree(bTreeNode *root)
 	}
 }
 
-bool	parseFile(char	*file)
+bTreeNode	*parseFile(char	*file)
 {
 	std::string	del = "{};=";
 	std::vector<t_token>	tokens;
 	if (!tokenizeFile(file, tokens, del))
 	{
 		std::cout << "Error al tokenizar" << std::endl;
-		return (false);
+		return (NULL);
 	}
 	for (int i = 0; i < tokens.size(); i++)
 		std::cout << "Token: " << tokens[i].value << std::endl;
 	bTreeNode	*root = new bTreeNode();
 	root->contextName = "main";
 	if (!parseContextTokens(root, tokens))
-		return (false);
+		return (NULL);
 	std::cout << "---------------Imprimir árbol de fichero de configuración---------------" << std::endl;
 	printBTree(root);
-	bTreeNode	*find = NULL; //http como root
-	return (true);
+	return (root);
 }
 
 /*int	main(int argc, char **argv)

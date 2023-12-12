@@ -16,9 +16,9 @@ void	findNode(bTreeNode *root, bTreeNode **find_node, std::string	find)
 	}
 }
 
-bool	findLocation(bTreeNode *server, std::string	&location)
+bTreeNode	*findLocation(bTreeNode *server, std::string	&location)
 {
-	bTreeNode	*loc;
+	bTreeNode	*loc = NULL;
 
 	for (int i = 0; i < server->childs.size(); i++)
 	{
@@ -27,11 +27,12 @@ bool	findLocation(bTreeNode *server, std::string	&location)
 		if (loc->contextArgs[0] == location)
 		{
 			std::cout << "Encontró location: " << loc->contextArgs[0] << std::endl;
-			return (true);
+			break ;
 		}
 	}
-	std::cout << "No encontró location" << std::endl;
-	return (false);
+	if (!loc)
+		std::cout << "No encontró location" << std::endl;
+	return (loc);
 }
 
 bool	findFile(std::string &dirFind, std::string &file)
@@ -125,7 +126,7 @@ void	parseURI(Location &loc, std::string &URI)
 	}
 }
 
-int	main(void)
+/*int	main(void)
 {
 	std::string	dir = "/Users/pfuentes/ejercicios/CPP/webserver_git";
 	std::string	file = "webserv";
@@ -140,3 +141,4 @@ int	main(void)
 	parseURI(loc, URI);
 	return (0);
 }
+*/

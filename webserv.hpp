@@ -98,22 +98,19 @@ typedef struct	keyValue //utilizarla como contenido de lista o vector de claves-
 	keyTypes	key;
 	valueTypes	values;
 };*/
+/*typedef struct	s_char_matrix{
+	char	*str;
+	int		*indexes;
+	int		n;
+}	t_char_matrix;*/
 
 typedef struct	context{
 	std::string					_name;
 	size_t						contextType;
 	size_t						contextOperation;
 	std::vector<std::string>	_args;
-	std::vector<std::pair<std::string, std::vector<std::string> > >	directives; //hacerlo asi, no usar el vector de mapear valores con keys
-
-	context() //constructor por defecto
-	{
-	};
-	context(std::string name, std::vector<std::string>	args) : _name(name), _args(args)
-	{
-	};
+	std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
 } context;
-
 
 
 typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores por estructuras de C - arrays, listas enlazadas,
@@ -129,12 +126,6 @@ typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores po
 	//int							*childsTypes; //tipos de cada hijo, id para saber donde moverse
 	void						*_content;
 	std::vector<bTreeNode*>		childs; //punteros a los hijos
-	bTreeNode() : _content(NULL) //constructor por defecto
-	{
-	}; 
-	bTreeNode(void *content) : _content(content) //constructor con parámetros
-	{
-	}; 
 } bTreeNode;
 
 typedef struct	servers{
@@ -196,8 +187,15 @@ char	*seLstToStr(seLst &lst);
 size_t	countCharinStr(const char *str, char c);
 
 //parse files
-bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &del);
-char	*readFileSeLst(int fd);
-void	parseFile(int fd);
+bool		tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &del);
+char		*readFileSeLst(int fd);
+bTreeNode	*parseFile(char	*file);
+
+//tree funcs - find, search
+
+void	findNode(bTreeNode *root, bTreeNode **find_node, std::string find);
+bTreeNode	*findLocation(bTreeNode *server, std::string	&location);
+bool	findFile(std::string &dirFind, std::string &file);
+
 
 //socket funcs
