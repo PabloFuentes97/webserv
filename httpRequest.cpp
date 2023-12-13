@@ -2,6 +2,7 @@
 
 HttpRequest loadRequest(char *buffer) {
 	
+	//Reorganizar vector: hasta \r\n\r\n lo metemos en una string y lo quitamos del vector
 	HttpRequest currentRequest;
 	std::string line;
 	std::istringstream bufferFile(buffer);
@@ -55,7 +56,7 @@ std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest) {
 	std::string path;
 	if (!loc) {
 		std::cout << "No encontró loc" << std::endl;
-		throw (errorExcept());
+		//throw (errorExcept());
 	}
 	else {
 		std::cout << "Encontró loc" << std::endl;
@@ -98,7 +99,7 @@ std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest) {
 
 std::string getResponseBody(std::string fileToReturn) {
 
-	std::ifstream file (fileToReturn);
+	std::ifstream file (fileToReturn, std::ios::binary);
 	std::string fileLine;
 	
     if (!file.is_open()) {
@@ -131,13 +132,15 @@ std::string getResponseFirstLine(HttpRequest currentRequest, std::string body) {
 	std::string line = "HTTP/1.1 ";
 	line.append(getStatus(currentRequest.status));
 	line.append("\r\n");
+	if (currentRequest.url.substr(currentRequest.url.find(".")) == ".avif")
+		line.append("Content-Type: image/avif\r\n");
 	if (!body.empty()) {
 		line.append("Content-Length: ");
 		line.append(std::to_string((body).size()));
 		line.append("\r\n");
 	}
-	line.append("Connection: close");
-	line.append("\r\n\r\n");
+	// line.append("Connection: close");
+	// line.append("\r\n\r\n");
 	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
 
 	return line;

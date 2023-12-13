@@ -24,7 +24,6 @@ void	readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_
 		std::cout << "flag es EV_EOF" << std::endl;
     // Read bytes from socket
     char buf[BUF_SIZE + 1];
-	std::string str;
 	memset(buf, 0, sizeof(BUF_SIZE));
 	//añadir manera de buclear el buffer
 	int bytes_read = 5;
@@ -33,13 +32,10 @@ void	readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_
 	if (bytes_read == -1) {
 		perror("recv"); }
 	buf[bytes_read] = '\0';
-	//std::cout << "BUF BIT: " << buf << std::endl;
-	str.append(buf);
-	//habrá q volcar el buffer en (void *)(&(Queue.clientArray[Queue.getPos(client->ident)].bufToRead)) o algo así 
-	std::cout << "FULL BUFFER IS: " << std::endl << str << std::endl;
-	//std::cout << "fd is: " << client->ident << std::endl;
-	Queue.clientArray[Queue.getPos(client->ident)].request = loadRequest((char *)str.c_str());
-	std::cout << "URL IS (PREV): " << Queue.clientArray[Queue.getPos(client->ident)].request.url << std::endl;
+	// for (int i = 0; i < bytes_read; i++) {
+	// 	Queue.clientArray[Queue.getPos(client->ident)].bufToRead.push_back(buf[i]);
+	 Queue.clientArray[Queue.getPos(client->ident)].request = loadRequest(buf);
+//	std::cout << "URL IS (PREV): " << Queue.clientArray[Queue.getPos(client->ident)].request.url << std::endl;
 	
 	EV_SET(&client_event[0], client->ident, EVFILT_WRITE, EV_ENABLE | EV_CLEAR, 0, 0, NULL);
 	if (kevent(kq, &client_event[0], 1, NULL, 0, NULL) == -1)
@@ -153,7 +149,7 @@ int	main(int argc, char **argv) {
 				std::cout << "CLIENT CLOSED CONNECTION. CLOSING CONNECTION......." << std::endl;
 				close(event[i].ident);
 				struct kevent timer_event;
-				EV_SET(&timer_event, new_sock, EVFILT_TIMER, EV_ADD | EV_ENABLE | EV_DELETE, 0, 0, NULL);
+				EV_SET(&timer_event, new_sock, EVFILT_TIMER, EV_ADD | EV_DELETE, 0, 5, NULL);
 				if (kevent(kq, &timer_event, 1, NULL, 0, NULL) < 0)
                    perror("kevent error");
 				std::cout << "CLOSED!" << std::endl;
