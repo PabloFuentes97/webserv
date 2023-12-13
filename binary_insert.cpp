@@ -168,7 +168,7 @@ int	cmpLocations(bTreeNode *loc, bTreeNode *cmp) //loc es la location a comparar
 	return (1);
 }*/
 
-int	binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert, int (*f)(bTreeNode *to_cmp, bTreeNode *cmp)) //hacer un template de esto
+int	binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert) //hacer un template de esto
 {
 	int	start = 0;
 	int	end = vec.size() - 1;
@@ -176,6 +176,7 @@ int	binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert, int (*f)(bTree
 	int	high = end;
 	int	mid;
 
+	std::cout << "Entro en binarySearch" << std::endl;
 	std::cout << "Cmp: " << insert->contextArgs[0] << std::endl;
 	while (low <= high)
 	{
@@ -183,7 +184,7 @@ int	binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert, int (*f)(bTree
 		std::cout << "Low: " << vec[low]->contextArgs[0] << std::endl;
 		std::cout << "High: " << vec[high]->contextArgs[0] << std::endl;
 		std::cout << "Valor a comparar: " << vec[mid]->contextArgs[0] << " en pos: " << mid << std::endl;
-		int	res = f(vec[mid], insert);
+		int	res = cmpLocations(vec[mid], insert);
 		std::cout << "Res es: " << res << std::endl;
 		if (res == 0)
 		{
