@@ -66,7 +66,6 @@ std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest) {
 		{
 			std::cout << "Alias: " << alias[i] << std::endl;
 		}
-
 		char	buf[1000];
 	
 		path = getcwd(buf, 1000);

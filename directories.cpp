@@ -93,22 +93,40 @@ typedef	struct	Location{
 }	Location;
 
 
-bool	cmpLocations(void *loc, void *cmp)
+/*int	cmpLocations(void *loc, void *cmp) //loc es la location a comparar, cmp es el url
 {
 	context	*loc_cast = (context *)loc;
 	std::string	*cmp_cast = (std::string *)cmp;
+	std::string	s1;
+	std::string	s2;
+	std::cout << "CMP1: " << loc_cast->_args[0] << ", CMP2: " << *cmp_cast << std::endl;
 
-	for (int i = 1; i < loc_cast->_name.length() && i < (*cmp_cast).length(); i++)
+	if (loc_cast->_args[0] == "/")
 	{
-		if (loc_cast->_name[i] == '/' || cmp_cast[i] == '/')
+		std::cout << "Location es directorio raíz" << std::endl;
+		return (1);
+	}		
+	for (int start1 = 1, start2 = 1, i = 1, j = 1; start1 < loc_cast->_args[0].length() && start2 < (*cmp_cast).length(); start1++, start2++)
+	{
+		//std::cout << "Loc: " << loc_cast->_args[0][i] << std::endl;
+		//std::cout << "Cmp: " << (*cmp_cast)[i] << std::endl;
+		for ( ; loc_cast->_args[0][start1] && loc_cast->_args[0][start1] != '/'; start1++);
+		for ( ; (*cmp_cast)[start2] && (*cmp_cast)[start2] != '/'; start2++);
+		s1 = loc_cast->_args[0].substr(i, start1 - i);
+		s2 = (*cmp_cast).substr(j, start2 - j);
+		std::cout << "S1: " << s1 << ", S2: " << s2 << std::endl;
+		if (s1 != s2)
 		{
-			
+			std::cout << "No coinciden" << std::endl;
+			return (0);
 		}
+		i = start1 + 1;
+		j = start2 + 1;
 	}
-	if (!loc_cast->_name.compare(loc_cast->_name.length(), 0, *cmp_cast))
-		return (true);
-	return (false);
-}
+	//if (!loc_cast->_name.compare(loc_cast->_name.length(), 0, *cmp_cast))
+	//	return (true);
+	return (1);
+}*/
 
 void	parseURI(Location &loc, std::string &URI)
 {
@@ -145,17 +163,19 @@ void	parseURI(Location &loc, std::string &URI)
 
 /*int	main(void)
 {
-	std::string	dir = "/Users/pfuentes/ejercicios/CPP/webserver_git";
+	std::string	dir = "/Users/pfuentes/ejercicios/CPP/webserv_git";
 	std::string	file = "webserv";
 	if (findFile(dir, file))
 		std::cout << "Encontró el fichero!" << std::endl;
 	else
 		std::cout << "No lo encontró..." << std::endl;
 	std::string	URI = "/kapouet/pouic/toto/pouet";
+	std::string	URI4 = "/kapouet/pouic/manuel/pouet";
 	//std::string	URI = "/";
-	//std::string	URI = "/pepe/manuel/";
-	Location	loc;
-	parseURI(loc, URI);
+	std::string	URI2 = "/pepe/manuel/";
+	std::string	URI3 = "/";
+	context	c;
+	c._args.push_back(URI);
+	cmpLocations(&c, &URI4);
 	return (0);
-}
-*/
+}*/
