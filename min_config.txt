@@ -34,15 +34,19 @@ server{
 
         location        /manuel
         {
-            alias /try.html;
+            alias /documents/;
         }
         location      /{
-            root      html;
+            alias      /documents/;
             index     index.html index.htm
+        }
+        location    /manolo
+        {
+            alias     jose;
         }
         location      /pepe/juan{
             root      jeje;
-            alias     juanito;
+            alias     /documents/;
         }
         location      /pepe{
             root      jejeje;

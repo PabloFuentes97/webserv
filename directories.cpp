@@ -16,21 +16,23 @@ void	findNode(bTreeNode *root, bTreeNode **find_node, std::string	find)
 	}
 }
 
-bTreeNode	*findLocation(bTreeNode *server, std::string	&location)
+bTreeNode	*findLocation(bTreeNode *server, std::string &URL)
 {
 	bTreeNode	*loc = NULL;
 
+	std::cout << "URL a comparar: " << URL << std::endl;
 	for (int i = 0; i < server->childs.size(); i++)
 	{
 		loc = server->childs[i];
 		std::cout << "Estoy en contexto location: " << loc->contextArgs[0] << std::endl;
-		if (loc->contextArgs[0] == location)
+		std::cout << "Len de location: " <<  loc->contextArgs[0].length() << std::endl;
+		if (URL.compare(0, loc->contextArgs[0].length(), loc->contextArgs[0]) == 0)
 		{
-			std::cout << "Encontró location: " << loc->contextArgs[0] << std::endl;
+			std::cout << "Hace match de la URL: " << loc->contextArgs[0] << " y " << URL << std::endl;
 			return (loc);
 		}
 	}
-	std::cout << "No encontró location" << std::endl;
+	std::cout << "No hizo ningún match" << std::endl;
 	return (NULL);
 }
 

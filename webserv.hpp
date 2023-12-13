@@ -198,7 +198,7 @@ bTreeNode	*parseFile(char	*file);
 //tree funcs - find, search
 
 void	findNode(bTreeNode *root, bTreeNode **find_node, std::string find);
-bTreeNode	*findLocation(bTreeNode *server, std::string	&location);
+bTreeNode	*findLocation(bTreeNode *server, std::string	&URL);
 bool	findFile(std::string &dirFind, std::string &file);
 bool	getValue(std::vector<std::pair<std::string, std::vector<std::string> > > keyValues, std::string key, std::vector<std::string>	*values_out);
 
@@ -206,7 +206,8 @@ bool	getValue(std::vector<std::pair<std::string, std::vector<std::string> > > ke
 //socket funcs
 
 //sort-insert funcs
-int	binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert, int (*f)(bTreeNode *to_cmp, bTreeNode *cmp));
+int		binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert);
+void	binaryInsert(std::vector<bTreeNode *> &vec, bTreeNode *insert);
 
 //directories-locations
 int	cmpDirectories(std::string &s1, std::string &s2);
