@@ -74,8 +74,12 @@ bool	getValue(std::vector<std::pair<std::string, std::vector<std::string> > > ke
 
 int	main(int argc, char **argv) {
 
-	if (argc != 2)
-		return (1);
+	if (argc != 2) {
+        std::cerr << "Format: ./webserv [configuration file]" << std::endl;
+        return (1); }
+    if (access(argv[1], R_OK) != 0) {
+        std::cerr << "Inaccessible file" << std::endl;
+        return 1; }
 	struct kevent event[SOMAXCONN + 1];
 
 	std::vector<int>	sockVec;
