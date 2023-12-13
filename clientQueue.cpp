@@ -7,6 +7,17 @@ int	clientQueue::getPos(int checkFd) {
 	return -1;
 }
 
+int	clientQueue::getServerId(int checkFd) {
+	for (int i = 0; i < clientArray.size(); i++)
+		if (clientArray[i].fd == checkFd)
+		{
+			std::cout << "Fd de socket: " << checkFd << ", serverID: " << clientArray[i].serverID << std::endl;
+			return clientArray[i].serverID;
+		}
+			
+	return -1;
+}
+
 clientQueue::clientQueue() { }
 
 clientQueue::~clientQueue() { }
@@ -20,15 +31,28 @@ void clientQueue::clearRequest(int clientFd) {
 	//server = NULL;
 }
 
-void clientQueue::addClient(int clientFd) {
-	if (getPos(clientFd) == -1 && clientFd <= SOMAXCONN)
+void clientQueue::addClient(int clientFd, int serverFd) {
+
+	struct client newClient;
+	int	pos = getPos(clientFd);
+	if (pos == -1 && clientFd <= SOMAXCONN)
 	{
 		struct client newClient;
 		newClient.fd = clientFd;
+		newClient.serverID = serverFd - 3;
 		newClient.request.method = "";
 		newClient.request.url = "";
 		newClient.request.body = "";
 		newClient.request.status = 0;
 		clientArray.push_back(newClient);
+	}
+	else
+	{
+		this->clientArray[pos].fd = clientFd;
+		this->clientArray[pos].serverID = serverFd - 3;
+		this->clientArray[pos].request.method = "";
+		this->clientArray[pos].request.url = "";
+		this->clientArray[pos].request.body = "";
+		this->clientArray[pos].request.status = 0;
 	}
 }

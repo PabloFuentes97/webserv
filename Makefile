@@ -1,6 +1,7 @@
 NAME = webserv
 
-SRC = socketConnection.cpp httpRequest.cpp clientQueue.cpp webserv.cpp 
+SRC = seLst.cpp parse.cpp httpRequest.cpp directories.cpp socketConnection.cpp \
+delete_method.cpp clientQueue.cpp webserv.cpp binary_insert.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -11,7 +12,7 @@ all: $(NAME)
 
 CC		= c++
 
-CCFLAGS	= -Wall -Werror -Wextra -std=c++98
+CCFLAGS	= -Wall -Werror -Wextra -fsanitize=address -std=c++98
 
 $(NAME): $(OBJ)
 		$(CC) $(CCFLAGS) $(OBJ) -o $(NAME)

@@ -38,27 +38,87 @@ HttpRequest loadRequest(char *buffer) {
 	return (currentRequest);
 }
 
-std::string getRequestedFile(HttpRequest *currentRequest) {
-
-	std::string path = "/Users/marias-e/Desktop/webserv/documents";
-	currentRequest->status = 200;
-
-	std::string filePath = path + currentRequest->url; 
-		std::cout << "URL FOR REQUEST IS: " << filePath << std::endl;
-	if (access(filePath.c_str(), F_OK) != 0) {
-		filePath = path + "/error404.html"; 
-		currentRequest->status = 404;
+class	errorExcept : public std::exception
+{
+	virtual const char *what() const throw()
+	{
+		return ("Error");
 	}
-	else if (access(filePath.c_str(), R_OK) != 0) {
-		filePath = path + "/error403.html"; 
-		currentRequest->status = 403;
+};
+
+bool	getDirLocation(bTreeNode	*server, HttpRequest *currentRequest)
+{
+	//primero busca una location que haga match con la URL pasada - tiene que buscar de más especifico a más general;
+	//es la url la que tiene que compararse con la location - compara en base al numero de caracteres de la location
+	//por ello si hay una location "/" hará match con cualquier URL pasada
+
+	//si ha encontrado la location, tiene que buscar un root o alias
+	//root -> path final de fichero a buscar = root + location + resto de URL (la parte final, restante que no coincide con la location)
+	//alias -> path final de fichero a buscar = alias + resto de URL
+
+	return (true);
+}
+
+std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest) {
+
+	std::cout << "URL: " << currentRequest->url << std::endl;
+	std::cout << "Entrar en findLocation" << std::endl;
+	bTreeNode	*loc = findLocation(server, currentRequest->url);
+	std::cout << "Hizo findLocation" << std::endl;
+	std::string	filePath;
+	std::string path;
+	if (!loc) {
+		std::cout << "No encontró loc" << std::endl;
+		throw (errorExcept());
 	}
-	//si es un script (terminación) habrá q redirigir a CGI (ejecutar en un hijo);
-	
-	struct stat info;
-    stat(filePath.c_str(), &info);
-	if (S_ISDIR(info.st_mode) != 0)
-		filePath = path + "/directory.html"; 
+	else {
+		std::cout << "Encontró loc" << std::endl;
+		std::vector<std::string>	alias;
+		getValue(loc->directives, "alias", &alias);
+		if (alias.empty())
+		{
+			std::vector<std::string>	root;
+			getValue(loc->directives, "root", &root);
+			if (root.empty())
+				throw (errorExcept());
+		}
+		std::cout << "Imprimir: " << std::endl;
+		for (int i = 0; i < alias.size(); i++)
+		{
+			std::cout << "Alias: " << alias[i] << std::endl;
+		}
+		int	locLen = loc->contextArgs[0].length();
+		std::string	fileName = currentRequest->url.substr(locLen, locLen - alias[0].length());
+
+		std::cout << "URL sin el alias, el resto: " << fileName << std::endl;
+		//si es alias
+		char	buf[1000];
+		path = getcwd(buf, 1000);
+		filePath = path + alias[0] + fileName;
+		std::cout << "PATH FINAL DONDE BUSCAR EL FICHERO: " << filePath << std::endl;
+		/*
+		char	buf[1000];
+		path = getcwd(buf, 1000);
+		path += "/documents"; //cambiarlo
+		currentRequest->status = 200;
+
+		filePath = path + alias[0];
+		std::cout << "URL FOR REQUEST IS: " << filePath << std::endl;*/
+		if (access(filePath.c_str(), F_OK) != 0) {
+			filePath = path + "/error404.html"; 
+			currentRequest->status = 404;
+		}
+		else if (access(filePath.c_str(), R_OK) != 0) {
+			filePath = path + "/error403.html"; 
+			currentRequest->status = 403;
+		}
+		//si es un script (terminación) habrá q redirigir a CGI (ejecutar en un hijo);
+		
+		/*struct stat info;
+		stat(filePath.c_str(), &info);
+		if (S_ISDIR(info.st_mode) != 0)
+			filePath = path + "/directory.html"; */
+	}
 
 	std::cout << std::endl << "FILEPATH IS:" << filePath << std::endl; 
 	return filePath; 
@@ -102,18 +162,30 @@ std::string getResponseFirstLine(HttpRequest currentRequest, std::string body) {
 	if (!body.empty()) {
 		line.append("Content-Length: ");
 		line.append(std::to_string((body).size()));
+		line.append("\r\n");
 	}
-	//line.append("\r\n");
-	//line.append("Connection: close");
+	line.append("Connection: close");
 	line.append("\r\n\r\n");
+	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
 
 	return line;
 }
 
-std::string GetResponse(HttpRequest *request) {
+std::string GetResponse(bTreeNode	*server, HttpRequest *request) {
 	
-	std::string fileToReturn = getRequestedFile(request);
-
+	//bTreeNode	*
+	std::string fileToReturn;
+	try {
+		fileToReturn = getRequestedFile(server, request);
+	}
+	catch(std::exception &e)
+	{
+		std::cout << e.what() << std::endl;
+		char buf[1000];
+		fileToReturn = getcwd(buf, 1000);
+		fileToReturn += "/error404.html";
+		request->status = 404;
+	}
 	HttpResponse Response;
 	// 
 	// if (fileToReturn.substr(fileToReturn.find('.')) == ".php")
@@ -126,15 +198,12 @@ std::string GetResponse(HttpRequest *request) {
 	return finalRequest;
 }
 
-std::string ResponseToMethod(HttpRequest *request) {
+std::string ResponseToMethod(bTreeNode	*server, HttpRequest *request) {
 	
 	std::string response = "";
 	if (request->method == "GET")
-		response = GetResponse(request);
+		response = GetResponse(server, request);
 	else if (request->method == "POST")
-	{
-
-		response = "HTTP/1.1 200 OK\r\n/* Content-Type: text/html\r\nContent-Length: 0\r\nAccept-Ranges: bytes\r\nConnection: close */";
-	}
+		response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";;
 	return response;
 }
