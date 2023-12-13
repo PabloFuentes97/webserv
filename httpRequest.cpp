@@ -61,6 +61,8 @@ std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest) {
 		std::cout << "Encontró loc" << std::endl;
 		std::vector<std::string>	alias;
 		getValue(loc->directives, "alias", &alias);
+		if (alias.empty())
+			throw (errorExcept());
 		std::cout << "Imprimir: " << std::endl;
 		for (int i = 0; i < alias.size(); i++)
 		{
