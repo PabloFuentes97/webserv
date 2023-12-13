@@ -139,6 +139,26 @@ bTreeNode	*copyBTreeNode(bTreeNode *node)
 	return (copy);
 }
 
+void	binaryInsert(std::vector<bTreeNode *> &vec, bTreeNode *insert) //hacer mejor un template de esto
+{
+	int	res = binarySearch(vec, insert, &cmpLocations);
+	if (res == -1)
+	{
+		std::cout << "Lo añade al principio" << std::endl;
+		vec.insert(vec.begin(), insert);
+	}
+	else if (res == -2)
+	{
+			std::cout << "Lo añade al final" << std::endl;
+			vec.push_back(insert);
+	}
+	else
+	{
+		std::cout << "Guardar elemento en pos: " << res << std::endl;
+		vec.insert(vec.begin() + res, insert);
+	}
+}
+
 bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 {
 	std::list<bTreeNode *>	nodes; //stack de nodos - se añade cuando entra a un contexto, se borra cuando termina, vuelve al anterior, evitar recursividad
@@ -158,6 +178,7 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 			child->contextName = tokens[initDirective].value;
 			for (int start = initDirective + 1; start < i; start++) //añade argumentos del contexto si los hay
 				child->contextArgs.push_back(tokens[start].value);
+			//binaryInsert(root->childs, child);
 			root->childs.push_back(child);
 			root->childsNames.push_back(child->contextName);
 			nodes.push_front(child);

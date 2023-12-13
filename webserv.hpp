@@ -201,10 +201,17 @@ void	findNode(bTreeNode *root, bTreeNode **find_node, std::string find);
 bTreeNode	*findLocation(bTreeNode *server, std::string	&location);
 bool	findFile(std::string &dirFind, std::string &file);
 bool	getValue(std::vector<std::pair<std::string, std::vector<std::string> > > keyValues, std::string key, std::vector<std::string>	*values_out);
+
+
 //socket funcs
+
+//sort-insert funcs
+int	binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert, int (*f)(bTreeNode *to_cmp, bTreeNode *cmp));
 
 //directories-locations
 int	cmpDirectories(std::string &s1, std::string &s2);
+int	cmpLocations(bTreeNode *loc, bTreeNode *cmp);
+int	cmpDirectives(void *loc, void *cmp);
 
 //--HTTP REQUEST---
 HttpRequest loadRequest(char *buffer);
