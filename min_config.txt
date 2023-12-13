@@ -12,8 +12,8 @@ server{
         alias   /tour.html;
     }
 
-    location    /del_prueba{
-        root    hola;
+    location    /favicon.ico{
+        alias   /error404.html;
     }
     location    /{
         alias    /about.html;
@@ -36,9 +36,9 @@ server{
         {
             alias /try.html;
         }
-        location      /{
-            root      html;
-            index     index.html index.htm
+        location      /
+		{   
+            alias    /;
         }
         location      /pepe/juan{
             root      jeje;

@@ -28,25 +28,14 @@ void	readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_
 	memset(buf, 0, sizeof(BUF_SIZE));
 	//añadir manera de buclear el buffer
 	int bytes_read = 5;
-	while (bytes_read != -1) {
-		//sleep(3); 
-		memset(buf, 0, sizeof(BUF_SIZE));
-		//std::cout << "DATA (BEFORE): " << client->data << std::endl;
-		bytes_read = recv(client->ident, buf, BUF_SIZE, MSG_DONTWAIT);
-		//std::cout << "DATA (AFTER): " << client->data << std::endl;
-		if (bytes_read == -1) {
-			perror("recv");
-			break ;
-		}
-		if (bytes_read == 0) {
-			std::cout << "[[CLOSE]]" << std::endl;
-			close(client->ident);
-			return;
-		}
-		buf[bytes_read] = '\0';
-		//std::cout << "BUF BIT: " << buf << std::endl;
-		str.append(buf);
-	}
+	memset(buf, 0, sizeof(BUF_SIZE));
+	bytes_read = recv(client->ident, buf, BUF_SIZE, MSG_DONTWAIT);
+	if (bytes_read == -1) {
+		perror("recv"); }
+	buf[bytes_read] = '\0';
+	//std::cout << "BUF BIT: " << buf << std::endl;
+	str.append(buf);
+	//habrá q volcar el buffer en (void *)(&(Queue.clientArray[Queue.getPos(client->ident)].bufToRead)) o algo así 
 	std::cout << "FULL BUFFER IS: " << std::endl << str << std::endl;
 	//std::cout << "fd is: " << client->ident << std::endl;
 	Queue.clientArray[Queue.getPos(client->ident)].request = loadRequest((char *)str.c_str());
@@ -55,6 +44,10 @@ void	readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_
 	EV_SET(&client_event[0], client->ident, EVFILT_WRITE, EV_ENABLE | EV_CLEAR, 0, 0, NULL);
 	if (kevent(kq, &client_event[0], 1, NULL, 0, NULL) == -1)
 		std::cerr << "kevent error" << std::endl;
+	struct kevent timer_event;
+	EV_SET(&timer_event, client->ident, EVFILT_TIMER, EV_ADD | EV_ENABLE | EV_ONESHOT, 0, 5, NULL);
+	if (kevent(kq, &timer_event, 1, NULL, 0, NULL) < 0)
+        perror("kevent error");
 
 }
 
@@ -114,7 +107,6 @@ int	main(int argc, char **argv) {
 		std::cout << "Socket de servidor " << i << " es: " << sockVec.back() << std::endl;
 		bindAndListen(sockVec[i], &addr);
 	}
-	std::cout << "Hizo bucle" << std::endl;
 	//Montar el kqueue
 	kq = kqueue();
 	if (kq < 0) {
@@ -156,7 +148,17 @@ int	main(int argc, char **argv) {
 				std::cout << "Es socket de escucha: " << event[i].ident << std::endl;
 				isServerSocket = true;
 			}
-			if (isServerSocket == true && (event[i].filter == EVFILT_READ)) {
+
+			if (event[i].flags & EV_EOF) {
+				std::cout << "CLIENT CLOSED CONNECTION. CLOSING CONNECTION......." << std::endl;
+				close(event[i].ident);
+				struct kevent timer_event;
+				EV_SET(&timer_event, new_sock, EVFILT_TIMER, EV_ADD | EV_ENABLE | EV_DELETE, 0, 0, NULL);
+				if (kevent(kq, &timer_event, 1, NULL, 0, NULL) < 0)
+                   perror("kevent error");
+				std::cout << "CLOSED!" << std::endl;
+			}
+			else if (isServerSocket == true && (event[i].filter == EVFILT_READ)) {
 
 				std::cout << "---ACCEPT EVENT---" << std::endl;
                 //Montar cliente
@@ -166,7 +168,7 @@ int	main(int argc, char **argv) {
 					exit (0);
 				}
 				Queue.addClient(new_sock, event[i].ident);
-				std::cout << "ADDED CLIENT. FD: " << event[i].ident << "SERVER ID: " << Queue.getServerId(new_sock) << std::endl;
+				std::cout << "ADDED CLIENT. FD: " << new_sock << " SERVER ID: " << event[i].ident << std::endl;
 				setNonBlocking(new_sock);
 
                 // Nuevo evento al kqueue
@@ -174,12 +176,21 @@ int	main(int argc, char **argv) {
 				EV_SET(&client_event[0], new_sock, EVFILT_WRITE, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, NULL);
 				if (kevent(kq, client_event, 2, NULL, 0, NULL) < 0)
                     perror("kevent error");
+				struct kevent timer_event;
+				EV_SET(&timer_event, new_sock, EVFILT_TIMER, EV_ADD | EV_ENABLE | EV_ONESHOT, 0, 5, NULL);
+				if (kevent(kq, &timer_event, 1, NULL, 0, NULL) < 0)
+                    perror("kevent error");
 			}
 			else if (isServerSocket == false && (event[i].filter == EVFILT_WRITE))
 				writeEvent(servers[Queue.getServerId(event[i].ident)], Queue, event[i].ident, client_event, kq);
 
 			else if (isServerSocket == false  && (event[i].filter == EVFILT_READ))
 				readEvent(Queue, &event[i], client_event, kq);
+			else if (event[i].filter == EVFILT_TIMER) {
+				std::cout << "TIMER IS UP! CLOSING CONNECTION......." << std::endl;
+				close(event[i].ident);
+				std::cout << "CLOSED!" << std::endl;
+			}
 		}
 	}
 	return 0;

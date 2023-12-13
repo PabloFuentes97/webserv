@@ -54,7 +54,7 @@ struct client {
     int fd;
 	int	serverID;
 	HttpRequest request;
-	//server *SocketServer;
+	std::vector<char> bufToRead;
 };
 
 struct HttpResponse {
