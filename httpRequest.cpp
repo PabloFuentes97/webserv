@@ -88,7 +88,10 @@ std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest) {
 			std::cout << "Alias: " << alias[i] << std::endl;
 		}
 		int	locLen = loc->contextArgs[0].length();
-		std::string	fileName = currentRequest->url.substr(locLen, locLen - alias[0].length());
+
+		//std::cout << "Check " << loc->contextArgs[0] << std::endl;
+		/* SEGFAULT */std::string	fileName = currentRequest->url.substr(locLen, locLen - alias[0].length());
+		//std::cout << "Check segfault" << std::endl;
 
 		std::cout << "URL sin el alias, el resto: " << fileName << std::endl;
 		//si es alias
