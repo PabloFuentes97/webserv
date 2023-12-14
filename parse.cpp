@@ -71,7 +71,7 @@ size_t	matrixLenChar(char const **matrix)
 bool	validSubContextsCmp(std::string &context, std::string &subcontext)
 {
 	const char	*main[] = {"events", "http", NULL};
-	const char	*http[] = {"server", NULL};
+	const char	*http[] = {"types", "server", NULL};
 	const char	*server[] = {"location", NULL};
 	
 	const char	**find = NULL;
@@ -96,6 +96,7 @@ bool	validDirectivesCmp(std::string	&context, std::string &directive)
 	const char	*main[] = {"workers", NULL};
 	const char	*events[] = {"prueba", NULL};
 	const char	*http[] = {"hola", NULL};
+	const char	*types[] = {"text/html", "text/css", "text/xml"};
 	const char	*server[] = {"listen", "server_name", "error_page", "root", "index", NULL};
 	const char	*location[] = {"root", "alias", "try_files", NULL};
 
@@ -106,6 +107,8 @@ bool	validDirectivesCmp(std::string	&context, std::string &directive)
 		find = events;
 	else if (context == "http")
 		find = http;
+	else if (context == "types")
+		find = types;
 	else if (context == "server")
 		find = server;
 	else if (context == "location")
@@ -185,7 +188,7 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 			child->contextName = tokens[initDirective].value;
 			for (int start = initDirective + 1; start < i; start++) //añade argumentos del contexto si los hay
 				child->contextArgs.push_back(tokens[start].value);
-			if (!child->contextArgs.empty())
+			if (child->contextName == "location")
 				binaryInsert(root->childs, child);
 			else
 				root->childs.push_back(child);
