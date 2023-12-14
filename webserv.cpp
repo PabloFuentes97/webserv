@@ -94,13 +94,18 @@ int	main(int argc, char **argv) {
 	
 	//guardar arbol con config
 	bTreeNode	*root = parseFile(argv[1]);
+	if (!root)
+		return (2);
 	bTreeNode	*http = NULL;
 	findNode(root, &http, "http");
 	if (!http)
 		return (2);
-	std::vector<bTreeNode*>	servers = http->childs;
-
-
+	std::vector<bTreeNode*>	servers;
+	for (int i = 0; i < http->childs.size(); i++)
+	{
+		if (http->childs[i]->contextName == "server")
+			servers.push_back(http->childs[i]);
+	} 
 	//Socket del servidor
 	for (int i = 0; i < servers.size(); i++)
 	{
@@ -136,11 +141,7 @@ int	main(int argc, char **argv) {
    		}
 	}
 	//Montar el cliente en el vector
-
 	//Chequear para evento una vez cada ciclo
-
-
-
 
 	for (;;) {
 		new_events = kevent(kq, NULL, 0, event, SOMAXCONN + 1, NULL);
@@ -165,12 +166,11 @@ int	main(int argc, char **argv) {
                 new_sock = accept(event[i].ident, (struct sockaddr *)&client_addr, (socklen_t *)&client_len);
 				if (new_sock == -1) {
 					std::cout << "ACCEPT ERROR" << std::endl;
-					exit (0);
+					exit(0);
 				}
 				Queue.addClient(new_sock, event[i].ident);
 				std::cout << "ADDED CLIENT. FD: " << event[i].ident << "SERVER ID: " << Queue.getServerId(new_sock) << std::endl;
 				setNonBlocking(new_sock);
-
                 // Nuevo evento al kqueue
 				EV_SET(&client_event[1], new_sock, EVFILT_READ, EV_ADD | EV_CLEAR | EV_EOF, 0, 0, NULL);
 				EV_SET(&client_event[0], new_sock, EVFILT_WRITE, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, NULL);
@@ -179,7 +179,6 @@ int	main(int argc, char **argv) {
 			}
 			else if (isServerSocket == false && (event[i].filter == EVFILT_WRITE))
 				writeEvent(servers[Queue.getServerId(event[i].ident)], Queue, event[i].ident, client_event, kq);
-
 			else if (isServerSocket == false  && (event[i].filter == EVFILT_READ))
 				readEvent(Queue, &event[i], client_event, kq);
 		}

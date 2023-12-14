@@ -20,6 +20,7 @@
 #include <array>
 #include <vector>
 #include <list>
+#include <algorithm>
 
 #define MAX_SE_ELEM 64
 #define MAX_READ 17

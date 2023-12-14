@@ -4,12 +4,16 @@ events
     prueba 2;}
 
 http{
-
+    types {
+    text/html                                        html htm shtml;
+    text/css                                         css;
+    text/xml                                         xml;
+    }
 server{
     server_name pfuentes.42;
     listen 127;
     location    /about.html{
-        alias   /tour.html;
+        alias   /documents/tour.html;
     }
 
     location    /del_prueba{
@@ -18,10 +22,9 @@ server{
     location    /{
         alias    /about.html;
     }
-    location    /jose
+    location    /prueba
     {
-        root    hue;
-        alias   pepe;
+        root    /documents/;
     }
 }
     server{
