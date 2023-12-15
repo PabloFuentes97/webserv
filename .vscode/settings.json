@@ -1,5 +1,7 @@
 {
 	"files.associations": {
+		"string": "cpp",
+		"filesystem": "cpp",
 		"__bit_reference": "cpp",
 		"__config": "cpp",
 		"__debug": "cpp",
@@ -58,7 +60,6 @@
 		"stack": "cpp",
 		"stdexcept": "cpp",
 		"streambuf": "cpp",
-		"string": "cpp",
 		"string_view": "cpp",
 		"system_error": "cpp",
 		"tuple": "cpp",

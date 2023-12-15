@@ -56,6 +56,7 @@ struct client {
 	int	serverID;
 	HttpRequest request;
 	//server *SocketServer;
+	std::string	response //- respuesta final
 };
 
 struct HttpResponse {
@@ -223,6 +224,8 @@ std::string	getStatus(int status);
 std::string getResponseFirstLine(HttpRequest currentRequest, std::string body);
 std::string GetResponse(bTreeNode	*server, HttpRequest *request);
 std::string ResponseToMethod(bTreeNode *server, HttpRequest *request);
+
+int	delete_method(int	socket, bTreeNode	*server, std::string &loc);
 
 //---SOCKET---
 void setNonBlocking(int fd);
