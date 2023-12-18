@@ -24,7 +24,7 @@
 
 #define MAX_SE_ELEM 64
 #define MAX_READ 17
-#define BUF_SIZE 20000
+#define BUF_SIZE 200000
 #define PORT 8080
 
 
@@ -43,17 +43,20 @@ typedef struct	seLst{
 } seLst;
 
 struct HttpRequest {
+	std::string headerBuf;
+	std::string bodyBuf;
     std::string method;
     std::string url; //version
     std::string body;
-    std::map<std::string, std::string> headers;
-
+    std::multimap<std::string, std::string> headers;
+	std::multimap<std::string, std::string>	bodyData;
 	int status;
 };
 
 struct client {
     int fd;
 	int	serverID;
+	int	state; // 0 - tiene que leer header, 1 - tiene que leer body, 2 - tiene que escribir
 	HttpRequest request;
 	//server *SocketServer;
 };
@@ -120,12 +123,14 @@ typedef struct	context{
 
 typedef struct bTreeNode //sustituir todos los tipos complejos y contenedores por estructuras de C - arrays, listas enlazadas,
 //evitar que haga copias innecesarias al añadir elementos a un contenedor
+//plantearse hacer una clase template
+//llamarlo n-tree o m-tree no es un b-tree realmente
 {
 	std::string					contextName;
 	size_t						contextType;
 	std::vector<std::string>	contextArgs;
 	//cambiar contenido a <pair>: key-value, pero valores puede ser una lista, múltiples valores
-	//std::map<std::string, std::string>	directivesMap;
+	std::multimap<std::string, std::string>	directivesMap;
 	std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
 	std::vector<std::string>	childsNames; //nombre del tipo de cada hijo añadido
 	//int							*childsTypes; //tipos de cada hijo, id para saber donde moverse
@@ -216,13 +221,18 @@ int	cmpLocations(bTreeNode *loc, bTreeNode *cmp);
 int	cmpDirectives(void *loc, void *cmp);
 
 //--HTTP REQUEST---
-HttpRequest loadRequest(char *buffer);
-std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest);
+int		readEvent(struct kevent *cli, struct kevent *client_event);
+//int		readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_event, int kq);
+void	writeEvent(bTreeNode *server, struct kevent *cli, struct kevent *client_event);
+//void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq);
+//HttpRequest loadRequest(char *buffer);
+void	loadRequest(HttpRequest *request);
+std::string	getRequestedFile(bTreeNode	*server, client *client);
 std::string getResponseBody(std::string fileToReturn);
 std::string	getStatus(int status);
-std::string getResponseFirstLine(HttpRequest currentRequest, std::string body);
-std::string GetResponse(bTreeNode	*server, HttpRequest *request);
-std::string ResponseToMethod(bTreeNode *server, HttpRequest *request);
+std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
+std::string GetResponse(bTreeNode	*server, std::string &url);
+std::string ResponseToMethod(bTreeNode *server, client *client);
 
 //---SOCKET---
 void setNonBlocking(int fd);

@@ -58,7 +58,7 @@ bool	findFile(std::string &dirFind, std::string &file)
 	return (found);
 }
 
-bool	SuccesiveChar(const char *str, char c)
+/*bool	SuccesiveChar(const char *str, char c)
 {
 	for (int i = 1; i < strlen(str); i++)
 	{
@@ -76,7 +76,7 @@ size_t	countCharinStr(const char *str, char c)
 		if	(str[i] == c)
 			count++;
 	return (count);
-}
+
 
 bool	validLocationModifiers(std::string &modifier)
 {
@@ -95,7 +95,7 @@ typedef	struct	Location{
 }	Location;
 
 
-/*int	cmpLocations(void *loc, void *cmp) //loc es la location a comparar, cmp es el url
+int	cmpLocations(void *loc, void *cmp) //loc es la location a comparar, cmp es el url
 {
 	context	*loc_cast = (context *)loc;
 	std::string	*cmp_cast = (std::string *)cmp;
@@ -128,7 +128,7 @@ typedef	struct	Location{
 	//if (!loc_cast->_name.compare(loc_cast->_name.length(), 0, *cmp_cast))
 	//	return (true);
 	return (1);
-}*/
+}
 
 void	parseURI(Location &loc, std::string &URI)
 {
@@ -163,7 +163,7 @@ void	parseURI(Location &loc, std::string &URI)
 	}
 }
 
-/*int	main(void)
+int	main(void)
 {
 	std::string	dir = "/Users/pfuentes/ejercicios/CPP/webserv_git";
 	std::string	file = "webserv";

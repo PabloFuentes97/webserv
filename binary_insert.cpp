@@ -1,6 +1,6 @@
 #include "webserv.hpp"
 
-/*size_t	countCharinStr(const char *str, char c)
+size_t	countCharinStr(const char *str, char c)
 {
 	int	count = 0;
 	
@@ -8,7 +8,7 @@
 		if	(str[i] == c)
 			count++;
 	return (count);
-}*/
+}
 
 /*int	cmpDirectories(std::string &s1, std::string &s2)
 {

@@ -1,62 +1,6 @@
 #include "webserv.hpp"
 
-void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq) {
-	
-	std::cout << "---WRITE EVENT---" << std::endl;
-	std::string finalRequest  = ResponseToMethod(server, &(Queue.clientArray[Queue.getPos(ident)].request));
-	
-	size_t requestLength = strlen(finalRequest.c_str());
-	size_t bytes_sent = 0;
-	//std::cout << "RESPONSE IS: " << finalRequest << std::endl;
-	while (bytes_sent < requestLength)
-		bytes_sent += send(ident, finalRequest.c_str(), requestLength, MSG_DONTWAIT);
-	Queue.clearRequest(ident);
-	EV_SET(&client_event[0], ident, EVFILT_WRITE, EV_DISABLE | EV_CLEAR, 0, 0, NULL);
-	if (kevent(kq, &client_event[0], 1, NULL, 0, NULL) == -1)
-		std::cerr << "kevent error\n";
-}
 
-void	readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_event, int kq) {
-
-	std::cout << "---READ EVENT---" << std::endl;
-	std::cout << client->ident << std::endl;
-	if (client->flags & EV_EOF)
-		std::cout << "flag es EV_EOF" << std::endl;
-    // Read bytes from socket
-    char buf[BUF_SIZE + 1];
-	std::string str;
-	memset(buf, 0, sizeof(BUF_SIZE));
-	//añadir manera de buclear el buffer
-	int bytes_read = 5;
-	while (bytes_read != -1) {
-		//sleep(3); 
-		memset(buf, 0, sizeof(BUF_SIZE));
-		//std::cout << "DATA (BEFORE): " << client->data << std::endl;
-		bytes_read = recv(client->ident, buf, BUF_SIZE, MSG_DONTWAIT);
-		//std::cout << "DATA (AFTER): " << client->data << std::endl;
-		if (bytes_read == -1) {
-			perror("recv");
-			break ;
-		}
-		if (bytes_read == 0) {
-			std::cout << "[[CLOSE]]" << std::endl;
-			close(client->ident);
-			return;
-		}
-		buf[bytes_read] = '\0';
-		//std::cout << "BUF BIT: " << buf << std::endl;
-		str.append(buf);
-	}
-	std::cout << "FULL BUFFER IS: " << std::endl << str << std::endl;
-	//std::cout << "fd is: " << client->ident << std::endl;
-	Queue.clientArray[Queue.getPos(client->ident)].request = loadRequest((char *)str.c_str());
-	std::cout << "URL IS (PREV): " << Queue.clientArray[Queue.getPos(client->ident)].request.url << std::endl;
-	
-	EV_SET(&client_event[0], client->ident, EVFILT_WRITE, EV_ENABLE | EV_CLEAR, 0, 0, NULL);
-	if (kevent(kq, &client_event[0], 1, NULL, 0, NULL) == -1)
-		std::cerr << "kevent error" << std::endl;
-
-}
 
 //
 bool	getValue(std::vector<std::pair<std::string, std::vector<std::string> > > keyValues, std::string key, std::vector<std::string>	*values_out)
@@ -129,11 +73,11 @@ int	main(int argc, char **argv) {
 	
 	//Declarar la clientQueue;
 	clientQueue Queue;
-
+	std::vector<client>	clients;
 	//Seter el evento para la kqueue
 	struct kevent server_event;
 	for (int i = 0; i < servers.size(); i++) {
-		EV_SET(&server_event, sockVec[i], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
+		EV_SET(&server_event, sockVec[i], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &clients[i]);
 		//Registrar el evento
 		if (kevent(kq, &server_event, 1, NULL, 0, NULL) == -1) {
     	    perror("kevent");
@@ -159,6 +103,7 @@ int	main(int argc, char **argv) {
 				std::cout << "Es socket de escucha: " << event[i].ident << std::endl;
 				isServerSocket = true;
 			}
+			client *clientPtr = (client *)event[i].udata;
 			if (isServerSocket == true && (event[i].filter == EVFILT_READ)) {
 
 				std::cout << "---ACCEPT EVENT---" << std::endl;
@@ -168,19 +113,27 @@ int	main(int argc, char **argv) {
 					std::cout << "ACCEPT ERROR" << std::endl;
 					exit(0);
 				}
-				Queue.addClient(new_sock, event[i].ident);
-				std::cout << "ADDED CLIENT. FD: " << event[i].ident << "SERVER ID: " << Queue.getServerId(new_sock) << std::endl;
 				setNonBlocking(new_sock);
+				client c = {new_sock, event[i].ident, 0};
+				clients.push_back(c);
+				Queue.addClient(new_sock, event[i].ident);
+				//std::cout << "ADDED CLIENT. FD: " << event[i].ident << "SERVER ID: " << Queue.getServerId(new_sock) << std::endl;
+				std::cout << "ADDED CLIENT. FD: " << c.fd << "SERVER ID: " << c.serverID << std::endl;
                 // Nuevo evento al kqueue
-				EV_SET(&client_event[1], new_sock, EVFILT_READ, EV_ADD | EV_CLEAR | EV_EOF, 0, 0, NULL);
-				EV_SET(&client_event[0], new_sock, EVFILT_WRITE, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, NULL);
+				EV_SET(&client_event[1], new_sock, EVFILT_READ, EV_ADD | EV_CLEAR | EV_EOF, 0, 0, &clients.back());
+				EV_SET(&client_event[0], new_sock, EVFILT_WRITE, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, &clients.back());
 				if (kevent(kq, client_event, 2, NULL, 0, NULL) < 0)
                     perror("kevent error");
 			}
-			else if (isServerSocket == false && (event[i].filter == EVFILT_WRITE))
-				writeEvent(servers[Queue.getServerId(event[i].ident)], Queue, event[i].ident, client_event, kq);
-			else if (isServerSocket == false  && (event[i].filter == EVFILT_READ))
-				readEvent(Queue, &event[i], client_event, kq);
+			else if (isServerSocket == false && (event[i].filter == EVFILT_WRITE) && clientPtr->state == 2)
+			{
+				writeEvent(servers[event[i].ident - 3], &event[i], client_event);
+				//writeEvent(servers[Queue.getServerId(event[i].ident)], Queue, event[i].ident, client_event, kq);
+				close(event[i].ident); //cerrar socket de conexion - se terminó
+			}
+			else if (isServerSocket == false && (event[i].filter == EVFILT_READ) && clientPtr->state < 2)
+				readEvent(&event[i], client_event);
+				//readEvent(Queue, &event[i], client_event, kq); //event es el evento que ha ocurrido; client_event es el tipo de evento a monitorear
 		}
 	}
 	return 0;

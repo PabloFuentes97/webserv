@@ -1,6 +1,61 @@
 #include "webserv.hpp"
 
-HttpRequest loadRequest(char *buffer) {
+void	loadRequest(HttpRequest *request) {
+	
+	HttpRequest currentRequest;
+	std::string line;
+	std::istringstream bufferFile(request->headerBuf.c_str());
+	std::cout << "~~~~LOAD REQUEST STAGE~~~~" << std::endl;
+	//Coger la primera línea
+	std::getline(bufferFile, line);
+	//Sacar: método, url (y versión)
+	size_t methodLength = line.find(' ');
+    size_t urlLength = line.find(' ', methodLength + 1);
+    if (methodLength != std::string::npos && urlLength != std::string::npos) {
+        currentRequest.method = line.substr(0, methodLength);
+        currentRequest.url = line.substr(methodLength + 1, urlLength - methodLength - 1);
+    } else {
+        perror("invalid HTTP request");
+		exit (0);
+    }
+	std::cout << std::endl << "METHOD: " << currentRequest.method << std::endl;
+	std::cout << std::endl << "URL: " << currentRequest.url << std::endl;
+	std::string	tokenKey;
+	std::string	tokenValue;
+	//Montar los headers
+	while (std::getline(bufferFile, line)) {
+        //Montar el mapa
+		std::stringstream	streamLine(line);
+		//std::cout << "Línea: " << line << std::endl;
+        getline(streamLine, tokenKey, ':');
+		//std::cout << "TokenKey: " << tokenKey << std::endl;
+		while (getline(streamLine, tokenValue, ';'))
+		{
+			//std::cout << "TokenValue: " << tokenValue << std::endl;
+			currentRequest.headers.insert(std::pair<std::string, std::string>(tokenKey, tokenValue));
+		}
+				
+		/*VERSION DE ANDREA----------
+		size_t pos = line.find(':');
+        if (pos != std::string::npos) {
+
+            std::string key = line.substr(0, pos);
+            std::string value = line.substr(pos + 1);
+			std::cout << "Key: " << key << ", Value: " << value << std::endl;
+            //currentRequest.headers[key] = value;
+			currentRequest.headers.insert(std::pair<std::string, std::string>(key, value));
+        }*/
+    }
+	std::cout << "-------------------IMPRIMO MAPA-------------------\n\n\n";
+	typedef std::multimap<std::string, std::string>::iterator	itm;
+	for (itm b = currentRequest.headers.begin(), e = currentRequest.headers.end(); b != e; b++)
+	{
+		std::cout << "Key: " << b->first << " | Value: " << b->second << std::endl;
+	}
+	std::cout << "\n\n-------------------TERMINA DE IMPRIMIR MAPA-------------------\n\n\n";
+}
+
+/*HttpRequest loadRequest(char *buffer) {
 	
 	HttpRequest currentRequest;
 	std::string line;
@@ -18,213 +73,152 @@ HttpRequest loadRequest(char *buffer) {
         perror("invalid HTTP request");
 		exit (0);
     }
-
-	std::cout << std::endl << "METHOD:" << currentRequest.method << std::endl;
-	std::cout << std::endl << "URL:" << currentRequest.url << std::endl;
-
+	std::cout << std::endl << "METHOD: " << currentRequest.method << std::endl;
+	std::cout << std::endl << "URL: " << currentRequest.url << std::endl;
+	std::string	tokenKey;
+	std::string	tokenValue;
 	//Montar los headers
 	while (std::getline(bufferFile, line)) {
         //Montar el mapa
-        size_t pos = line.find(':');
+		std::stringstream	streamLine(line);
+		//std::cout << "Línea: " << line << std::endl;
+        getline(streamLine, tokenKey, ':');
+		//std::cout << "TokenKey: " << tokenKey << std::endl;
+		while (getline(streamLine, tokenValue, ';'))
+		{
+			//std::cout << "TokenValue: " << tokenValue << std::endl;
+			currentRequest.headers.insert(std::pair<std::string, std::string>(tokenKey, tokenValue));
+		}
+				
+		VERSION DE ANDREA----------
+		size_t pos = line.find(':');
         if (pos != std::string::npos) {
 
             std::string key = line.substr(0, pos);
             std::string value = line.substr(pos + 1);
-    
-            currentRequest.headers[key] = value;
+			std::cout << "Key: " << key << ", Value: " << value << std::endl;
+            //currentRequest.headers[key] = value;
+			currentRequest.headers.insert(std::pair<std::string, std::string>(key, value));
         }
     }
+	std::cout << "-------------------IMPRIMO MAPA-------------------\n\n\n";
+	typedef std::multimap<std::string, std::string>::iterator	itm;
+	for (itm b = currentRequest.headers.begin(), e = currentRequest.headers.end(); b != e; b++)
+	{
+		std::cout << "Key: " << b->first << " | Value: " << b->second << std::endl;
+	}
+	std::cout << "\n\n-------------------TERMINA DE IMPRIMIR MAPA-------------------\n\n\n";
 	return (currentRequest);
-}
-
-class	errorExcept : public std::exception
-{
-	virtual const char *what() const throw()
-	{
-		return ("Error");
-	}
-};
-int	getKeyPos(std::vector<std::pair<std::string, std::vector<std::string> > > &map, std::string &search)
-{
-	for (int i = 0; i < map.size(); i++) //aqui se podría llamar a getValue, hacerlo busqueda binaria, o hacer un map
-	{
-		std::cout << "Map key: " << map[i].first << std::endl;
-		if (map[i].first == search)
-			return (i);
-	}
-	return (-1);
-}
-
-std::string	getPathFileRequest(bTreeNode *location, HttpRequest	&request)
-{
-	//primero busca una location que haga match con la URL pasada - tiene que buscar de más especifico a más general;
-	//es la url la que tiene que compararse con la location - compara en base al numero de caracteres de la location
-	//por ello si hay una location "/" hará match con cualquier URL pasada
-
-	//si ha encontrado la location, tiene que buscar un root o alias
-	//root -> path final de fichero a buscar = root + location + resto de URL (la parte final, restante que no coincide con la location)
-	//alias -> path final de fichero a buscar = alias + resto de URL
-	std::cout << "Location es: " << location->contextArgs[0] << std::endl;
-	std::string	keys[] = {"alias", "root"};
-	int	keysIndex;
-	int	locIndex;
-	std::string	pathFile;
-
-	for (keysIndex = 0; keysIndex < 2; keysIndex++) //esto rehacerlo para que llame a otra funcion - rehacer getValue
-	{
-		std::cout << "Key tipo: " << keys[keysIndex] << std::endl;
-		locIndex = getKeyPos(location->directives, keys[keysIndex]);
-		if (locIndex != -1)
-		{
-			std::cout << "Encontró la key" << std::endl;
-			break ;
-		}
-	}
-	std::cout << "Key tipo encontrada: " << keys[keysIndex] << std::endl;
-	std::string	&key = location->directives[locIndex].first;
-	std::string	&value = location->directives[locIndex].second[0];
-	int	locLen = location->contextArgs[0].length();
-	std::string	fileDir = request.url.substr(locLen, locLen - value.length());
-	std::cout << "URL sin la key, el resto: " << fileDir << std::endl;
-	//coger path absoluto
-	char	buf[1000];
-	std::string absPath = getcwd(buf, 1000);
-	std::string filePath;
-	switch (keysIndex)
-	{
-		case 0: { std::cout << "Es alias: " << std::endl; filePath = absPath + value + fileDir; break ;} //alias
-		case 1: { std::cout << "Es root: " << std::endl; filePath = absPath + value + location->contextArgs[0] + fileDir ; break ;} //root
-	}
-	std::cout << "filePath: " << filePath << std::endl;
-	return (filePath);
-}
-
-std::string	getErrorPath(int error)
-{
-	char		buf[1000];
-	std::string	absPath = getcwd(buf, 1000);
-	std::string	errorPath;
-	switch (error)
-	{
-		case 403: {errorPath = absPath + "/errors" + "/error403.html" ; break ; }
-		case 404: {errorPath = absPath + "/errors" + "/error404.html" ; break ; }
-	}
-	return (errorPath);
-}
-
-std::string getRequestedFile(bTreeNode	*server, HttpRequest *currentRequest) {
-
-	std::cout << "URL: " << currentRequest->url << std::endl;
-	std::cout << "Entrar en findLocation" << std::endl;
-	bTreeNode	*loc = findLocation(server, currentRequest->url);
-	std::cout << "Hizo findLocation" << std::endl;
-	std::string	filePath;
-	std::string path;
-	if (!loc) {
-		currentRequest->status = 404;
-		std::cout << "No encontró loc" << std::endl;
-		throw (errorExcept());
-	}
-	filePath = getPathFileRequest(loc, *currentRequest);
-	std::cout << "URL FOR REQUEST IS: " << filePath << std::endl;
-	if (access(filePath.c_str(), F_OK) != 0)
-		currentRequest->status = 404;
-	else if (access(filePath.c_str(), R_OK) != 0)
-		currentRequest->status = 403;
-	else
-		currentRequest->status = 200;
-	if (currentRequest->status != 200)
-	{
-		std::cout << "filePath está mal" << std::endl;
-		throw (errorExcept());
-	}
-	//si es un script (terminación) habrá q redirigir a CGI (ejecutar en un hijo);
-	/*struct stat info;
-	stat(filePath.c_str(), &info);
-	if (S_ISDIR(info.st_mode) != 0)
-		filePath = path + "/directory.html"; */
-	std::cout << std::endl << "FILEPATH IS:" << filePath << std::endl; 
-	return filePath; 
-}
-
-std::string getResponseBody(std::string fileToReturn) {
-
-	std::ifstream file (fileToReturn);
-	std::string fileLine;
-	
-    if (!file.is_open()) {
-        std::cerr << "File error" << std::endl;
-        exit (1); }
-	std::cout << "Lee bien el fichero para enviar la respuesta" << std::endl;
-	char c;
-	while (file.get(c))
-		fileLine.push_back(c);
-	file.close();
-	//std::cout << std::endl << "RESPONSE BODY IS: " << fileLine << std::endl;
-
-	return fileLine;
-}
-
-std::string	getStatus(int status) {
-
-	switch (status) {
-		case 404:
-			return "404 Not Found";
-		case 403:
-			return "403 Forbidden";
-		default:
-			return "200 OK";
-	}
-}
-
-std::string getResponseFirstLine(HttpRequest currentRequest, std::string body) {
-
-	std::string line = "HTTP/1.1 ";
-	line.append(getStatus(currentRequest.status));
-	line.append("\r\n");
-	if (!body.empty()) {
-		line.append("Content-Length: ");
-		line.append(std::to_string((body).size()));
-		line.append("\r\n");
-	}
-	line.append("Connection: close");
-	line.append("\r\n\r\n");
-	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
-
-	return line;
-}
-
-std::string GetResponse(bTreeNode	*server, HttpRequest *request) {
-	
-	//bTreeNode	*
-	std::string fileToReturn;
-	try {
-		fileToReturn = getRequestedFile(server, request);
-	}
-	catch(std::exception &e)
-	{
-		std::cout << e.what() << std::endl;
-		fileToReturn = getErrorPath(request->status);
-	}
-	std::cout << "FILETORETURN: " << fileToReturn << std::endl;
-	HttpResponse Response;
-	// 
-	// if (fileToReturn.substr(fileToReturn.find('.')) == ".php")
-	// 	Response.body = getCgi(fileToReturn);
-	// else
-	Response.body = getResponseBody(fileToReturn);
-	Response.firstLine = getResponseFirstLine(*request, Response.body);
-	std::string finalRequest = Response.firstLine + Response.body;
-	
-	return finalRequest;
 }
 
 std::string ResponseToMethod(bTreeNode	*server, HttpRequest *request) {
 	
-	std::string response = "";
+	std::string response;
 	if (request->method == "GET")
-		response = GetResponse(server, request);
+		response = GetResponse(server, request->url);
 	else if (request->method == "POST")
 		response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";;
 	return response;
+}*/
+
+int	readEvent(struct kevent *cli, struct kevent *client_event)
+{
+	std::cout << "---READ EVENT---" << std::endl;
+	std::cout << "FD del cliente: " << cli->ident << std::endl;
+	if (cli->flags & EV_EOF)
+		std::cout << "flag es EV_EOF" << std::endl;
+    // Read bytes from socket
+    char buf[BUF_SIZE + 1];
+	memset(buf, 0, sizeof(BUF_SIZE));
+	int	bytes_read;
+	bytes_read = recv(cli->ident, buf, BUF_SIZE, MSG_DONTWAIT);
+	std::cout << "Bytes read: " << bytes_read << std::endl;
+	//std::cout << "DATA (AFTER): " << client->data << std::endl;
+	if (bytes_read == -1) {
+		perror("recv");
+	}
+	if (bytes_read == 0) {
+		std::cout << "[[CLOSE]]" << std::endl;
+		close(cli->ident);
+		return (1);
+	}
+	buf[bytes_read] = '\0';
+	//std::cout << "BUF: " << buf << std::endl;
+	client	*clientCast = (client *)cli->udata;
+	/*BUSCAR QUE LO LEÍDO CONTIENE EL FINAL DEL HEADER HTTP, MARCA QUE LO SIGUIENTE DEBERÍA SER EL BODY
+	 - DIVIDIR LO QUE QUEDA DESPUÉS EN OTRA VARIABLE BODY COMO EN EL GETNEXTLINE*/
+	if (clientCast->state == 0 && strstr(buf, "\r\n\r\n"))
+	{
+		std::cout << "Leyó todo el header" << std::endl;
+		clientCast->request.headerBuf.append(buf);
+		//std::cout << "FULL BUFFER IS: " << clientCast->request.headerBuf << std::endl;
+		loadRequest(&clientCast->request);
+		clientCast->state = 1;
+		return (0);
+	}
+	if (clientCast->state == 1)
+	{
+		std::cout << "Lee el body" << std::endl;
+		clientCast->request.bodyBuf.append(buf);
+		//std::cout << "BODYBUFFER: " << std::endl << clientCast->request.bodyBuf << std::endl;
+		return (0);
+	}
+	//std::cout << "BUF BIT: " << buf << std::endl;
+	//std::cout << "fd is: " << client->ident << std::endl;
+	
+	//std::cout << "URL IS (PREV): " << Queue.clientArray[Queue.getPos(client->ident)].request.url << std::endl;
+	
+	/*EV_SET(&client_event[0], client->ident, EVFILT_WRITE, EV_ENABLE | EV_CLEAR, 0, 0, NULL);
+	if (kevent(kq, &client_event[0], 1, NULL, 0, NULL) == -1)
+		std::cerr << "kevent error" << std::endl;*/
+	clientCast->state = 2;
+	return (1);
+
 }
+
+/*void	readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_event, int kq)
+{
+
+	std::cout << "---READ EVENT---" << std::endl;
+	std::cout << client->ident << std::endl;
+	if (client->flags & EV_EOF)
+		std::cout << "flag es EV_EOF" << std::endl;
+    // Read bytes from socket
+    char buf[BUF_SIZE + 1];
+	std::string str;
+	memset(buf, 0, sizeof(BUF_SIZE));
+	//añadir manera de buclear el buffer
+	int bytes_read = 5;
+	while (bytes_read != -1) {
+		//sleep(3); 
+		memset(buf, 0, sizeof(BUF_SIZE));
+		//std::cout << "DATA (BEFORE): " << client->data << std::endl;
+		bytes_read = recv(client->ident, buf, BUF_SIZE, MSG_DONTWAIT);
+		//std::cout << "DATA (AFTER): " << client->data << std::endl;
+		if (bytes_read == -1) {
+			perror("recv");
+			break ;
+		}
+		if (bytes_read == 0) {
+			std::cout << "[[CLOSE]]" << std::endl;
+			close(client->ident);
+			return;
+		}
+		buf[bytes_read] = '\0';
+		BUSCAR QUE LO LEÍDO CONTIENE EL FINAL DEL HEADER HTTP, MARCA QUE LO SIGUIENTE DEBERÍA SER EL BODY
+		 - DIVIDIR LO QUE QUEDA DESPUÉS EN OTRA VARIABLE BODY COMO EN EL GETNEXTLINE
+		if (str.find("\r\n\r\n "))
+			break ;
+		//std::cout << "BUF BIT: " << buf << std::endl;
+		str.append(buf);
+	}
+	std::cout << "FULL BUFFER IS: " << std::endl << str << std::endl;
+	//std::cout << "fd is: " << client->ident << std::endl;
+	Queue.clientArray[Queue.getPos(client->ident)].request = loadRequest((char *)str.c_str());
+	std::cout << "URL IS (PREV): " << Queue.clientArray[Queue.getPos(client->ident)].request.url << std::endl;
+	
+	EV_SET(&client_event[0], client->ident, EVFILT_WRITE, EV_ENABLE | EV_CLEAR, 0, 0, NULL);
+	if (kevent(kq, &client_event[0], 1, NULL, 0, NULL) == -1)
+		std::cerr << "kevent error" << std::endl;
+
+}*/

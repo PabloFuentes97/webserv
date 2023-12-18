@@ -98,7 +98,7 @@ bool	validDirectivesCmp(std::string	&context, std::string &directive)
 	const char	*http[] = {"hola", NULL};
 	const char	*types[] = {"text/html", "text/css", "text/xml"};
 	const char	*server[] = {"listen", "server_name", "error_page", "root", "index", NULL};
-	const char	*location[] = {"root", "alias", "try_files", NULL};
+	const char	*location[] = {"root", "methods", "alias", "try_files", "postdir", NULL};
 
 	const char	**find = NULL;
 	if (context == "main")
@@ -213,6 +213,9 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 			for (int j = initDirective + 1; j < endDirective; j++) //añade values
 				keyVal.second.push_back(tokens[j].value);
 			root->directives.push_back(keyVal); //añade key-values
+			//version de mapa
+			for (int j = initDirective + 1; j < endDirective; j++)
+				root->directivesMap.insert(std::pair<std::string, std::string>(tokens[initDirective].value, tokens[j].value));
 			initDirective = i + 1;
 		}
 	}
@@ -232,7 +235,7 @@ void	printBTree(bTreeNode *root)
 		}
 		std::cout << "}" << std::endl;
 	}
-	std::cout << "Directivas: " << std::endl;
+	/*std::cout << "Directivas: " << std::endl;
 	for (int i = 0; i < root->directives.size(); i++)
 	{
 		std::cout << "Key: " << root->directives[i].first << ": ";
@@ -244,8 +247,13 @@ void	printBTree(bTreeNode *root)
 				std::cout << ", ";
 		}
 		std::cout << "}" << std::endl;
+	}*/
+	typedef std::multimap<std::string, std::string>::iterator	itm;
+	for (itm ib = root->directivesMap.begin(); ib != root->directivesMap.end(); ib++)
+	{
+		std::cout << "Key: " << ib->first << ": ";
+		std::cout << "Value: " << ib->second << std::endl;
 	}
-	std::cout << std::endl;
 	for (int i = 0; i < root->childs.size(); i++)
 	{
 		std::cout << "Hijo " << i << " de: " << root->contextName << std::endl;
@@ -267,7 +275,10 @@ bTreeNode	*parseFile(char	*file)
 	bTreeNode	*root = new bTreeNode();
 	root->contextName = "main";
 	if (!parseContextTokens(root, tokens))
+	{
+		//funcion de liberar el arbol
 		return (NULL);
+	}
 	std::cout << "---------------Imprimir árbol de fichero de configuración---------------" << std::endl;
 	printBTree(root);
 	return (root);
