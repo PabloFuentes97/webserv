@@ -44,7 +44,7 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 	return (line);
 }
 
-void	writeEvent(bTreeNode *server, struct kevent *cli, struct kevent *client_event)
+void	writeEvent(bTreeNode *server, struct kevent *cli)
 {
 	std::cout << "---WRITE EVENT---" << std::endl;
 	client	*clientCast = (client *)cli->udata;

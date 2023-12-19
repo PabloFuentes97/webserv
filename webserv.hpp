@@ -43,8 +43,7 @@ typedef struct	seLst{
 } seLst;
 
 struct HttpRequest {
-	std::string headerBuf;
-	std::string bodyBuf;
+	std::string buf;
     std::string method;
     std::string url; //version
     std::string body;
@@ -221,9 +220,9 @@ int	cmpLocations(bTreeNode *loc, bTreeNode *cmp);
 int	cmpDirectives(void *loc, void *cmp);
 
 //--HTTP REQUEST---
-int		readEvent(struct kevent *cli, struct kevent *client_event);
+int		readEvent(struct kevent *cli);
 //int		readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_event, int kq);
-void	writeEvent(bTreeNode *server, struct kevent *cli, struct kevent *client_event);
+void	writeEvent(bTreeNode *server, struct kevent *cli);
 //void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq);
 //HttpRequest loadRequest(char *buffer);
 void	loadRequest(HttpRequest *request);

@@ -240,7 +240,9 @@ std::string	deleteMethod(bTreeNode	*server, client *client)
 
 std::string ResponseToMethod(bTreeNode	*server, client *client) {
 	
-	std::string response;;
+	std::cout << "EN RESPONSE TO METHOD" << std::endl;
+	std::string response;
+	std::cout << "MÉTODO A EVALUAR: " << client->request.method << std::endl;
 	if (client->request.method == "GET")
 		response = getMethod(server, client);
 	else if (client->request.method == "POST")

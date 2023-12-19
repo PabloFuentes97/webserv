@@ -12,7 +12,7 @@ all: $(NAME)
 
 CC		= c++
 
-CCFLAGS	= -Wall -Werror -Wextra -fsanitize=address -std=c++98
+CCFLAGS	= -Wall -Werror -Wextra -std=c++98 -fsanitize=address
 
 $(NAME): $(OBJ)
 		$(CC) $(CCFLAGS) $(OBJ) -o $(NAME)

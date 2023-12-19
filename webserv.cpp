@@ -1,7 +1,5 @@
 #include "webserv.hpp"
 
-
-
 //
 bool	getValue(std::vector<std::pair<std::string, std::vector<std::string> > > keyValues, std::string key, std::vector<std::string>	*values_out)
 {
@@ -77,7 +75,7 @@ int	main(int argc, char **argv) {
 	//Seter el evento para la kqueue
 	struct kevent server_event;
 	for (int i = 0; i < servers.size(); i++) {
-		EV_SET(&server_event, sockVec[i], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &clients[i]);
+		EV_SET(&server_event, sockVec[i], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 		//Registrar el evento
 		if (kevent(kq, &server_event, 1, NULL, 0, NULL) == -1) {
     	    perror("kevent");
@@ -88,23 +86,31 @@ int	main(int argc, char **argv) {
 	//Chequear para evento una vez cada ciclo
 
 	for (;;) {
+		std::cout << "----------LLAMAR A KEVENT PARA BUSCAR NUEVOS EVENTOS---------" << std::endl;
 		new_events = kevent(kq, NULL, 0, event, SOMAXCONN + 1, NULL);
+		std::cout << "Número de eventos señalizados: " << new_events << std::endl;
         if (new_events == -1) {
             perror("kevent");
             exit(1);
         }
 		for (int i = 0; i < new_events; i++) {
 			struct kevent client_event[2];
-			std::cout << "========NEW EVENT======" << std::endl;
+			std::cout << "========EVENTO DETECTADO======" << std::endl;
+			/*if (event[i].udata != NULL)
+			{
+				std::cout << "EVENTO ES SOCKET DE CLIENTE" << std::endl;
+				client *clientPtr = (client *)event[i].udata;
+				std::cout << "CLIENT FD: " << clientPtr->fd << " | SERVER ID: " << clientPtr->serverID
+						<< " | STATE: " << clientPtr->state << std::endl;
+			}*/
 			//Socket de escucha
 			bool isServerSocket = false;
 			if (event[i].ident <= sockVec.size() + 3)
 			{
-				std::cout << "Es socket de escucha: " << event[i].ident << std::endl;
+				std::cout << "EVENTO ES SOCKET DE ESCUCHA: " << event[i].ident << std::endl;
 				isServerSocket = true;
 			}
-			client *clientPtr = (client *)event[i].udata;
-			if (isServerSocket == true && (event[i].filter == EVFILT_READ)) {
+			if (isServerSocket == true && event[i].filter == EVFILT_READ) {
 
 				std::cout << "---ACCEPT EVENT---" << std::endl;
                 //Montar cliente
@@ -114,26 +120,42 @@ int	main(int argc, char **argv) {
 					exit(0);
 				}
 				setNonBlocking(new_sock);
-				client c = {new_sock, event[i].ident, 0};
+				client c = {new_sock, event[i].ident - 3, 0};
 				clients.push_back(c);
-				Queue.addClient(new_sock, event[i].ident);
+				//Queue.addClient(new_sock, event[i].ident);
 				//std::cout << "ADDED CLIENT. FD: " << event[i].ident << "SERVER ID: " << Queue.getServerId(new_sock) << std::endl;
-				std::cout << "ADDED CLIENT. FD: " << c.fd << "SERVER ID: " << c.serverID << std::endl;
+				std::cout << "ADDED CLIENT. FD: " << clients.back().fd << " | SERVER ID: " << clients.back().serverID << std::endl;
                 // Nuevo evento al kqueue
-				EV_SET(&client_event[1], new_sock, EVFILT_READ, EV_ADD | EV_CLEAR | EV_EOF, 0, 0, &clients.back());
-				EV_SET(&client_event[0], new_sock, EVFILT_WRITE, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, &clients.back());
+				EV_SET(&client_event[0], new_sock, EVFILT_READ, EV_ADD | EV_CLEAR | EV_EOF, 0, 0, &clients.back());
+				EV_SET(&client_event[1], new_sock, EVFILT_WRITE, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, &clients.back());
 				if (kevent(kq, client_event, 2, NULL, 0, NULL) < 0)
                     perror("kevent error");
+				continue ;
 			}
-			else if (isServerSocket == false && (event[i].filter == EVFILT_WRITE) && clientPtr->state == 2)
+			client *clientPtr = (client *)event[i].udata;
+			if (isServerSocket == false && event[i].filter == EVFILT_WRITE && clientPtr->state == 2) // && clientPtr->state == 2
 			{
-				writeEvent(servers[event[i].ident - 3], &event[i], client_event);
+				std::cout << "EVENTO DE ESCRITURA" << std::endl;
+				writeEvent(servers[event[i].ident - 3], &event[i]);
 				//writeEvent(servers[Queue.getServerId(event[i].ident)], Queue, event[i].ident, client_event, kq);
 				close(event[i].ident); //cerrar socket de conexion - se terminó
+				//std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), *clientPtr);
+				//clients.erase(it);
 			}
-			else if (isServerSocket == false && (event[i].filter == EVFILT_READ) && clientPtr->state < 2)
-				readEvent(&event[i], client_event);
+			else if (isServerSocket == false && event[i].filter == EVFILT_READ && clientPtr->state < 2) // && clientPtr->state < 2
+			{
+				std::cout << "EVENTO DE LECTURA" << std::endl;
+				readEvent(&event[i]);
 				//readEvent(Queue, &event[i], client_event, kq); //event es el evento que ha ocurrido; client_event es el tipo de evento a monitorear
+				std::cout << "Estado de cliente tras leer: " << clientPtr->state << std::endl;
+				if (clientPtr->state == 2)
+				{
+					EV_SET(&client_event[1], event[i].ident, EVFILT_WRITE, EV_ENABLE | EV_CLEAR, 0, 0, NULL);
+					if (kevent(kq, &client_event[1], 1, NULL, 0, NULL) == -1)
+						std::cerr << "kevent error" << std::endl;
+				}
+			}
+			
 		}
 	}
 	return 0;
