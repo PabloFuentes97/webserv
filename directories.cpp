@@ -15,8 +15,129 @@ void	findNode(bTreeNode *root, bTreeNode **find_node, std::string	find)
 			findNode(root->childs[i], find_node, find);
 	}
 }
+bool	strcmp_range(char *s1, char *s2, int n1, int n2)
+{
+	std::cout << "Rango a comparar s1: " << n1 << std::endl;
+	std::cout << "Longitud de s1: " << strlen(s1) << std::endl;
+	std::cout << "Rango a comparar s2: " << n2 << std::endl;
+	std::cout << "Longitud de s2: " << strlen(s2) << std::endl;
+	int	range = std::max(n1, n2);
+	if (n1 > strlen(s1) || n2 > strlen(s2))
+		return (false);
+	for (int i = 0; i < range; i++)
+	{
+		if (!s1 || !s2)
+		if (s1[i] != s2[i])
+			return (false);
+	}
+	return (true);
+}
+int		str_skip_char_index(char const *str, char c)
+{
+	int	len = strlen(str);
+	int i = 0;
+
+	for (; i < len && str[i] == c; i++);
+	if (str[i] != '\0')
+		return (-1);
+	return (i);
+}
+
+int		str_search_char_index(char const *str, char c)
+{
+	int	len = strlen(str);
+	for (int i = 0; i < len; i++)
+	{
+		if (str[i] == c)
+			return (i);
+	}
+	return (-1);
+}
+
+int	match_loc_url(char const *loc, char const *url)
+{
+	int	loc_i = 0;
+	int	loc_j;
+	int	url_i = 0;
+	int	url_j;
+
+	int	loc_len = strlen(loc);
+	int	url_len = strlen(url);
+	std::cout << "loc: " << loc << std::endl;
+	std::cout << "url: " << url << std::endl;
+	while (loc_i < loc_len && url_i < url_len)
+	{
+		loc_i += str_skip_char_index(&loc[loc_i], '/');
+		if (loc_i == -1)
+			break ;
+		std::cout << "loc_i después de skip: " << loc_i << std::endl;
+		loc_j = str_search_char_index(&loc[loc_i], '/');
+		if (loc_j == -1)
+			loc_j = loc_len;
+		std::cout << "loc_j después de search: " << loc_j << std::endl;
+		url_i += str_skip_char_index(&url[url_i], '/');
+		if (url_i == -1)
+			break ;
+		std::cout << "url_i después de skip: " << url_i << std::endl;
+		url_j = str_search_char_index(&url[url_i], '/');
+		if (url_j == -1)
+			url_j = url_len;
+		std::cout << "url_j después de search: " << url_j << std::endl;
+		std::cout << "Dir de Location: ";
+		for (int i = loc_i; i <= loc_j; i++)
+			std::cout << loc[i];
+		std::cout << std::endl;
+		std::cout << "Dir de URL: ";
+		for (int i = url_i; i <= url_j; i++)
+			std::cout << url[i];
+			std::cout << std::endl;
+		int	diff = (loc_j - loc_i) - (url_j - url_i);
+		if (diff != 0)
+		{
+			std::cout << "Rango no es el mismo, no pueden ser iguales" << std::endl;
+			return (diff);
+		}
+		std::cout << "Entro a comparar" << std::endl;
+		diff = strncmp(loc, url, loc_j - loc_i);
+		if (diff != 0)
+		{
+			std::cout << "No coinciden" << std::endl;
+			return (diff);
+		}
+		else
+			std::cout << "Coinciden" << std::endl;
+		loc_i = loc_j + 1;
+		std::cout << "loc_i después de avanzar loc_j + 1: " << loc_i << std::endl;
+		url_i = url_j + 1;
+		std::cout << "url_i después de avanzar url_j + 1: " << url_i << std::endl;
+		std::cout << "---------------------------------------------------" << std::endl;
+		sleep(5);
+	}
+	return (0);
+}
 
 bTreeNode	*findLocation(bTreeNode *server, std::string &URL)
+{
+	bTreeNode	*loc = NULL;
+
+	std::cout << "URL a comparar: " << URL << std::endl;
+	for (int i = 0; i < server->childs.size(); i++)
+	{
+		loc = server->childs[i];
+		std::cout << "Estoy en contexto location: " << loc->contextArgs[0] << std::endl;
+		std::cout << "Len de location: " <<  loc->contextArgs[0].length() << std::endl;
+		//if (!match_loc_url(loc->contextArgs[0].c_str(), URL.c_str()))
+		if (URL.compare(0, loc->contextArgs[0].length(), loc->contextArgs[0]) == 0)
+		{
+			std::cout << "Hace match de la URL: " << loc->contextArgs[0] << " y " << URL << std::endl;
+			return (loc);
+		}
+	}
+	std::cout << "No hizo ningún match" << std::endl;
+	return (NULL);
+}
+
+/*bTreeNode	*findLocation(bTreeNode *server, std::string &URL)
 {
 	bTreeNode	*loc = NULL;
 
@@ -34,7 +155,7 @@ bTreeNode	*findLocation(bTreeNode *server, std::string &URL)
 	}
 	std::cout << "No hizo ningún match" << std::endl;
 	return (NULL);
-}
+}*/
 
 bool	findFile(std::string &dirFind, std::string &file)
 {
@@ -180,4 +301,11 @@ int	main(void)
 	c._args.push_back(URI);
 	cmpLocations(&c, &URI4);
 	return (0);
+}*/
+
+/*int	main(void)
+{
+	char	s1[] = "/post/buenas";
+	char	s2[] = "/post/buenas.html";
+	match_loc_url(s1, s2);
 }*/

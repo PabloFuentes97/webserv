@@ -111,7 +111,80 @@ std::string ResponseToMethod(bTreeNode	*server, HttpRequest *request) {
 	return response;
 }*/
 
-int	readEvent(struct kevent *cli)
+
+int	readEvent(struct client *client)
+{
+	std::cout << "---READ EVENT---" << std::endl;
+	std::cout << "FD del cliente: " << client->fd << std::endl;
+
+    char buf[BUF_SIZE + 1];
+	memset(buf, 0, sizeof(BUF_SIZE));
+	int	bytes_read = recv(client->fd, buf, BUF_SIZE, MSG_DONTWAIT);
+
+	std::cout << "Bytes read: " << bytes_read << std::endl;
+	if (bytes_read == -1) {
+		perror("recv");
+	}
+	if (bytes_read == 0) {
+		/*std::cout << "[[CLOSE]]" << std::endl;
+		close(cli->ident);
+		return (1);*/
+	}
+	buf[bytes_read] = '\0';
+	client->request.buf.append(buf);
+
+	std::cout << "Buffer total hasta ahora: " << client->request.buf << std::endl;
+	if (client->state == 0 && strstr(buf, "\r\n\r\n"))
+	{
+		std::string	res;
+		std::cout << "Leyó todo el header" << std::endl;
+		int	endPos = client->request.buf.find("\r\n\r\n");
+		std::cout << "endPos: " << endPos + 4 << " , length: " << client->request.buf.length() << std::endl;		
+		if (endPos + 4 == client->request.buf.length())
+			std::cout << "Solo leyó el header, no hay body" << std::endl;
+		else
+		{
+			std::cout << "Guardo el resto" << std::endl;
+			res = client->request.buf.substr(endPos + 6,
+						endPos + 4 - client->request.buf.length() + 1);
+			std::cout << "Guardó bien el resto" << std::endl;
+			client->request.buf = client->request.buf.substr(0, endPos + 1);
+			std::cout << "Header: " << client->request.buf << std::endl;
+			std::cout << "Resto: " << res << std::endl;
+		}
+		//std::cout << "FULL BUFFER IS: " << clientCast->request.headerBuf << std::endl;
+		loadRequest(&client->request);
+		client->request.buf.clear();
+		if (!res.empty())
+			client->request.buf = res;
+		client->state = 1;
+		std::cout << "Pasa a estado 1" << std::endl;
+	}
+	if (client->state == 1)
+	{
+		std::cout << "Tiene que leer el body" << std::endl;
+		typedef std::multimap<std::string, std::string>::iterator itm;
+		itm	it = client->request.headers.find("Content-Length");
+		if (it != client->request.headers.end())
+		{
+			std::pair<itm, itm>	keyVal = client->request.headers.equal_range("Content-Length");
+			std::cout << "Content-Length: " << keyVal.first->first << std::endl;
+			int	contLen = atoi(keyVal.first->first.c_str());
+			if (contLen >= client->request.buf.length())
+				client->state = 2;
+		}
+		else
+		{
+			std::cout << "No hay content-length" << std::endl;
+		}
+		client->state = 2;
+	}
+	return (1);
+}
+
+
+
+/*int	readEvent(struct kevent *cli)
 {
 	std::cout << "---READ EVENT---" << std::endl;
 	std::cout << "FD del cliente: " << cli->ident << std::endl;
@@ -129,15 +202,15 @@ int	readEvent(struct kevent *cli)
 		perror("recv");
 	}
 	if (bytes_read == 0) {
-		/*std::cout << "[[CLOSE]]" << std::endl;
+		std::cout << "[[CLOSE]]" << std::endl;
 		close(cli->ident);
-		return (1);*/
+		return (1);
 	}
 	buf[bytes_read] = '\0';
 	clientCast->request.buf.append(buf);
 	//std::cout << "BUF: " << buf << std::endl;
-	/*BUSCAR QUE LO LEÍDO CONTIENE EL FINAL DEL HEADER HTTP, MARCA QUE LO SIGUIENTE DEBERÍA SER EL BODY
-	 - DIVIDIR LO QUE QUEDA DESPUÉS EN OTRA VARIABLE BODY COMO EN EL GETNEXTLINE*/
+	BUSCAR QUE LO LEÍDO CONTIENE EL FINAL DEL HEADER HTTP, MARCA QUE LO SIGUIENTE DEBERÍA SER EL BODY
+	 - DIVIDIR LO QUE QUEDA DESPUÉS EN OTRA VARIABLE BODY COMO EN EL GETNEXTLINE
 	std::cout << "Buffer total hasta ahora: " << clientCast->request.buf << std::endl;
 	if (clientCast->state == 0 && strstr(buf, "\r\n\r\n"))
 	{
@@ -190,12 +263,12 @@ int	readEvent(struct kevent *cli)
 	
 	//std::cout << "URL IS (PREV): " << Queue.clientArray[Queue.getPos(client->ident)].request.url << std::endl;
 	
-	/*EV_SET(&client_event[0], client->ident, EVFILT_WRITE, EV_ENABLE | EV_CLEAR, 0, 0, NULL);
+	EV_SET(&client_event[0], client->ident, EVFILT_WRITE, EV_ENABLE | EV_CLEAR, 0, 0, NULL);
 	if (kevent(kq, &client_event[0], 1, NULL, 0, NULL) == -1)
-		std::cerr << "kevent error" << std::endl;*/
+		std::cerr << "kevent error" << std::endl;
 	return (1);
 
-}
+}*/
 
 /*void	readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_event, int kq)
 {

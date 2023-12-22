@@ -57,6 +57,12 @@ struct client {
 	int	serverID;
 	int	state; // 0 - tiene que leer header, 1 - tiene que leer body, 2 - tiene que escribir
 	HttpRequest request;
+	bool operator==(struct client const &cmp) const
+	{
+		if (this->fd == cmp.fd)
+			return (1);
+		return (0);
+	}
 	//server *SocketServer;
 };
 
@@ -220,9 +226,9 @@ int	cmpLocations(bTreeNode *loc, bTreeNode *cmp);
 int	cmpDirectives(void *loc, void *cmp);
 
 //--HTTP REQUEST---
-int		readEvent(struct kevent *cli);
+int		readEvent(struct client *client);
 //int		readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_event, int kq);
-void	writeEvent(bTreeNode *server, struct kevent *cli);
+void	writeEvent(bTreeNode *server, struct client *client);
 //void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq);
 //HttpRequest loadRequest(char *buffer);
 void	loadRequest(HttpRequest *request);

@@ -44,21 +44,17 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 	return (line);
 }
 
-void	writeEvent(bTreeNode *server, struct kevent *cli)
+void	writeEvent(bTreeNode *server, struct client *client)
 {
 	std::cout << "---WRITE EVENT---" << std::endl;
-	client	*clientCast = (client *)cli->udata;
-	std::string finalRequest  = ResponseToMethod(server, clientCast);
+	std::string finalRequest  = ResponseToMethod(server, client);
 	
 	size_t requestLength = strlen(finalRequest.c_str());
 	size_t bytes_sent = 0;
-	//std::cout << "RESPONSE IS: " << finalRequest << std::endl;
+	std::cout << "RESPONSE IS: " << finalRequest << std::endl;
 	while (bytes_sent < requestLength)
-		bytes_sent += send(cli->ident, finalRequest.c_str(), requestLength, MSG_DONTWAIT);
-	//Queue.clearRequest(cli->ident);
-	/*EV_SET(&client_event[0], ident, EVFILT_WRITE, EV_DISABLE | EV_CLEAR, 0, 0, NULL);
-	if (kevent(kq, &client_event[0], 1, NULL, 0, NULL) == -1)
-		std::cerr << "kevent error\n";*/
+		bytes_sent += send(client->fd, finalRequest.c_str(), requestLength, MSG_DONTWAIT);
+	client->state = -1;
 }
 
 /*void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq)
