@@ -19,7 +19,8 @@ class	errorExcept : public std::exception
 	return (-1);
 }*/
 
-std::string	getPathFileRequest(bTreeNode *location, client *client)
+std::string	getPathFileRequest(bTreeNode *location, client *client, std::string &method) //cambiar para que haga diferentes cosas segun el metodo pasado
+//añadir parametro method, como string o int - hacer un enum de methods
 {
 	//primero busca una location que haga match con la URL pasada - tiene que buscar de más especifico a más general;
 	//es la url la que tiene que compararse con la location - compara en base al numero de caracteres de la location
@@ -29,42 +30,58 @@ std::string	getPathFileRequest(bTreeNode *location, client *client)
 	//root -> path final de fichero a buscar = root + location + resto de URL (la parte final, restante que no coincide con la location)
 	//alias -> path final de fichero a buscar = alias + resto de URL
 	std::cout << "Location es: " << location->contextArgs[0] << std::endl;
-	std::string	keys[] = {"alias", "root"};
-	int	keysIndex;
+	std::cout << "URL es: " << client->request.url << std::endl;
 	std::string	pathFile;
-
-	std::multimap<std::string, std::string>::iterator itm;
-	for (keysIndex = 0; keysIndex < 2; keysIndex++) //esto rehacerlo para que llame a otra funcion - rehacer getValue
-	{
-		std::cout << "Key tipo: " << keys[keysIndex] << std::endl;
-		itm = location->directivesMap.find(keys[keysIndex]);
-		if (itm != location->directivesMap.end())
-		{
-			std::cout << "Encontró la key" << std::endl;
-			break ;
-		}
-		/*locIndex = getKeyPos(location->directives, keys[keysIndex]);
-		if (locIndex != -1)
-		{
-			std::cout << "Encontró la key" << std::endl;
-			break ;
-		}*/
-	}
-	std::cout << "Key tipo encontrada: " << keys[keysIndex] << std::endl;
-	/*std::string	&key = location->directives[locIndex].first;
-	std::string	&value = location->directives[locIndex].second[0];*/
+	
 	int	locLen = location->contextArgs[0].length();
-	std::string	fileDir = client->request.url.substr(locLen, locLen - itm->second.length());
-	std::cout << "URL sin la key, el resto: " << fileDir << std::endl;
 	//coger path absoluto
 	char	buf[1000];
 	std::string absPath = getcwd(buf, 1000);
 	std::string filePath;
-	switch (keysIndex)
+	std::multimap<std::string, std::string>::iterator itm;
+	if (method == "POST")
 	{
-		case 0: { std::cout << "Es alias: " << std::endl; filePath = absPath + itm->second + fileDir; break ;} //alias
-		case 1: { std::cout << "Es root: " << std::endl; filePath = absPath + itm->second + location->contextArgs[0] + fileDir ; break ;} //root
+		itm = location->directivesMap.find("postdir");
+		if (itm != location->directivesMap.end())
+		{
+			std::cout << "Encontró la key" << std::endl;
+		}
+		std::string	fileDir = client->request.url.substr(locLen, client->request.url.length() - locLen);
+		std::cout << "URL sin la key, el resto: " << fileDir << std::endl;
+		filePath = absPath + itm->second + fileDir;
 	}
+	else
+	{
+		std::string	keys[] = {"alias", "root"};
+		int	keysIndex;
+	
+		for (keysIndex = 0; keysIndex < 2; keysIndex++) //esto rehacerlo para que llame a otra funcion - rehacer getValue
+		{
+			std::cout << "Key tipo: " << keys[keysIndex] << std::endl;
+			itm = location->directivesMap.find(keys[keysIndex]);
+			if (itm != location->directivesMap.end())
+			{
+				std::cout << "Encontró la key" << std::endl;
+				break ;
+			}
+			/*locIndex = getKeyPos(location->directives, keys[keysIndex]);
+			if (locIndex != -1)
+			{
+				std::cout << "Encontró la key" << std::endl;
+				break ;
+			}*/
+		}
+		std::cout << "Key tipo encontrada: " << keys[keysIndex] << std::endl;
+		std::string	fileDir = client->request.url.substr(locLen, locLen - itm->second.length());
+		std::cout << "URL sin la key, el resto: " << fileDir << std::endl;
+		switch (keysIndex)
+		{
+			case 0: { std::cout << "Es alias: " << std::endl; filePath = absPath + itm->second + fileDir; break ;} //alias
+			case 1: { std::cout << "Es root: " << std::endl; filePath = absPath + itm->second + location->contextArgs[0] + fileDir ; break ;} //root
+		}
+	}
+	/*std::string	&key = location->directives[locIndex].first;
+	std::string	&value = location->directives[locIndex].second[0];*/
 	std::cout << "filePath: " << filePath << std::endl;
 	return (filePath);
 }
@@ -86,7 +103,7 @@ std::string	getErrorPath(int error)
 	return (errorPath);
 }
 
-std::string	getRequestedFile(bTreeNode	*server, client *client)
+std::string	getRequestedFile(bTreeNode	*server, client *client) //cambiar esto - cada método gestiona de manera distinta el acceso a los ficheros
 {
 
 	std::cout << "URL: " << client->request.url << std::endl;
@@ -98,24 +115,7 @@ std::string	getRequestedFile(bTreeNode	*server, client *client)
 		client->request.status = 404;
 		throw (404);
 	}
-	filePath = getPathFileRequest(loc, client);
-	std::cout << "URL FOR REQUEST IS: " << filePath << std::endl;
-	if (access(filePath.c_str(), F_OK) != 0)
-	{
-		client->request.status = 404;
-		throw (404);
-	}
-	else if (access(filePath.c_str(), R_OK) != 0)
-	{
-		client->request.status = 403;
-		throw (403);
-	}
-	//si es un script (terminación) habrá q redirigir a CGI (ejecutar en un hijo);
-	/*struct stat info;
-	stat(filePath.c_str(), &info);
-	if (S_ISDIR(info.st_mode) != 0)
-		filePath = path + "/directory.html"; */
-	client->request.status = 200;
+	filePath = getPathFileRequest(loc, client, client->request.method);
 	std::cout << std::endl << "FILEPATH IS:" << filePath << std::endl; 
 	return (filePath); 
 }
@@ -132,12 +132,23 @@ std::string	getMethod(bTreeNode	*server, client *client) {
 	{
 		filePath = getErrorPath(status);
 	}
-	std::cout << "filePath: " << filePath<< std::endl;
+	std::cout << "filePath: " << filePath << std::endl;
+	if (access(filePath.c_str(), F_OK) != 0)
+	{
+		client->request.status = 404;
+		throw (404);
+	}
+	else if (access(filePath.c_str(), R_OK) != 0)
+	{
+		client->request.status = 403;
+		throw (403);
+	}
 	HttpResponse Response;
 	// 
 	// if (fileToReturn.substr(fileToReturn.find('.')) == ".php")
 	// 	Response.body = getCgi(fileToReturn);
 	// else
+	client->request.status = 200;
 	Response.firstLine = getResponseHeader(client->request, Response.body);
 	Response.body = getResponseBody(filePath);
 	std::string finalRequest = Response.firstLine + Response.body;
@@ -157,6 +168,11 @@ std::string	postMethod(bTreeNode *server, client *client)
 	catch(int status)
 	{
 		filePath = getErrorPath(status);
+	}
+	if (access(filePath.c_str(), F_OK) == 0)
+	{
+		client->request.status = 404;
+		throw (404);
 	}
 	std::string	postFile;
 	typedef std::multimap<std::string, std::string>::iterator	itm;
@@ -183,8 +199,8 @@ std::string	postMethod(bTreeNode *server, client *client)
 		client->request.status = 500;
 		throw (500);
 	}
-	//std::string	fileBody = client->request.body;
-	std::string	fileBody = "prueba egege asasasa"; //sacarlo del body de la request
+	std::string	fileBody = client->request.body;
+	//std::string	fileBody = "prueba egege asasasa"; //sacarlo del body de la request
 	size_t fileLength = strlen(fileBody.c_str());
 	size_t bytes_sent = 0;
 	//std::cout << "RESPONSE IS: " << finalRequest << std::endl;
@@ -197,6 +213,7 @@ std::string	postMethod(bTreeNode *server, client *client)
 	}	
 	else
 		client->request.status = 200;
+	
 	return ("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n");
 }
 
@@ -243,8 +260,19 @@ std::string ResponseToMethod(bTreeNode	*server, client *client) {
 	std::cout << "EN RESPONSE TO METHOD" << std::endl;
 	std::string response;
 	std::cout << "MÉTODO A EVALUAR: " << client->request.method << std::endl;
+	//GET
 	if (client->request.method == "GET")
-		response = getMethod(server, client);
+	{
+		try
+		{
+			response = getMethod(server, client);
+		}
+		catch(int error)
+		{
+			response = getErrorPath(error);
+		}
+	}
+	//POST
 	else if (client->request.method == "POST")
 	{
 		try
@@ -253,10 +281,11 @@ std::string ResponseToMethod(bTreeNode	*server, client *client) {
 		}
 		catch(int error)
 		{
+			std::cout << "Hay error: " << error << std::endl;
 			response = getErrorPath(error);
 		}
 	}
-		
+	//DELETE	
 	else if (client->request.method == "DELETE")
 	{
 		try
@@ -268,5 +297,6 @@ std::string ResponseToMethod(bTreeNode	*server, client *client) {
 			response = getErrorPath(error);
 		}
 	}
+	std::cout << "RESPONSE FINAL: " << std::endl;
 	return (response);
 }

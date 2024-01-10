@@ -22,6 +22,8 @@
 #include <list>
 #include <algorithm>
 
+#include "charptr_n.hpp"
+
 #define MAX_SE_ELEM 64
 #define MAX_READ 17
 #define BUF_SIZE 200000
@@ -43,7 +45,7 @@ typedef struct	seLst{
 } seLst;
 
 struct HttpRequest {
-	std::string buf;
+	charptr_n	buf_struct;
     std::string method;
     std::string url; //version
     std::string body;

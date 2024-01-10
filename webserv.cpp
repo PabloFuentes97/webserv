@@ -83,9 +83,14 @@ int	pollEvents(std::vector<bTreeNode *> servers, std::vector<int>	&sockets)
 							exit(0);
 						}
 						setNonBlocking(accept_socket);
-						client c = {accept_socket, events[i].fd - 3, 0};
+						client c;
+						c.fd = accept_socket;
+						c.serverID = events[i].fd - 3;
+						c.state = 0;
+						//c = {accept_socket, events[i].fd - 3, 0};
+						std::cout << "Añadir cliente al vector" << std::endl;
 						clients.push_back(c);
-						std::cout << "Añadió cliente al vector " << std::endl;
+						std::cout << "Añadió bien el cliente al vector" << std::endl;
 						short	poll_events[2] = {POLLIN, POLLOUT};
 						for (int e = 0; e < 2; e++)
 						{
@@ -127,7 +132,6 @@ int	pollEvents(std::vector<bTreeNode *> servers, std::vector<int>	&sockets)
 							readEvent(curr_client);
 							events[i].revents = 0;
 							std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
-							
 							if (curr_client->state == 2)
 							{
 								events[i].fd = -1;

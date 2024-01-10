@@ -1,6 +1,7 @@
 #include "webserv.hpp"
 
 void	findNode(bTreeNode *root, bTreeNode **find_node, std::string	find)
+//quiza pasar un puntero a una funcion de comparar, que ya compare los valores para determinar si coincide o no
 {
 	std::cout << "Estoy en contexto: " << root->contextName << std::endl;
 
@@ -15,7 +16,7 @@ void	findNode(bTreeNode *root, bTreeNode **find_node, std::string	find)
 			findNode(root->childs[i], find_node, find);
 	}
 }
-bool	strcmp_range(char *s1, char *s2, int n1, int n2)
+/*bool	strcmp_range(char *s1, char *s2, int n1, int n2)
 {
 	std::cout << "Rango a comparar s1: " << n1 << std::endl;
 	std::cout << "Longitud de s1: " << strlen(s1) << std::endl;
@@ -115,6 +116,48 @@ int	match_loc_url(char const *loc, char const *url)
 	}
 	return (0);
 }
+*/
+
+int	cmpDirectories(std::string &dir1, std::string &dir2)
+{
+	std::vector<std::string>	subDirs1;
+	std::vector<std::string>	subDirs2;
+	
+	//tokenize dirs
+	{
+		//dir1
+		{
+			std::stringstream	dir1Stream(dir1);
+			std::string			subDir1;
+			std::cout << "SUBDIRS1" << std::endl;
+			while (getline(dir1Stream, subDir1, '/'))
+			{
+				std::cout << subDir1 << std::endl;
+				subDirs1.push_back(subDir1);
+			}
+		}
+		//dir2
+		{
+			std::stringstream	dir2Stream(dir2);
+			std::string			subDir2;
+			std::cout << "SUBDIRS2" << std::endl;
+	 		while (getline(dir2Stream, subDir2, '/'))
+			{
+				std::cout << subDir2 << std::endl;
+				subDirs2.push_back(subDir2);
+			}
+		}
+	}
+	//cmp dirs
+	int	len = std::min(subDirs1.size(), subDirs2.size());
+	for (int i = 0; i < len; i++)
+	{
+		int dif = strcmp(subDirs1[i].c_str(), subDirs2[i].c_str());
+		if (dif != 0)
+			return (dif);
+	}
+	return (0);
+}
 
 bTreeNode	*findLocation(bTreeNode *server, std::string &URL)
 {
@@ -127,7 +170,8 @@ bTreeNode	*findLocation(bTreeNode *server, std::string &URL)
 		std::cout << "Estoy en contexto location: " << loc->contextArgs[0] << std::endl;
 		std::cout << "Len de location: " <<  loc->contextArgs[0].length() << std::endl;
 		//if (!match_loc_url(loc->contextArgs[0].c_str(), URL.c_str()))
-		if (URL.compare(0, loc->contextArgs[0].length(), loc->contextArgs[0]) == 0)
+		//if (URL.compare(0, loc->contextArgs[0].length(), loc->contextArgs[0]) == 0)
+		if (!cmpDirectories(loc->contextArgs[0], URL))
 		{
 			std::cout << "Hace match de la URL: " << loc->contextArgs[0] << " y " << URL << std::endl;
 			return (loc);
@@ -305,7 +349,11 @@ int	main(void)
 
 /*int	main(void)
 {
-	char	s1[] = "/post/buenas";
-	char	s2[] = "/post/buenas.html";
-	match_loc_url(s1, s2);
+	std::string	loc = "/post/";
+	std::string	find = "/post.html";
+	
+	if (!cmpDirectories(loc, find))
+		std::cout << "Son iguales" << std::endl;
+	else
+		std::cout << "Son diferentes" << std::endl;
 }*/
