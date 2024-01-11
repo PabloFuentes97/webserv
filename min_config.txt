@@ -55,6 +55,9 @@ server{
             root      jejeje;
             alias     manolo;
         }
+		location      /post{
+			alias		/documents/post.html;
+		}
     }
 }
 

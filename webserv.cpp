@@ -172,7 +172,7 @@ int	main(int argc, char **argv) {
 				std::cout << "ADDED CLIENT. FD: " << event[i].ident << "SERVER ID: " << Queue.getServerId(new_sock) << std::endl;
 				setNonBlocking(new_sock);
                 // Nuevo evento al kqueue
-				EV_SET(&client_event[1], new_sock, EVFILT_READ, EV_ADD | EV_CLEAR | EV_EOF, 0, 0, NULL);
+				EV_SET(&client_event[1], new_sock, EVFILT_READ, EV_ADD | EV_CLEAR | EV_EOF, 0, 0, NULL); //hacer que udata sea puntero a cliente
 				EV_SET(&client_event[0], new_sock, EVFILT_WRITE, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, NULL);
 				if (kevent(kq, client_event, 2, NULL, 0, NULL) < 0)
                     perror("kevent error");
