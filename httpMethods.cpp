@@ -117,9 +117,6 @@ int	GetMethod(bTreeNode	*server, client *client)
 	std::string	filePath;
 	try {
 		filePath = getRequestedFile(server, client);
-		response = header
-		if (get)
-			response += body
 	}
 	catch(int status)
 	{
@@ -222,11 +219,11 @@ std::string ResponseToMethod(bTreeNode	*server, client	*client) {
 	
 	std::string response;
 	if (client->request.method == "GET")
-		response = GetMethod(server, request->url);
+		response = GetMethod(server, client);
 	else if (client->request.method == "POST")
 		response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";
 	else if (client->request.method == "DELETE")
-		response = deleteMethod(server, request->url);
+		response = deleteMethod(server, client);
 	return response;
 }
 /* 

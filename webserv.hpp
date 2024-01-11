@@ -56,7 +56,7 @@ struct client {
 	int	serverID;
 	HttpRequest request;
 	//server *SocketServer;
-	std::string	response //- respuesta final
+	std::string	response; //- respuesta final
 };
 
 struct HttpResponse {
