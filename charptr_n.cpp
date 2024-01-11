@@ -37,7 +37,7 @@ charptr_n::charptr_n(char *s, size_t len, size_t to_fill)
 		state = PART;
 };
 
-charptr_n::charptr_n(const charptr_n &copy)
+charptr_n::charptr_n(const charptr_n &copy) : ptr(NULL), cursor(NULL), size(0), filled(0), state(EMPTY)
 {
 	*this = copy;
 };
@@ -45,16 +45,15 @@ charptr_n::charptr_n(const charptr_n &copy)
 charptr_n	&charptr_n::operator=(const charptr_n &assign)
 {
 	std::cout << "Estado de objeto a copiar: " << state << std::endl;
+	char	*aux = (char *)malloc(assign.size);
+	for (size_t i = 0; i < assign.filled; i++)
+			aux[i] = assign.ptr[i];
 	if (state > EMPTY)
 	{
-		std::cout << "Ptr no está vacío, hacer deep copy" << std::endl;
+		std::cout << "Ptr no está vacío, borrar el anterior" << std::endl;
 		free(ptr);
-		ptr = (char *)malloc(assign.size);
-		for (size_t i = 0; i < assign.filled; i++)
-			ptr[i] = assign.ptr[i];
 	}
-	else
-		ptr = NULL;
+	ptr = aux;
 	size = assign.size;
 	filled = assign.filled;
 	state = assign.state;
@@ -159,6 +158,7 @@ charptr_n	subcharptr(charptr_n &charptr, size_t pos, size_t size)
 	charptr_n	sub;
 
 	sub.ptr = (char *)malloc(size);
+	std::cout << "SUBCHARPTR: POS: " << pos << " SIZE: " << size << std::endl;
 	for (size_t i = 0; i < size; i++, pos++)
 	{
 		sub.ptr[i] = charptr.ptr[pos];

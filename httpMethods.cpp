@@ -297,6 +297,5 @@ std::string ResponseToMethod(bTreeNode	*server, client *client) {
 			response = getErrorPath(error);
 		}
 	}
-	std::cout << "RESPONSE FINAL: " << std::endl;
 	return (response);
 }

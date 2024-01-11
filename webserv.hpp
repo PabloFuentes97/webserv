@@ -46,9 +46,11 @@ typedef struct	seLst{
 
 struct HttpRequest {
 	charptr_n	buf_struct;
+	std::string	buf;
+	std::string	header;
+	std::string body;
     std::string method;
     std::string url; //version
-    std::string body;
     std::multimap<std::string, std::string> headers;
 	std::multimap<std::string, std::string>	bodyData;
 	int status;

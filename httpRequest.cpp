@@ -3,11 +3,8 @@
 void	loadRequest(HttpRequest *request) {
 	std::cout << "~~~~LOAD REQUEST STAGE~~~~" << std::endl;
 	std::string line;
-	std::string	header;
-	for (int i = 0; i < request->buf_struct.filled; i++)
-		header += request->buf_struct.ptr[i];
-	std::cout << "Construyó el string" << std::endl;
-	std::istringstream bufferFile(header.c_str());
+
+	std::istringstream bufferFile(request->header.c_str());
 	std::cout << "Creó el istringstream" << std::endl;
 	//Coger la primera línea
 	std::getline(bufferFile, line);
@@ -115,9 +112,101 @@ std::string ResponseToMethod(bTreeNode	*server, HttpRequest *request) {
 	return response;
 }*/
 
+int find_str(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize)
+{
+	size_t	n = i;
+	size_t	e;
+
+	while (n < size)
+	{
+		e = 0;
+		while (haystack[n] == needle[e])
+		{
+			if (n == size)
+				return (-1);
+			e++;
+			n++;
+			if (e == nsize)
+				return (n - e);
+		}
+		n = n - e;
+		n++;
+	}
+	return (-1);
+}
+
 int	readHeader(struct client *client)
 {
-	
+	std::cout << "Leer header" << std::endl;
+	//char	*lim = strstr(client->request.buf_struct.ptr, "\r\n\r\n");//hacer un strstr que devuelva el indice en vez del puntero
+	int		lim = find_str(client->request.buf.c_str(), (const char*)"\r\n\r\n", 0, client->request.buf.size(), 4);
+	std::cout << "Lim es: " << lim << std::endl;
+	std::cout << "Size es: " << client->request.buf.size() << std::endl;
+	if (lim < 0)
+		return (0);
+	std::cout << "Leyó todo el header" << std::endl;
+	if (lim + 4 == client->request.buf.size()) //NO HAY NADA MÁS DESPUÉS DEL HEADER
+	{
+		std::cout << "Solo leyó el header, no hay body" << std::endl;
+		client->request.header = client->request.buf;
+		loadRequest(&client->request);
+	}
+	else //HACER SUBSTRING DEL HEADER Y LO QUE HA LEÍDO DEL BODY
+	{
+		std::cout << "Hay que guardar el resto" << std::endl;
+		client->request.header = client->request.buf.substr(0, lim);
+		std::cout << "Guardó bien el header" << std::endl;
+		std::cout << "Header: " << client->request.header << std::endl;
+		//RESTO
+		int	body_len = client->request.buf.size() - lim + 4;
+		client->request.body.reserve(body_len);
+		for (int i = 0, j = lim + 4; j < body_len; i++, j++)
+			client->request.body[i] = client->request.buf[j];
+		std::cout << "Guardó bien el resto" << std::endl;
+		std::cout << "Resto: " << std::endl;
+		for (int i = 0; i < client->request.body.size(); i++)
+			std::cout << client->request.body[i] << std::endl;
+		std::cout << std::endl;
+		loadRequest(&client->request);
+	}
+	client->state = 1;
+	std::cout << "Pasa a estado 1" << std::endl;
+	return (1);
+}
+
+int	readBody(struct client *client)
+{
+	std::cout << "Tiene que leer el body" << std::endl;
+	typedef std::multimap<std::string, std::string>::iterator itm;
+	size_t	bodyLen;
+	itm	it = client->request.headers.find("Content-Length");
+	if (it != client->request.headers.end())
+	{
+		std::pair<itm, itm>	keyVal = client->request.headers.equal_range("Content-Length");
+		bodyLen = atoi(keyVal.first->second.c_str());
+	}
+	else
+	{
+		std::cout << "No hay content-length" << std::endl;
+		client->state = 2;
+		std::cout << "Pasa a estado 2" << std::endl;
+		return (1);
+	}
+	size_t	bufLen = client->request.buf.size();
+	if (bufLen > bodyLen) //o es mayor que el límite del servidor
+		return (-1);
+	if (bufLen == bodyLen)
+	{
+		std::cout << "Leyó ya todo el body" << std::endl;
+		std::cout << "BODY: " << std::endl;
+		for (int i = 0; i < client->request.buf.size(); i++)
+			std::cout << client->request.buf[i];
+		std::cout << std::endl;
+		std::cout << "Pasa a estado 2" << std::endl;
+		client->state = 2;
+		return (1);
+	}
+	return (0);
 }
 
 int	readEvent(struct client *client)
@@ -144,81 +233,27 @@ int	readEvent(struct client *client)
 
 	//CONCATENAR LO LEÍDO AL BUFFER ANTERIOR SI HABÍA ALGO
 	std::cout << "Concatear buf" << std::endl;
-	charptr_n	add_buff(buf, bytes_read);
-	client->request.buf_struct += add_buff;
-
-	std::cout << "Buffer total hasta ahora: \n";
-	//std::cout << client->request.buf_struct.ptr << std::endl;
-	1 << client->request.buf_struct;
-	std::cout << "Longitud total del buffer concatenado: " << client->request.buf_struct.filled << std::endl;
-
-	//BUSCAR SI EN EL BUFFER YA ESTÁ EL FINAL DEL HEADER
-	char	*lim = strstr(client->request.buf_struct.ptr, "\r\n\r\n");
-	if (client->state == 0 && lim)
+	std::string	&s = client->request.buf;
+	size_t	size = s.size();
+	s.resize(s.size() + bytes_read);
+	std::cout << "Size del buf general: " << s.size() << " , capacity: " << s.capacity() << std::endl;
+	for (int i = size, j = 0; i < s.size(); i++, j++)
 	{
-		std::cout << "Leyó todo el header" << std::endl;
-		if (!*(lim + 4)) //NO HAY NADA MÁS DESPUÉS DEL HEADER
-		{
-			std::cout << "Solo leyó el header, no hay body" << std::endl;
-			loadRequest(&client->request);
-		}
-		else //HACER SUBSTRING DEL HEADER Y LO QUE HA LEÍDO DEL BODY
-		{
-			charptr_n 	header;
-			charptr_n	res;
-			std::cout << "Guardar el resto" << std::endl;
-			//HEADER
-			header = subcharptr(client->request.buf_struct, 0, (lim + 4) - client->request.buf_struct.ptr);
-			std::cout << "Guardó bien el header" << std::endl;
-			std::cout << "Header: ";
-			1 << header;
-			std::cout << std::endl;
-			//RESTO
-			res = subcharptr(client->request.buf_struct, client->request.buf_struct.ptr - (lim + 4),
-				client->request.buf_struct.filled - ((lim + 4) - client->request.buf));
-			std::cout << "Guardó bien el resto" << std::endl;
-			std::cout << "Resto: ";
-			1 << res;
-			std::cout << std::endl;
-			client->request.buf_struct = header;
-			loadRequest(&client->request);
-			client->request.buf_struct = res;
-		}
-		client->state = 1;
-		std::cout << "Pasa a estado 1" << std::endl;
+		s[i] = buf[j];
+		std::cout << buf[j];
 	}
-	if (client->state == 1 && client->request.buf_struct.state != charptr_n::EMPTY)
-	{
-		std::cout << "Tiene que leer el body" << std::endl;
-		typedef std::multimap<std::string, std::string>::iterator itm;
-		size_t	bodyLen;
-		itm	it = client->request.headers.find("Content-Length");
-		if (it != client->request.headers.end())
-		{
-			std::pair<itm, itm>	keyVal = client->request.headers.equal_range("Content-Length");
-			bodyLen = atoi(keyVal.first->second.c_str());
-		}
-		else
-		{
-			std::cout << "No hay content-length" << std::endl;
-			client->state = 2;
-			std::cout << "Pasa a estado 2" << std::endl;
-		}
-		std::cout << "Longitud de buffer total leído: " << client->request.buf_struct.filled << " y content-length: " << bodyLen << std::endl;
-		if (client->request.buf_struct.filled == bodyLen) //+1 por salto de línea final del body
-		{
-			std::cout << "Leyó ya todo el body" << std::endl;
-			std::cout << "BODY: " << std::endl;
-			1 << client->request.buf_struct;
-			std::cout << std::endl;
-			std::cout << "Pasa a estado 2" << std::endl;
-			client->state = 2;
-		}		
-	}
+	std::cout << "Imprimir buf concatenado: " << std::endl;
+	for (int i = 0; i < s.size(); i++)
+		std::cout << s[i];
+	std::cout << std::endl;
+	std::cout << "Longitud de buffer concantenado: " << s.size() << std::endl;
+	if (client->state == 0) //ESTOY EN MODO DE LEER EL HEADER
+		readHeader(client);
+	if (client->state == 1)
+		readBody(client);
+	system("leaks -q webserv");
 	return (1);
 }
-
-
 
 /*int	readEvent(struct kevent *cli)
 {

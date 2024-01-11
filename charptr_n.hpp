@@ -20,10 +20,10 @@ typedef	struct	charptr_n
 	charptr_n(char *s, size_t len, size_t to_fill);
 	charptr_n(const charptr_n &copy);
 	charptr_n	&operator=(const charptr_n &assign);
-	charptr_n operator+(const charptr_n &add);
-	int	operator+=(const charptr_n &add);
-	charptr_n operator+(const char *add);
-	int	operator+=(const char *add);
+	charptr_n 	operator+(const charptr_n &add);
+	charptr_n	operator+(const char *add);
+	int			operator+=(const charptr_n &add);
+	int			operator+=(const char *add);
 	~charptr_n();
 } charptr_n;
 

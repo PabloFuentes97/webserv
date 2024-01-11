@@ -123,7 +123,7 @@ charptr_n	subcharptr(charptr_n &charptr, size_t pos, size_t size)
 	return (sub);
 }
 
-int	main(void)
+/*int	main(void)
 {
 	//std::cout << strlen_unsafe("que pasa") << std::endl;
 	//char	*substr = substr_unsafe("que p\0asa \0a\0 eee \0a", 12);
@@ -156,4 +156,48 @@ int	main(void)
 	1 << sub;
 	std::cout << std::endl;
 	system("leaks -q charptrpruebas");
+}*/
+
+int	search_str_charptr_pos(const charptr_n *haystack, const char *needle)
+{
+	for (size_t i = 0; i < haystack->filled; i++)
+	{
+		std::cout << "Caracter de haystack a buscar: " << haystack->ptr[i] << std::endl;
+		if (haystack->ptr[i] == needle[0])
+		{
+			for (size_t j = 0; ; j++)
+			{
+				std::cout << "Caracter de needle a comparar: " << needle[j] << std::endl;
+				std::cout << "Caracter de haystack a comparar: " << haystack->ptr[i + j] << std::endl;
+				if (needle[j] == '\0')
+					return (i);
+				if (i + j > haystack->filled)
+				{
+					std::cout << "Needle se sale ya del haystack restante" << std::endl;
+					return (-1);
+				}
+				if (needle[j] != haystack->ptr[i + j])
+				{
+					std::cout << "No coinciden" << std::endl;
+					break ;
+				}	
+			}
+		}
+	}
+	std::cout << "Llegó al final, no lo encuentra" << std::endl;
+	return (-1);
+}
+
+int	main(void)
+{
+	charptr_n	e((char*)"egegegeasagege\r\n\r\n", 19);
+	1 << e;
+	std::cout << std::endl;
+	int		lim = search_str_charptr_pos(&e, "\r\n\r\n");
+	std::cout << lim << std::endl;
+	if (lim != -1)
+	{
+		charptr_n	p(&e.ptr[lim], e.filled - lim);
+		1 << p;
+	}
 }
