@@ -31,9 +31,7 @@ int	getServerSocket(sockaddr_in *addr, int port) {
   	addr->sin_family = PF_INET;
  	addr->sin_addr.s_addr = htonl(INADDR_ANY);
   	addr->sin_port = htons(port);
-
 	setNonBlocking(sock);
-
 	return sock;
 }
 

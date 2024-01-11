@@ -5,9 +5,9 @@ events
 
 http{
     types {
-    text/html                                        html htm shtml;
-    text/css                                         css;
-    text/xml                                         xml;
+        text/html                                        html htm shtml;
+        text/css                                         css;
+        text/xml                                         xml;
     }
 server{
     server_name pfuentes.42;
@@ -41,6 +41,8 @@ server{
         }
         location      /{
             alias      /documents/;
+            methods   POST;
+            postdir   /postfiles/;
             index     index.html index.htm
         }
         location    /manolo
