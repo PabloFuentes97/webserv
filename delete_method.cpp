@@ -2,31 +2,13 @@
 
 int	delete_method(int	socket, bTreeNode	*server, std::string &loc)
 {
-	struct stat	st;
-
 	std::cout << "Delete method" << std::endl;
 	bTreeNode	*find_loc = NULL;
-	if (access(&loc.c_str()[1], F_OK) < 0) //hacer una función generica de search o find y pasar una funcion como arg
-	{
-		std::cout << "NOZING BORRAO\n";
+	if (!findLocation(server, loc)) //hacer una función generica de search o find y pasar una funcion como arg
 		return (404);
-	}	
-	
-	
-
-	if (stat(loc.c_str(), &st) == 0 && !(st.st_mode & S_IFDIR))
-    {
-		std::cout << "borrao DIR\n";
-		if (rmdir(&loc.c_str()[1]) < 0)
-			return (404);
-	}
-	else
-	{
-		std::cout << "borrao FILE\n";
-		if (remove(&loc.c_str()[1]) < 0)
-			return (404);
-	}
-	char	response[] = "HTTP/1.1 200 OK\r\n\r\n<h1>File deleted.</h1>\n  </body>\n</html>\n";
+	if (remove(&loc.c_str()[1]) < 0)
+		return (404);
+	char	response[] = "HTTP/1.1 200 OK\nDate: Wed, 21 Oct 2015 07:28:00 GMT\n<html>\n  <body>\n    <h1>File deleted.</h1>\n  </body>\n</html>\n";
 	write(socket, response, 114);
 	return (200);
 }

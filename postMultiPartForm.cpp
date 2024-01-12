@@ -1,12 +1,4 @@
-#include <iostream>
-#include <unistd.h>
-#include <string.h>
-#include <fstream>
-#include <dirent.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <vector>
-#include <map>
+#include "webserv.hpp"
 
 size_t locate_boundary(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize)
 {
@@ -59,7 +51,7 @@ void	create_files(std::map<std::string, std::vector<char> >files, std::string ro
 	}
 }
 
-void	doPost(std::string route, const char *body, std::string boundary, size_t size)
+void	postMultiPartForm(std::string route, const char *body, std::string boundary, size_t size)
 {
 	std::map<std::string, std::vector<char> >	files;
 	std::vector<char>	fheader;

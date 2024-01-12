@@ -9,17 +9,16 @@ server{
     server_name pfuentes.42;
     listen 8080;
     location    /del_prueba{
-        root    /hola;
+        root    hola;
     }
     location    /{
-        root    /documents;
+        root    hola;
     }
     location    /jose
     {
-        root    /hue;
-        alias   /pepe;
+        root    hue;
+        alias   pepe;
     }
-	
 }
     server{
         server_name   serbre;
@@ -30,16 +29,16 @@ server{
         error_page    500  /50x.html;
 
         location      /{
-            root      /html;
+            root      html;
             index     index.html index.htm
         }
         location      /pepe/juan{
-            root      /jeje;
-            alias     /juanito;
+            root      jeje;
+            alias     juanito;
         }
         location      /pepe{
-            root      /jejeje;
-            alias     /manolo;
+            root      jejeje;
+            alias     manolo;
         }
     }
 }
