@@ -34,6 +34,9 @@ void	loadRequest(HttpRequest *request) {
 		while (getline(streamLine, tokenValue, ';'))
 		{
 			//std::cout << "TokenValue: " << tokenValue << std::endl;
+			int	space = tokenValue.find(' ', 0);
+			if (space != std::string::npos)
+				tokenValue.erase(space, 1);
 			request->headers.insert(std::pair<std::string, std::string>(tokenKey, tokenValue));
 		}
     }
@@ -149,6 +152,7 @@ int	readHeader(struct client *client)
 	{
 		std::cout << "Solo leyó el header, no hay body" << std::endl;
 		client->request.header = client->request.buf;
+		client->request.buf.clear();
 	}
 	else //HACER SUBSTRING DEL HEADER Y LO QUE HA LEÍDO DEL BODY
 	{
@@ -157,14 +161,31 @@ int	readHeader(struct client *client)
 		std::cout << "Guardó bien el header" << std::endl;
 		std::cout << "Header: " << client->request.header << std::endl;
 		//RESTO
-		int	body_len = client->request.buf.size() - lim + 4;
-		client->request.body.reserve(body_len);
-		for (int i = 0, j = lim + 4; j < body_len; i++, j++)
-			client->request.body[i] = client->request.buf[j];
+		int	body_len = client->request.buf.size() - (lim + 4);
+		std::cout << "Bodylen: " << body_len << std::endl;
+		std::string	body;
+		body.reserve(body_len);
+		std::cout << "Donde tiene que empezar: " << lim + 4 << std::endl;
+		for (int i = 0, j = lim + 4; i < body_len; i++, j++)
+		{
+			body[i] = client->request.buf[j];
+			//std::cout << "j: " << j << std::endl;
+			//std::cout << client->request.buf[j];
+		}
+		std::cout << std::endl;
 		std::cout << "Guardó bien el resto" << std::endl;
 		std::cout << "Resto: " << std::endl;
-		for (int i = 0; i < client->request.body.size(); i++)
-			std::cout << client->request.body[i] << std::endl;
+		for (int i = 0; i < body_len; i++)
+			std::cout << body[i];
+		std::cout << std::endl;
+		client->request.buf.clear();
+		client->request.buf.reserve(body_len);
+		for (int i = 0; i < body_len; i++)
+			client->request.buf[i] = body[i];
+		client->request.bufLen = body_len;
+		std::cout << "---------------BUF TRAS REASIGNARLO---------------" << std::endl;
+		for (int i = 0; i < client->request.bufLen; i++)
+			std::cout << client->request.buf[i];
 		std::cout << std::endl;
 	}
 	loadRequest(&client->request);
@@ -177,12 +198,12 @@ int	readBody(struct client *client)
 {
 	std::cout << "Tiene que leer el body" << std::endl;
 	typedef std::multimap<std::string, std::string>::iterator itm;
-	size_t	bodyLen;
+	size_t	contentLen;
 	itm	it = client->request.headers.find("Content-Length");
 	if (it != client->request.headers.end())
 	{
 		std::pair<itm, itm>	keyVal = client->request.headers.equal_range("Content-Length");
-		bodyLen = atoi(keyVal.first->second.c_str());
+		contentLen = atoi(keyVal.first->second.c_str());
 	}
 	else
 	{
@@ -191,14 +212,14 @@ int	readBody(struct client *client)
 		std::cout << "Pasa a estado 2" << std::endl;
 		return (1);
 	}
-	size_t	bufLen = client->request.buf.size();
-	if (bufLen > bodyLen) //o es mayor que el límite del servidor
+	std::cout << "BufLen: " << client->request.bufLen << " , contentLen: " << contentLen << std::endl;
+	if (client->request.bufLen > contentLen) //o es mayor que el límite del servidor
 		return (-1);
-	if (bufLen == bodyLen)
+	if (client->request.bufLen == contentLen)
 	{
 		std::cout << "Leyó ya todo el body" << std::endl;
 		std::cout << "BODY: " << std::endl;
-		for (int i = 0; i < client->request.buf.size(); i++)
+		for (int i = 0; i < client->request.bufLen; i++)
 			std::cout << client->request.buf[i];
 		std::cout << std::endl;
 		std::cout << "Pasa a estado 2" << std::endl;
@@ -229,7 +250,7 @@ int	readEvent(struct client *client)
 		return (1);
 	}
 	buf[bytes_read] = '\0';
-
+	client->request.bufLen += bytes_read;
 	//CONCATENAR LO LEÍDO AL BUFFER ANTERIOR SI HABÍA ALGO
 	std::cout << "Concatear buf" << std::endl;
 	std::string	&s = client->request.buf;
@@ -239,7 +260,6 @@ int	readEvent(struct client *client)
 	for (int i = size, j = 0; i < s.size(); i++, j++)
 	{
 		s[i] = buf[j];
-		std::cout << buf[j];
 	}
 	std::cout << "Imprimir buf concatenado: " << std::endl;
 	for (int i = 0; i < s.size(); i++)

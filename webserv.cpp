@@ -167,7 +167,7 @@ int	pollEvents(std::vector<bTreeNode *> servers, std::vector<int>	&sockets)
 	}
 }	
 
-int	kqueue_events(std::vector<bTreeNode *>servers, std::vector<int> &sockets)
+/*int	kqueue_events(std::vector<bTreeNode *>servers, std::vector<int> &sockets)
 {
 	struct kevent event[SOMAXCONN + 1];
 
@@ -208,13 +208,13 @@ int	kqueue_events(std::vector<bTreeNode *>servers, std::vector<int> &sockets)
 		for (int i = 0; i < new_events; i++) {
 			struct kevent client_event[2];
 			std::cout << "========EVENTO DETECTADO======" << std::endl;
-			/*if (event[i].udata != NULL)
+			if (event[i].udata != NULL)
 			{
 				std::cout << "EVENTO ES SOCKET DE CLIENTE" << std::endl;
 				client *clientPtr = (client *)event[i].udata;
 				std::cout << "CLIENT FD: " << clientPtr->fd << " | SERVER ID: " << clientPtr->serverID
 						<< " | STATE: " << clientPtr->state << std::endl;
-			}*/
+			}
 			//Socket de escucha
 			bool isServerSocket = false;
 			if (event[i].ident <= sockets.size() + 3)
@@ -271,7 +271,7 @@ int	kqueue_events(std::vector<bTreeNode *>servers, std::vector<int> &sockets)
 		}
 	}
 	return (0);
-}
+}*/
 
 int	main(int argc, char **argv) {
 

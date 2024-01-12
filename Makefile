@@ -1,7 +1,7 @@
 NAME = webserv
 
 SRC = seLst.cpp parse.cpp httpMethods.cpp httpResponse.cpp httpRequest.cpp directories.cpp socketConnection.cpp \
-clientQueue.cpp webserv.cpp binary_insert.cpp charptr_n.cpp
+webserv.cpp binary_insert.cpp postMultiPartForm.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
