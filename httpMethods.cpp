@@ -49,10 +49,10 @@ std::string	getPathFileRequest(bTreeNode *location, client *client, std::string 
 		{
 			std::cout << "Encontró la key" << std::endl;
 		}
-		std::string	fileDir = client->request.url.substr(locLen, client->request.url.length() - locLen); //esto no es asi
-		std::cout << "URL sin la key, el resto: " << fileDir << std::endl;
-		filePath = absPath + itm->second + fileDir;
+		//concantenar subdirectorio con ruta absoluta
+		filePath = absPath + itm->second;
 	}
+	//PARTE DE GET Y DELETE
 	else
 	{
 		std::string	keys[] = {"alias", "root"};
@@ -163,7 +163,7 @@ std::string	getMethod(bTreeNode	*server, client *client) {
 std::string	postMethod(bTreeNode *server, client *client)
 {
 	std::cout << "ESTOY EN POST" << std::endl;
-	std::cout << "BODY REQUEST: " << client->request.body << std::endl;
+	std::cout << "BODY REQUEST: " << client->request.buf << std::endl;
 	std::string filePath;
 	try 
 	{
@@ -180,16 +180,16 @@ std::string	postMethod(bTreeNode *server, client *client)
 		std::cout << "Encontró la key: " << itm->first << " , Value: " << itm->second << std::endl;
 	}
 	//DIFERENTES TIPOS DE POST: APPLICATION, MULTIPART-FORM, TEXT-PLAIN
-	if (itm->second == "application/x-www-form-urlencoded");
+	//if (itm->second == "application/x-www-form-urlencoded");
 		//funcion de application
-	else if (itm->second == "multipart/form-data");
-		//funcion de multipart
-	else if (itm->second == "text/plain");
+	if (itm->second == "multipart/form-data")
+		callMultiPart(client, filePath);
+	//else if (itm->second == "text/plain");
 		//funcion de text-plain
 	else
 		client->request.status = 400;
 	client->request.status = 201;
-	return ("HTTP/1.1 201 Created\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n");
+	return ("HTTP/1.1 201 Created\r\n\r\n");
 }
 
 std::string	deleteMethod(bTreeNode	*server, client *client)
@@ -235,6 +235,7 @@ std::string ResponseToMethod(bTreeNode	*server, client *client) {
 	std::cout << "EN RESPONSE TO METHOD" << std::endl;
 	std::string response;
 	std::cout << "MÉTODO A EVALUAR: " << client->request.method << std::endl;
+	std::cout << "hola" << std::endl;
 	//GET
 	if (client->request.method == "GET")
 	{

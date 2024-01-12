@@ -45,10 +45,9 @@ typedef struct	seLst{
 } seLst;
 
 struct HttpRequest {
-	charptr_n	buf_struct;
 	std::string	buf;
+	size_t	bufLen;
 	std::string	header;
-	std::string body;
     std::string method;
     std::string url; //version
     std::multimap<std::string, std::string> headers;
@@ -244,7 +243,8 @@ std::string GetResponse(bTreeNode	*server, std::string &url);
 std::string ResponseToMethod(bTreeNode *server, client *client);
 
 //HTTP METHODS
-void	postMultiPartForm(std::string route, const char *body, std::string boundary, size_t size);
+int		callMultiPart(struct client *client, std::string &path);
+void	postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size);
 
 //---SOCKET---
 void setNonBlocking(int fd);
