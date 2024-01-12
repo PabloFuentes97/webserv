@@ -243,6 +243,9 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
 std::string GetResponse(bTreeNode	*server, std::string &url);
 std::string ResponseToMethod(bTreeNode *server, client *client);
 
+//HTTP METHODS
+void	postMultiPartForm(std::string route, const char *body, std::string boundary, size_t size);
+
 //---SOCKET---
 void setNonBlocking(int fd);
 int	getServerSocket(sockaddr_in *addr, int port);

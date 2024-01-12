@@ -149,7 +149,6 @@ int	readHeader(struct client *client)
 	{
 		std::cout << "Solo leyó el header, no hay body" << std::endl;
 		client->request.header = client->request.buf;
-		loadRequest(&client->request);
 	}
 	else //HACER SUBSTRING DEL HEADER Y LO QUE HA LEÍDO DEL BODY
 	{
@@ -167,8 +166,8 @@ int	readHeader(struct client *client)
 		for (int i = 0; i < client->request.body.size(); i++)
 			std::cout << client->request.body[i] << std::endl;
 		std::cout << std::endl;
-		loadRequest(&client->request);
 	}
+	loadRequest(&client->request);
 	client->state = 1;
 	std::cout << "Pasa a estado 1" << std::endl;
 	return (1);
