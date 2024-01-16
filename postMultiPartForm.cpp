@@ -37,6 +37,7 @@ std::string	get_filename(std::vector<char> &header)
 	}
 	if (header[start] != '\"')
 		throw ("wrong format");
+	std::cerr << filename << "\n";
 	return (filename);
 }
 
@@ -53,11 +54,15 @@ void	create_files(std::map<std::string, std::vector<char> >files, std::string ro
 
 void	postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size)
 {
-	std::cout << "Entra en postMultiPartForm" << std::endl;
+	/* std::cout << "Entra en postMultiPartForm" << std::endl;
 	std::cout << "route: \n" << route << "\nbody: \n";
 	for(size_t t = 0; t < size; t++)
-		std::cout << body[t];
-	std::cout << "\nboundary: \n"<< boundary << "\nsize: \n" << size << std::endl;
+		std::cout << body[t]; */
+	/* std::cerr << "PRE " << boundary.size() << "\n";
+	std::cerr << "\nboundary: \n"<< boundary << std::endl;
+	boundary.erase(boundary.size() - 1, std::string::npos);
+	std::cerr << "POST " << boundary.size() << "\n";
+	std::cerr << "\nboundary: \n"<< boundary << std::endl; */
 	std::map<std::string, std::vector<char> >	files;
 	std::vector<char>	fheader;
 	std::vector<char>	fcont;
@@ -74,17 +79,11 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 		if (c >= 4 && fheader[c - 1] == '\n' && fheader[c - 2] == '\r' && fheader[c - 3] == '\n' && fheader[c - 4] == '\r')
 		{
 			limit = locate_boundary(body, ("\n--" + boundary).c_str(), i, size, ("\n--" + boundary).size() - 1);
-			std::cout << "\nSTART DE LIMIT\n";
-			for (size_t y = limit; y < limit + ("\r\n--" + boundary).size() - 1; y++)
-				std::cout << body[y];
-			std::cout << "\nFIN DE LIMIT\n";
 			while (i < limit)
 			{
-				std::cout << body[i];
 				fcont.push_back(body[i]);
 				i++;
 			}
-			std::cout << "\nFIN DEL CONTENT\n";
 			filename = get_filename(fheader);
 			if (!access((route + filename).c_str(), F_OK))
 				throw("already exists");
@@ -97,7 +96,30 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 			c = 0;
 		}
 	}
-	/* if (locate_boundary(body, ("\n--" + boundary + "--").c_str(), i - c, size, ("\r\n--" + boundary + "--").size()) != i - ("\r\n--" + boundary + "--").size())
+	/* std::cerr << "\nPREVE\n/";
+	for (int y = i - c; y < i; y++)
+	{
+		std::cerr << body[y];
+	}
+	std::cerr << "SIZE = " << c << "\n";
+	std::cerr << "/\n";
+	std::cerr << "\nPOST\n";
+	std::cerr << "\r\n--" << boundary << "--\n";
+	std::string sbody(body + (i - c));
+	std::cerr << "\nPOSuuuuuT\n";
+	std::cerr << "\n/" << sbody.size() << "/\n";
+	std::cerr << "\n/" << ("\r\n--" + boundary + "--\n").size() << "/\n";
+	std::cerr << "\nPOSrrrrrrrrrT\n";
+	std::cerr << "\n/";
+	for (int y = 0; y < c; y++)
+	{
+		std::cerr << 
+		std::cerr << sbody[y];
+	}
+	std::cerr << "/\n";
+	std::cerr << "\n/" << "\r\n--" + boundary + "--\n" << "/\n";
+	std::cerr << ("\r\n--" + boundary + "--\r").compare(0, ("\r\n--" + boundary + "--\r").size(), sbody) << "\n";
+	if (("\r\n--" + boundary + "--\r").compare(0, ("\r\n--" + boundary + "--\r").size(), sbody))
 		throw("no final boundary"); */
 	create_files(files, route);
 }
@@ -129,5 +151,5 @@ int	callMultiPart(struct client *client, std::string &path)
 	{
 		std::cerr << s << '\n';
 	}	
-	return (1);	
+	return (1);
 }

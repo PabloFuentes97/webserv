@@ -3,10 +3,30 @@
 std::string	getStatus(int status) {
 
 	switch (status) {
-		case 404:
-			return "404 Not Found";
+		case 201:
+			return "201 Created";
+		case 400:
+			return "400 Bad Request"; //El formato de la request está mal
 		case 403:
-			return "403 Forbidden";
+			return "403 Forbidden"; //Acceso no permitido
+		case 404:
+			return "404 Not Found"; //Archivo no encontrado
+		case 405:
+			return "405 Method Not Allowed"; //Método que no gestionamos (DELETE de CGI o cualquier otro)
+		case 408:
+			return "408 Request Timeout"; //Timeout
+		case 413:
+			return "413 Payload Too Large"; //Request muy grande
+		case 429:
+			return "429 Too Many Request"; //Muchas
+		case 500:
+			return "500 Internal Server Error";
+		case 501:
+			return "501 Not Implemented";
+		case 502:
+			return "502 Bad Gateway";
+		case 504:
+			return "504 Gateway Timeout";
 		default:
 			return "200 OK";
 	}
