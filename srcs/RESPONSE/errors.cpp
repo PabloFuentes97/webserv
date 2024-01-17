@@ -65,22 +65,19 @@ std::string	getErrorPath(bTreeNode *server, struct client *client, int error)
 	itm it = loc->directivesMap.find("error_files");
 	if (it != loc->directivesMap.end())
 	{
-		std::pair<itm, itm> itr;
-		if (itr.first != loc->directivesMap.end())
+		std::pair<itm, itm> itr = loc->directivesMap.equal_range("error_files");
+		std::cout << "Encuentra error_files en location" << std::endl;
+		for (itm ib = itr.first, ie = itr.second; ib != ie; ib++)
 		{
-			std::cout << "Encuentra error_files en location" << std::endl;
-			for (itm ib = itr.first, ie = itr.second; ib != ie; ib++)
+			std::cout << "Key: " << ib->first << " | Value: " << ib->second << std::endl;
+			int	n = atoi(ib->second.c_str());
+			std::cout << "error de error_files: " << n << std::endl;
+			if (n == error)
 			{
-				std::cout << "Key: " << ib->first << " | Value: " << ib->second << std::endl;
-				int	n = atoi(ib->second.c_str());
-				std::cout << "error de error_files: " << n << std::endl;
-				if (n == error)
-				{
-					ie--;
-					std::cout << "Fichero a redirigir: " << "Key: " << ie->first << " | Value: " << ie->second << std::endl;
-					errorPath = absPath + ie->second;
-					return (errorPath);
-				}
+				ie--;
+				std::cout << "Fichero a redirigir: " << "Key: " << ie->first << " | Value: " << ie->second << std::endl;
+				errorPath = absPath + ie->second;
+				return (errorPath);
 			}
 		}
 	}
