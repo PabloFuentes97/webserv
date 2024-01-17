@@ -152,4 +152,8 @@ int	callMultiPart(struct client *client, std::string &path)
 		std::cerr << s << '\n';
 	}	
 	return (1);
+<<<<<<< HEAD:srcs/RESPONSE/postMultiPartForm.cpp
 }
+=======
+}
+>>>>>>> 830b4f4b61bbac8349e7c2f2ad19f35793a20164:postMultiPartForm.cpp
