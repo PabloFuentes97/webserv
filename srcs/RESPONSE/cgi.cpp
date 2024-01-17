@@ -5,9 +5,10 @@ std::string	CGIForward(std::string &path)
 	std::cout << "Path del ejecutable: " << path << std::endl;
 	int	pipes[2];
 	pipe(pipes);
-	char	**args = (char **)malloc(sizeof(char *) * 2);
-	args[0] = (char *)path.c_str();
-	args[1] = NULL;
+	char	**args = (char **)malloc(sizeof(char *) * 3);
+	args[0] = (char *)("/usr/bin/python");
+	args[1] = (char *)path.c_str();
+	args[2] = NULL;
 	int	pid = fork();
 	if (pid == 0)
 	{
