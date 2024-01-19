@@ -88,7 +88,6 @@ int	pollEvents(std::vector<bTreeNode *> servers, std::vector<int>	&sockets)
 						c.state = 0;
 						c.request.cgi = 0;
 						c.request.bufLen = 0;
-						//c = {accept_socket, events[i].fd - 3, 0};
 						std::cout << "Añadir cliente al vector" << std::endl;
 						clients.push_back(c);
 						std::cout << "Añadió bien el cliente al vector" << std::endl;
@@ -130,13 +129,20 @@ int	pollEvents(std::vector<bTreeNode *> servers, std::vector<int>	&sockets)
 						if (curr_client && curr_client->state < 2)
 						{
 							std::cout << "EVENTO DE LECTURA" << std::endl;
-							readEvent(curr_client);
+							if (readEvent(curr_client))
+							{
+								// FUNCION DELETE CLIENT
+								events_n--;
+								events[i].fd = -1;
+								events[i].events = 0;
+								std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), *curr_client);
+								clients.erase(it);
+							}
 							std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
 							if (curr_client->state == 2)
 							{
 								events[i].fd = -1;
 								events[i].events = 0;
-								//events[i].revents = 0;
 							}
 						}
 						events[i].revents = 0;
@@ -151,7 +157,7 @@ int	pollEvents(std::vector<bTreeNode *> servers, std::vector<int>	&sockets)
 						std::cout << "EVENTO DE ESCRITURA" << std::endl;
 						writeEvent(servers[curr_client->serverID], curr_client);
 						close(events[i].fd); //cerrar socket de conexion - se terminó
-						//events[i] = events[events_n];
+						// FUNCION DELETE CLIENT
 						events_n--;
 						events[i].fd = -1;
 						events[i].events = 0;

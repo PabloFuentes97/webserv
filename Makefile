@@ -25,6 +25,8 @@ REQUEST    		=  	httpRequest.cpp
 RESPONSE    	=   httpMethods.cpp \
 					cgi.cpp \
 					postMultiPartForm.cpp \
+					postText.cpp \
+					postUrlEncoded.cpp \
 					errors.cpp
 SEND 			=	httpResponse.cpp 
 

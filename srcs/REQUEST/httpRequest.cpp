@@ -235,11 +235,11 @@ int	readEvent(struct client *client)
 	//std::cout << "Buf leído: " << buf << std::endl;
 	if (bytes_read == -1) {
 		perror("recv");
-		return (0);
+		return (1);
 	}
 	if (bytes_read == 0) {
-		/*//std::cout << "[[CLOSE]]" << std::endl;
-		close(cli->ident);*/
+		//std::cout << "[[CLOSE]]" << std::endl;
+		close(client->fd);
 		return (1);
 	}
 	buf[bytes_read] = '\0';
@@ -263,7 +263,7 @@ int	readEvent(struct client *client)
 	if (client->state == 1)
 		readBody(client);
 	system("leaks -q webserv");
-	return (1);
+	return (0);
 }
 
 /*int	readEvent(struct kevent *cli)

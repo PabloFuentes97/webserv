@@ -140,14 +140,16 @@ std::string	postMethod(bTreeNode *server, client *client)
 		std::cout << "Encontró la key: " << itm->first << " , Value: " << itm->second << std::endl;
 	}
 	//DIFERENTES TIPOS DE POST: APPLICATION, MULTIPART-FORM, TEXT-PLAIN
-	//if (itm->second == "application/x-www-form-urlencoded");
-		//funcion de application
-	if (itm->second == "multipart/form-data")
+	std::cout << "TIPO DE POST: " << itm->second << std::endl;
+	if (itm->second == "application/x-www-form-urlencoded\r")
+		postUrlEncoded(filePath, client->request.buf.c_str(), client->request.bufLen);
+	else if (itm->second == "multipart/form-data")
 		callMultiPart(client, filePath);
-	//else if (itm->second == "text/plain");
-		//funcion de text-plain
+	else if (itm->second == "text/plain\r")
+		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else
 		throw (400);
+	//REHACER
 	client->request.status = 201;
 	return ("HTTP/1.1 201 Created\r\n\r\n");
 }
