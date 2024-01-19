@@ -193,6 +193,8 @@ std::string ResponseToMethod(bTreeNode *server, client *client);
 //HTTP METHODS
 int		callMultiPart(struct client *client, std::string &path);
 void	postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size);
+void	postText(std::string &route, const char *body, size_t size);
+void	postUrlEncoded(std::string &route, const char *body, size_t size);
 
 //---SOCKET---
 void 	setNonBlocking(int fd);
