@@ -1,5 +1,7 @@
 #include "../../includes/webserv.hpp"
 
+
+
 void	findNode(bTreeNode *root, bTreeNode **find_node, std::string	find)
 //quiza pasar un puntero a una funcion de comparar, que ya compare los valores para determinar si coincide o no
 {
@@ -225,6 +227,23 @@ int	cmp_str_ranges(std::string &s1, size_t pos1, size_t n1, std::string &s2, siz
 	return (0);
 }
 
+int	cmp_str_ranges(const char *s1, size_t n1, const char *s2, size_t n2)
+{
+	if (!s1 || !s2)
+		return (-1);
+	if (n1 != n2)
+		return (-2);
+	int	dif;
+	for (size_t i = 0 ; i < n1; i++)
+	{
+		//std::cout << "Comparar: " << s1[i] << " y " << s2[i] << std::endl;
+		dif = s1[i] - s2[i];
+		if (dif != 0)
+			return (dif);
+	}
+	return (0);
+}
+
 int	cmpPaths(std::string &dir1, std::string &dir2)
 {
 	std::vector<int_tuple>	ranges = del_ranges(dir1, '/');
@@ -262,7 +281,7 @@ int	cmpPaths(std::string &dir1, std::string &dir2)
 	return (0);
 }
 
-int	cmpLocUrl(std::string &loc, std::string &url)
+/*int	cmpLocUrl(std::string &loc, std::string &url)
 {
 	std::vector<int_tuple>	rangesLoc = del_ranges(loc, '/');
 	if (rangesLoc.empty())
@@ -301,6 +320,86 @@ int	cmpLocUrl(std::string &loc, std::string &url)
 			return (dif);
 	}
 	return (0);
+}*/
+
+std::vector<int_tuple>	setRangesDelRev(std::string &s, char del, int pos)
+{
+	int_tuple				ranges;
+	size_t					find;
+	std::vector<int_tuple>	rangesVec;
+
+	if (s.size() == 1)
+		return (rangesVec);
+	for (; pos >= 0; )
+	{
+		std::cout << "Pos de final: " << pos << std::endl;
+		//sleep(2);
+		ranges.e = pos;
+		find = s.rfind(del, pos);
+		std::cout << "Find: " << find << std::endl;
+		if (find == std::string::npos)
+		{
+			std::cout << "Deja de encontrar del" << std::endl;
+			break ;
+		}
+		ranges.i = find + 1;
+		rangesVec.insert(rangesVec.begin(), ranges);
+		pos = find - 1;
+		std::cout << "Pos tras find - 1: " << pos << std::endl;
+		if (pos < 0)
+			break ;
+		for (; s[pos] == del && pos >= 0; pos--);
+	}
+	for (size_t i = 0; i < rangesVec.size(); i++)
+	{
+		std::cout << "RANGE: START: " << rangesVec[i].i << " | END: " << rangesVec[i].e << std::endl;
+		for (int j = rangesVec[i].i; j <= rangesVec[i].e; j++)
+			std::cout << s[j];
+		std::cout << std::endl;
+		//sleep(3);
+	}
+	return (rangesVec);
+}
+
+int	cmpLocUri(std::string &loc, std::string &url)//, std::string &url
+{
+	int	i = loc.size() - 1;
+	std::vector<int_tuple>	rangesLoc = setRangesDelRev(loc, '/', i);
+	if (!rangesLoc.size())
+		return (0);
+	i = url.size() - 1;
+	for (; url[i] != '/' && i >= 0; i--);
+	std::vector<int_tuple>	rangesURI = setRangesDelRev(url, '/', i);
+	std::cout << "Size de rangesLoc: " << rangesLoc.size() << std::endl;
+	if (!rangesURI.size() && rangesLoc.size())
+		return (1);
+	if (!rangesURI.size() && !rangesLoc.size())
+		return (0);
+	for (size_t i = 0; i < rangesLoc.size(); i++)
+	{
+		std::cout << "Comparar LOC: ";
+		for (int j = rangesLoc[i].i; j <= rangesLoc[i].e; j++)
+			std::cout << loc[j];
+		std::cout << " y URI: ";
+		for (int j = rangesURI[i].i; j <= rangesURI[i].e; j++)
+			std::cout << url[j];
+		std::cout << std::endl;
+		int	dif = (rangesLoc[i].e - rangesLoc[i].i) - (rangesURI[i].e - rangesURI[i].i);
+		if (dif != 0)
+		{
+			std::cout << "Distinta longitud" << std::endl;
+			return (1);
+		}
+		dif = cmp_str_ranges(&(loc.c_str()[rangesLoc[i].i]), rangesLoc[i].e - rangesLoc[i].i + 1,
+				&(url.c_str()[rangesURI[i].i]), rangesURI[i].e - rangesURI[i].i + 1);
+		std::cout << "Retorno de cmp: " << dif << std::endl;
+		if (dif != 0)
+		{
+			std::cout << "No coinciden" << std::endl;
+			return (1);
+		}
+	}
+	return (0);
 }
 
 bTreeNode	*findLocation(struct client *client)
@@ -315,8 +414,8 @@ bTreeNode	*findLocation(struct client *client)
 		std::cout << "Len de location: " <<  loc->contextArgs[0].length() << std::endl;
 		//if (!match_loc_url(loc->contextArgs[0].c_str(), URL.c_str()))
 		//if (URL.compare(0, loc->contextArgs[0].length(), loc->contextArgs[0]) == 0)
-		if (!cmpDirectories(loc->contextArgs[0], client->request.url))
-		//if (!cmpLocUrl(loc->contextArgs[0], URL))
+		//if (!cmpDirectories(loc->contextArgs[0], client->request.url))
+		if (!cmpLocUri(loc->contextArgs[0], client->request.url))
 		{
 			std::cout << "Hace match de la URL: " << loc->contextArgs[0] << " y " << client->request.url << std::endl;
 			return (loc);

@@ -42,7 +42,6 @@ bTreeNode *findServerByClient(std::vector<bTreeNode *> servers, struct client *c
 	}
 	//busca por puerto
 	std::cout << "BUSCAR POR PUERTO" << std::endl;
-	it = client->request.headers.find("hostname");
 	for (size_t i = 0; i < servers.size(); i++)
 	{
 		it = servers[i]->directivesMap.find("listen");
@@ -73,6 +72,18 @@ pollfd *findUnusedPoll(pollfd *polls, int polls_n)
 			return (&polls[i]);
 	}
 	return (NULL);
+}
+
+size_t	deleteClient(std::vector<client> &clients, client &c, pollfd &event, size_t n)
+{
+	close(c.fd);
+	event.fd = -1;
+	event.events = 0;
+	event.revents = 0;
+	std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), c);
+	clients.erase(it);
+	std::cerr << "Elimina cliente" << std::endl;
+	return (n - 1);
 }
 
 int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
@@ -115,6 +126,7 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 				{
 					if (events[i].fd < (int)(ports->n + 3)) //ES SOCKET DE PUERTO, CREAR NUEVO CLIENTE
 					{
+						std::cerr << "Crea cliente nuevo" << std::endl;
 						std::cout << "SOCKET DE ESCUCHA: " << events[i].fd << std::endl;
 						accept_socket = accept(events[i].fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_len);
 						std::cout << "Socket de cliente aceptado: " << accept_socket << std::endl;
@@ -173,16 +185,8 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 						if (curr_client && curr_client->state < 2)
 						{
 							std::cout << "EVENTO DE LECTURA" << std::endl;
-							if (!readEvent(curr_client)) //meterlo todo en una funcion
-							{
-								close(curr_client->fd);
-								events_n--;
-								events[i].fd = -1;
-								events[i].events = 0;
-								events[i].revents = 0;
-								std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), *curr_client);
-								clients.erase(it);
-							}
+							if (readEvent(curr_client)) //meterlo todo en una funcion
+								events_n = deleteClient(clients, *curr_client, events[i], events_n);
 							std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
 							if (curr_client->state == 2)
 							{
@@ -190,9 +194,10 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 								events[i].events = 0;
 								curr_client->server = findServerByClient(servers, curr_client);
 								if (!curr_client->server)
-									std::cout << "NO ENCONTRÓ SERVER CON ESE PORT" << std::endl;
+									events_n = deleteClient(clients, *curr_client, events[i], events_n);
 								//events[i].revents = 0;
-								curr_client->response.response = ResponseToMethod(curr_client);
+								else
+									curr_client->response.response = ResponseToMethod(curr_client);
 							}
 						}
 						events[i].revents = 0;
@@ -205,17 +210,8 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 					if (curr_client && curr_client->state == 3)
 					{
 						std::cout << "EVENTO DE ESCRITURA" << std::endl;
-						if (writeEvent(curr_client))
-						{
-							close(events[i].fd); //cerrar socket de conexion - se terminó
-							//events[i] = events[events_n];
-							events_n--;
-							events[i].fd = -1;
-							events[i].events = 0;
-							events[i].revents = 0;
-							std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), *curr_client);
-							clients.erase(it);
-						}
+						if (!writeEvent(curr_client))
+							events_n = deleteClient(clients, *curr_client, events[i], events_n);
 					}
 					j++;
 				}		

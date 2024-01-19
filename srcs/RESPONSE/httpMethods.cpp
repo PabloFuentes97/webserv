@@ -120,23 +120,25 @@ std::string	getRedir(struct client *client, std::string &absPath, itmap &redir, 
 }
 
 
-std::string	findLocIndex(client *client)
+std::string	findLocIndex(client *client, std::string &absPath)
 {
 	std::cout << "Es un directorio, usar index" << std::endl;
 	bTreeNode &loc = *(client->loc);
-	itr itk = loc.directivesMap.equal_range("try_files");
+	itr itk = loc.directivesMap.equal_range("index");
 	if (itk.first != loc.directivesMap.end())
-		std::cout << "Encontró la key de try_files: " << std::endl;
-	std::string	file;
+		std::cout << "Encontró la key de index: " << std::endl;
+	std::string	path;
 	for (itmap itb = itk.first, ite = itk.second; itb != ite; itb++)
 	{
-		file = itb->second;
-		if (!access(itb->second.c_str(), F_OK))
-			break ;
+		path = absPath + itb->second;
+		std::cout << "path de file index: " << path << std::endl;
+		if (!access(path.c_str(), F_OK | R_OK))
+		{
+			std::cout << "Existe fichero " << std::endl;
+			return (path);
+		}	
 	}
-	if (file.empty())
-		throw(404);
-	return (file);
+	throw (404);
 }
 
 std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs)
@@ -169,10 +171,12 @@ std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs)
 	if (i == redirs.size())
 		throw (400);
 	if (client->request.url[client->request.url.size() - 1] == '/') //es un directorio
-		file = findLocIndex(client);
+		pathFile = findLocIndex(client, absPath);
 	else //es un fichero
+	{
 		file = client->request.url.substr(locLen, locLen - itm->second.length() + 1);
-	pathFile = getRedir(client, absPath, itm, file);
+		pathFile = getRedir(client, absPath, itm, file);
+	}
 	return (pathFile);
 }
 
@@ -208,10 +212,10 @@ std::string	getMethod(client *client) {
 		throw (403);
 	HttpResponse Response;
 	client->request.status = 200;
+	Response.body = getResponseBody(filePath);
 	Response.firstLine = getResponseHeader(client->request, Response.body);
 	//if (client->request.cgi == 1)
 	//	Response.body = CGIForward(filePath);
-	Response.body = getResponseBody(filePath);
 	std::string finalRequest = Response.firstLine + Response.body;
 	return (finalRequest);
 }
@@ -294,6 +298,37 @@ bool	isInMultiMap(std::multimap<std::string, std::string> &map, std::string key,
 	return (false);
 }
 
+std::string	autoIndexListing(client *client)
+{
+	std::cout << "Entro en autoindex" << std::endl;
+	char	buf[1000];
+	std::string absPath = getcwd(buf, 1000) + client->loc->contextArgs[0];
+	std::cout << "Abspath: " << absPath << std::endl;
+	DIR	*dir = opendir(absPath.c_str());
+	if (!dir)
+		throw (400);
+	dirent *elem = readdir(dir);
+	std::string body;
+	body += "<html><body>";
+	while (elem)
+	{
+		std::cout << elem->d_name << std::endl;
+		body += "<h1>";
+		body += elem->d_name;
+		body += "</h1>";
+		elem = readdir(dir);
+	}
+	body += "</body></html>";
+
+	std::string	response;
+	
+	client->request.status = 200;
+	response += getResponseHeader(client->request, body);
+	response += body;
+	std::cout << "RESPONSE DE AUTOINDEX: " << response << std::endl;
+	return (response);
+}
+
 std::string ResponseToMethod(client *client)
 {
 	std::cout << "EN RESPONSE TO METHOD" << std::endl;
@@ -301,8 +336,18 @@ std::string ResponseToMethod(client *client)
 	client->loc = findLocation(client);
 	if (!client->loc)
 		throw (0);
-	if (!isInMultiMap(client->loc->directivesMap, "methods", client->request.method))
-		throw (1);
+	//if (!isInMultiMap(client->loc->directivesMap, "methods", client->request.method))
+	//	throw (1);
+	//probar aqui casos de que url sea un directorio, no fichero
+	if (client->request.url[client->request.url.size() - 1] == '/') //es un directorio
+	{
+		if (isInMultiMap(client->loc->directivesMap, "autoindex", "on"))
+		{
+			response = autoIndexListing(client);
+			client->state = 3;
+			return (response);
+		}
+	}
 	std::cout << "MÉTODO PERMITIDO: " << client->request.method << std::endl;
 	std::cout << "MÉTODO A EVALUAR: " << client->request.method_int << std::endl;
 	try

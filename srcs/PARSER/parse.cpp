@@ -98,7 +98,7 @@ bool	validDirectivesCmp(std::string	&context, std::string &directive)
 	const char	*http[] = {"hola", NULL};
 	const char	*types[] = {"text/html", "text/css", "text/xml"};
 	const char	*server[] = {"listen", "server_name", "error_page", "root", "index", NULL};
-	const char	*location[] = {"root", "methods", "alias", "error_files", "try_files", "postdir", "cgi_pass", NULL};
+	const char	*location[] = {"autoindex", "root", "methods", "alias", "error_files", "index", "try_files", "postdir", "cgi_pass", NULL};
 
 	const char	**find = NULL;
 	if (context == "main")
