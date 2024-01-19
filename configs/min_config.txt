@@ -35,8 +35,9 @@ server{
 
         error_page    500  /50x.html;
 
-        location        /manuel
+        location        /documents/
         {
+            autoindex on;
             alias /documents/;
         }
         location    /cgi
@@ -48,7 +49,7 @@ server{
             methods   GET POST;
             error_files 403 404 /documents/error.html;
             postdir   /postfiles/;
-            try_files index.html index.htm;
+            index   /documents/index.html /documents/index.htm;
         }
         location    /manolo
         {

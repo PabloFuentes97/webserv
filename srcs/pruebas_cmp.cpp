@@ -208,64 +208,59 @@ int	cmpPaths(std::string &dir1, std::string &dir2)
 	return (0);
 }*/
 
+std::vector<int_tuple>	setRangesDelRev(std::string &s, char del, int pos)
+{
+	int_tuple				ranges;
+	size_t					find;
+	std::vector<int_tuple>	rangesVec;
+
+	if (s.size() == 1)
+		return (rangesVec);
+	for (; pos >= 0; )
+	{
+		std::cout << "Pos de final: " << pos << std::endl;
+		//sleep(2);
+		ranges.e = pos;
+		find = s.rfind(del, pos);
+		std::cout << "Find: " << find << std::endl;
+		if (find == std::string::npos)
+		{
+			std::cout << "Deja de encontrar del" << std::endl;
+			break ;
+		}
+		ranges.i = find + 1;
+		rangesVec.insert(rangesVec.begin(), ranges);
+		pos = find - 1;
+		std::cout << "Pos tras find - 1: " << pos << std::endl;
+		if (pos < 0)
+			break ;
+		for (; s[pos] == del && pos >= 0; pos--);
+	}
+	for (size_t i = 0; i < rangesVec.size(); i++)
+	{
+		std::cout << "RANGE: START: " << rangesVec[i].i << " | END: " << rangesVec[i].e << std::endl;
+		for (int j = rangesVec[i].i; j <= rangesVec[i].e; j++)
+			std::cout << s[j];
+		std::cout << std::endl;
+		//sleep(3);
+	}
+	return (rangesVec);
+}
+
 int	cmpLocUri(std::string &loc, std::string &url)//, std::string &url
 {
 	int	i = loc.size() - 1;
-	std::cout << "LOC SIZE: " << i << std::endl;
-	int_tuple	ranges;
-	size_t	find;
-	std::vector<int_tuple>	rangesLoc;
-	//meterlo todo en una funcion de calcular y guardar rangos
-	for (; i >= 0; )
-	{
-		ranges.e = i;
-		find = loc.rfind('/', i);
-		if (find == std::string::npos)
-		{
-			std::cout << "Deja de encontrar /" << std::endl;
-			break ;
-		}
-		ranges.i = find + 1;
-		i = find - 1;
-		for (; loc[i] == '/'; i--);
-		//std::cout << "RANGE: START: " << ranges.i << " | END: " << ranges.e << std::endl;
-		rangesLoc.insert(rangesLoc.begin(), ranges);
-	}
-	std::cout << "LOCATION PARSEADA: " << std::endl;
-	for (size_t i = 0; i < rangesLoc.size(); i++)
-	{
-		std::cout << "RANGE: START: " << rangesLoc[i].i << " | END: " << rangesLoc[i].e << std::endl;
-		for (int j = rangesLoc[i].i; j <= rangesLoc[i].e; j++)
-			std::cout << loc[j];
-		std::cout << std::endl;
-	}
+	std::vector<int_tuple>	rangesLoc = setRangesDelRev(loc, '/', i);
+	if (!rangesLoc.size())
+		return (0);
 	i = url.size() - 1;
-	for (; url[i] != '/'; i--); //meterlo todo en una funcion de calcular y guardar rangos
-	std::vector<int_tuple>	rangesURI;
-	for (; i >= 0; )
-	{
-		ranges.e = i;
-		find = url.rfind('/', i);
-		if (find == std::string::npos)
-		{
-			std::cout << "Deja de encontrar /" << std::endl;
-			break ;
-		}
-		ranges.i = find + 1;
-		i = find - 1;
-		for (; url[i] == '/'; i--);
-		//std::cout << "RANGE: START: " << ranges.i << " | END: " << ranges.e << std::endl;
-		rangesURI.insert(rangesURI.begin(), ranges);
-	}
-	std::cout << "URL PARSEADA: " << std::endl;
-	for (size_t i = 0; i < rangesURI.size(); i++)
-	{
-		std::cout << "RANGE: START: " << rangesURI[i].i << " | END: " << rangesURI[i].e << std::endl;
-		for (int j = rangesURI[i].i; j <= rangesURI[i].e; j++)
-			std::cout << url[j];
-		std::cout << std::endl;
-	}
-	std::cout << "Size: " << rangesLoc.size() << std::endl;
+	for (; url[i] != '/' && i >= 0; i--);
+	std::vector<int_tuple>	rangesURI = setRangesDelRev(url, '/', i);
+	std::cout << "Size de rangesLoc: " << rangesLoc.size() << std::endl;
+	if (!rangesURI.size() && rangesLoc.size())
+		return (1);
+	if (!rangesURI.size() && !rangesLoc.size())
+		return (0);
 	for (size_t i = 0; i < rangesLoc.size(); i++)
 	{
 		std::cout << "Comparar LOC: ";
@@ -297,8 +292,9 @@ int	main(void)
 {
 	//std::string	loc("/pepe/juanito/manuel//e");
 	std::string	loc("/buenas/eee/holas");
-	std::string	url("/buenas/eee/holas/adios/aaa");
-	//std::string	url("/");
+	//std::string	url("/buenas/eee/holas/adios/aaa");
+	//std::string	url("/pepe/");
+	std::string url("/");
 	if (!cmpLocUri(loc, url))
 		std::cout << "URL está contenida en location" << std::endl;
 	else

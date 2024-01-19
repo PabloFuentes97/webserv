@@ -8,9 +8,9 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 	if (!body.empty()) {
 		line.append("Content-Length: ");
 		line.append(std::to_string((body).size()));
-		line.append("\r\n");
+		//line.append("\r\n");
 	}
-	line.append("Connection: close");
+	//line.append("Connection: close");
 	line.append("\r\n\r\n");
 	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
 	return (line);
@@ -43,14 +43,15 @@ int	writeEvent(struct client *client)
 	//size_t requestLength = strlen(finalRequest.c_str());
 	size_t responseLen = client->response.response.size();
 	std::cout << "LEN DE RESPONSE: " << responseLen << std::endl;
-	//std::cout << "RESPONSE IS: " << client->response.response << std::endl;
+	//std::cout << "\033[1;31mRESPONSE IS: " << client->response.response << "\033[0m" << std::endl;
 	//while (bytes_sent < requestLength)
-	client->response.bytesSent += send(client->fd, client->response.response.c_str(), responseLen, MSG_DONTWAIT);
-	std::cout << "ENVIADO: " << client->response.bytesSent << std::endl;
+	client->response.bytesSent += send(client->fd, 
+				&client->response.response.c_str()[client->response.bytesSent], responseLen - client->response.bytesSent, MSG_DONTWAIT);
+	std::cout << "\033[1;31mENVIADO: " << client->response.bytesSent << "\033[0m" << std::endl;
 	if (client->response.bytesSent == responseLen)
 	{
 		client->state = -1;
-		return (1);
+		return (0);
 	}
-	return (0);
+	return (1);
 }

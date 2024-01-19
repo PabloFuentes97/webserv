@@ -240,7 +240,7 @@ int	readEvent(struct client *client)
 	if (bytes_read == 0) {
 		/*//std::cout << "[[CLOSE]]" << std::endl;
 		close(cli->ident);*/
-		return (0);
+		return (2);
 	}
 	buf[bytes_read] = '\0';
 	//CONCATENAR LO LEÍDO AL BUFFER ANTERIOR SI HABÍA ALGO
