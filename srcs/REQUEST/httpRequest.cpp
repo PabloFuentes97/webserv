@@ -24,6 +24,10 @@ void	loadRequest(HttpRequest *request)
 		}
 		std::cout << "Id de method: " << request->method_int << std::endl;
         request->url = line.substr(methodLength + 1, urlLength - methodLength - 1);
+		if (request->url.find('?') != std::string::npos) {
+			request->query = request->url.substr(request->url.find('?') + 1);
+			request->url = request->url.substr(0, request->url.find('?'));
+		}
     }
 	else
 	{

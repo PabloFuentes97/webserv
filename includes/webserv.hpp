@@ -84,6 +84,7 @@ typedef struct HttpRequest {
 	int			method_int;
 	typedef enum methods{GET, POST, PUT, DELETE} methods;
     std::string url; //version
+	std::string query;
     std::multimap<std::string, std::string> headers;
 	//std::multimap<std::string, std::string>	bodyData;
 	bool	cgi;
@@ -216,7 +217,7 @@ int		pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports);
 
 //---CGI---
 std::string getCgi(std::string script);
-std::string	CGIForward(std::string &path);
+std::string CGIForward(std::string &path, client *client);
 
 //ERRORS
 std::string	getStatus(int status);

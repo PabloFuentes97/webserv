@@ -350,19 +350,35 @@ std::string ResponseToMethod(client *client)
 	}
 	std::cout << "MÉTODO PERMITIDO: " << client->request.method << std::endl;
 	std::cout << "MÉTODO A EVALUAR: " << client->request.method_int << std::endl;
-	try
-	{
-		//checkear cgi antes
-		switch(client->request.method_int)
-		{
-			case HttpRequest::GET : {response = getMethod(client); break ;}
-			case HttpRequest::POST : {response = postMethod(client); break ;}
-			//case HttpRequest::PUT : {response = getMethod(server, client); break ;}
-			case HttpRequest::DELETE : {response = deleteMethod(client); break ;}
+	try {
+		///esto hay que modificarle la carpeta en algún momento
+		std::vector<std::string>	redirs;
+		redirs.push_back("alias");
+		redirs.push_back("root");
+		std::string filePath = getRequestedFile(client, redirs);
+
+		if (filePath.find(".py") != std::string::npos ||
+				filePath.find(".pl") != std::string::npos ||
+				filePath.find(".php") != std::string::npos) {
+			std::cout << "Entra en CGI" << std::endl;
+			HttpResponse Response;
+			client->request.status = 200;
+			Response.firstLine = getResponseHeader(client->request, Response.body);
+			Response.body = CGIForward(filePath, client);
+			response = Response.firstLine + Response.body;
+		}
+		else {
+			//pasar filepath como parámetro o montarlo sobre el cliente en vez d en cada método
+			switch(client->request.method_int)
+			{
+				case HttpRequest::GET : {response = getMethod(client); break ;}
+				case HttpRequest::POST : {response = postMethod(client); break ;}
+				//case HttpRequest::PUT : {response = getMethod(server, client); break ;}
+				case HttpRequest::DELETE : {response = deleteMethod(client); break ;}
+			}
 		}
 	}
-	catch(int error)
-	{
+	catch(int error) {
 		client->request.status = error;
 		response = getErrorResponse(client, error);
 	}
