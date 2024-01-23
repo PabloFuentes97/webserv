@@ -55,15 +55,6 @@ bTreeNode *findServerByClient(std::vector<bTreeNode *> servers, struct client *c
 	return (NULL);
 }
 
-std::string *getMultiMapValue(std::multimap<std::string, std::string> &map, std::string key)
-{
-	std::multimap<std::string, std::string>::iterator	it;
-	it = map.find(key);
-	if (it != map.end())
-		return (&it->second);
-	return (NULL);
-}
-
 pollfd *findUnusedPoll(pollfd *polls, int polls_n)
 {
 	for (int i = 0; i < polls_n; i++)
@@ -86,6 +77,94 @@ size_t	deleteClient(std::vector<client> &clients, client &c, pollfd &event, size
 	return (n - 1);
 }
 
+void	setClient(struct client &client, int fd, int id)
+{
+	client.fd = fd;
+	client.portID = id;
+	client.state = 0;
+	client.request.cgi = 0;
+	client.request.bufLen = 0;
+	client.response.bytesSent = 0;
+}
+
+void	setEvent(pollfd *event, int _fd, short _event, short _revent)
+{
+	event->fd = _fd;
+	event->events = _event;
+	event->revents = _revent;
+}
+
+int	createClient(std::vector<client> &clients, int socket, t_ports *ports, pollfd *events, int &events_n)
+{
+	struct sockaddr_in	client_addr;
+	int					client_len;
+
+	std::cerr << "Crea cliente nuevo" << std::endl;
+	std::cout << "SOCKET DE ESCUCHA: " << socket << std::endl;
+	int accept_socket = accept(socket, (struct sockaddr *)&client_addr, (socklen_t *)&client_len);
+	std::cout << "Socket de cliente aceptado: " << accept_socket << std::endl;
+	if (accept_socket == -1)
+	{
+		std::cout << "ACCEPT ERROR" << std::endl;
+		return (0);
+	}
+	setNonBlocking(accept_socket);
+	//CLIENTE
+	client c;
+	setClient(c, accept_socket, findPortbySocket(ports, socket));
+	std::cout << "Añadir cliente al vector" << std::endl;
+	clients.push_back(c);
+	std::cout << "Añadió bien el cliente al vector" << std::endl;
+	short	poll_events[2] = {POLLIN, POLLOUT};
+	for (int e = 0; e < 2; e++)
+	{
+		pollfd *event = findUnusedPoll(events, events_n);
+		if (event)
+		{
+			std::cout << "Hay evento a -1 para sobreescribir";
+			setEvent(event, accept_socket, poll_events[e], 0);
+			std::cout << "NEW EVENT | FD: " << event->fd << " | EVENTS: " << event->events << std::endl;
+		}
+		else
+		{
+			if (events_n < SOMAXCONN)
+			{
+				std::cout << "No hay evento a -1 para sobreescribir, escribo en el máximo actual" << std::endl;
+				setEvent(&events[events_n], accept_socket, poll_events[e], 0);
+				std::cout << "NEW EVENT | FD: " << events[events_n - 1].fd << " | EVENTS: " << events[events_n]
+					.events << std::endl;
+				events_n++;
+			}
+		}
+	}
+	return (1);
+}
+
+int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, pollfd &event, int &events_n)
+{
+	client *curr_client = findClientFd(clients, event.fd);
+	if (curr_client && curr_client->state < 2)
+	{
+		std::cout << "EVENTO DE LECTURA" << std::endl;
+		if (readEvent(curr_client))
+			events_n = deleteClient(clients, *curr_client, event, events_n);
+		else
+		{
+			std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
+			if (curr_client->state == 2)
+			{
+				setEvent(&event, -1, 0, 0);
+				curr_client->server = findServerByClient(servers, curr_client);
+				if (!curr_client->server)
+					events_n = deleteClient(clients, *curr_client, event, events_n);
+				else
+					curr_client->response.response = ResponseToMethod(curr_client);
+			}
+		}
+	}
+	return (1);
+}
+
 int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 {
 	std::cout << "EN POLLEVENTS" << std::endl;
@@ -94,19 +173,12 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 	std::vector<client>	clients;
 	bzero(events, sizeof(pollfd) * (SOMAXCONN + 1));
 	for (size_t i = 0; i < ports->n; i++)
-	{
-		events[i].fd = ports->fd[i];
-		events[i].events = POLLIN;
-		//events[i].revents = -1;
-	}
-	int	sign_events;
-	int	accept_socket;
-	//struct sockaddr_in	addr;
-	struct sockaddr_in	client_addr;
-	int					client_len;
+		setEvent(&events[i], ports->fd[i], POLLIN, -1);
 
-	for (;;) {
-		//std::cout << "----------LLAMAR A POLL PARA BUSCAR NUEVOS EVENTOS---------" << std::endl;
+	int	sign_events;
+
+	for (;;)
+	{
 		sign_events = poll(events, events_n, 0);
         if (sign_events == -1) {
             perror("poll failed: ");
@@ -114,93 +186,20 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
         }
 		if (sign_events > 0)
 		{
-			//std::cout << "Número de eventos a monitorear: " << events_n << std::endl;
-			//std::cout << "Número de eventos señalizados: " << sign_events  << std::endl;
 			int	events_it = events_n;
 			for (int i = 0, j = 0; i < events_it && j < sign_events; i++)
 			{
-				//std::cout << "========EVENTO DETECTADO======" << std::endl;
-				//std::cout << "EVENTO " << i << ": FD: " << events[i].fd << " | EVENTS: "
-				//	<< events[i].events << " | REVENTS: " << events[i].revents << std::endl;
-				if (events[i].revents & POLLIN) // socket de escucha, crear nuevo cliente
+				if (events[i].revents & POLLIN) // EVENTO DE LECTURA
 				{
 					if (events[i].fd < (int)(ports->n + 3)) //ES SOCKET DE PUERTO, CREAR NUEVO CLIENTE
 					{
-						std::cerr << "Crea cliente nuevo" << std::endl;
-						std::cout << "SOCKET DE ESCUCHA: " << events[i].fd << std::endl;
-						accept_socket = accept(events[i].fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_len);
-						std::cout << "Socket de cliente aceptado: " << accept_socket << std::endl;
-						if (accept_socket == -1) {
-							std::cout << "ACCEPT ERROR" << std::endl;
-							exit(0);
-						}
-						setNonBlocking(accept_socket);
-						//CLIENTE
-						client c;
-						//bzero(&c, sizeof(client));
-						c.fd = accept_socket;
-						c.portID = findPortbySocket(ports, events[i].fd);
-						std::cout << "PUERTO ASOCIADO AL CLIENTE: " << c.portID << std::endl;
-						//c.serverID = events[i].fd - 3; //esto es mas bien portID
-						c.state = 0;
-						c.request.cgi = 0;
-						c.request.bufLen = 0;
-						c.response.bytesSent = 0;
-						std::cout << "Añadir cliente al vector" << std::endl;
-						clients.push_back(c);
-						std::cout << "Añadió bien el cliente al vector" << std::endl;
-						short	poll_events[2] = {POLLIN, POLLOUT};
-						for (int e = 0; e < 2; e++)
-						{
-							pollfd *event = findUnusedPoll(events, events_n);
-							if (event)
-							{
-								std::cout << "Hay evento a -1 para sobreescribir";
-								event->fd = accept_socket;
-								event->events = poll_events[e];
-								event->revents = 0;
-								std::cout << "NEW EVENT | FD: " << event->fd << " | EVENTS: " << event->events << std::endl;
-							}
-							else
-							{
-								if (events_n < SOMAXCONN)
-								{
-									std::cout << "No hay evento a -1 para sobreescribir, escribo en el máximo actual" << std::endl;
-									events[events_n].fd = accept_socket;
-									events[events_n].events = poll_events[e];
-									events[events_n].revents = 0;
-									std::cout << "NEW EVENT | FD: " << events[events_n].fd << " | EVENTS: " << events[events_n]
-										.events << std::endl;
-									events_n++;
-								}
-							}
-						}
-						events[i].revents = 0;
+						createClient(clients, events[i].fd, ports, events, events_n);
 						j++;
 						continue ;
 					}
 					else // SOCKET DE CLIENTE, LEER REQUEST
 					{
-						client *curr_client = findClientFd(clients, events[i].fd);
-						if (curr_client && curr_client->state < 2)
-						{
-							std::cout << "EVENTO DE LECTURA" << std::endl;
-							if (readEvent(curr_client)) //meterlo todo en una funcion
-								events_n = deleteClient(clients, *curr_client, events[i], events_n);
-							std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
-							if (curr_client->state == 2)
-							{
-								events[i].fd = -1;
-								events[i].events = 0;
-								curr_client->server = findServerByClient(servers, curr_client);
-								if (!curr_client->server)
-									events_n = deleteClient(clients, *curr_client, events[i], events_n);
-								//events[i].revents = 0;
-								else
-									curr_client->response.response = ResponseToMethod(curr_client);
-							}
-						}
-						events[i].revents = 0;
+						readClient(clients, servers, events[i], events_n);
 						j++;	
 					}
 				}
@@ -217,6 +216,6 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 				}		
 			}
 		}
-		//sleep(5);
 	}
+	return (1);
 }	

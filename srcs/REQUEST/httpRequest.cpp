@@ -32,10 +32,12 @@ void	loadRequest(HttpRequest *request)
 	else
 	{
     	perror("invalid HTTP request");
-		exit(0);
+		//return (1);
+		throw (400);
     }
 	std::cout << std::endl << "METHOD: " << request->method << std::endl;
 	std::cout << std::endl << "URL: " << request->url << std::endl;
+	//checkear que tipo de accion deberia hacer en base a url - directorio, fichero normal, cgi
 	std::string	tokenKey;
 	std::string	tokenValue;
 	//Montar los headers
