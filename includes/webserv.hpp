@@ -176,6 +176,8 @@ void		findNode(bTreeNode *root, bTreeNode **find_node, std::string find);
 bTreeNode	*findLocation(struct client *client);
 bool		findFile(std::string &dirFind, std::string &file);
 std::string *getMultiMapValue(std::multimap<std::string, std::string> &map, std::string key);
+bool		isInMultiMapKey(std::multimap<std::string, std::string> &map, std::string key);
+bool		isInMultiMapValue(std::multimap<std::string, std::string> &map, std::string key, std::string value);
 
 //socket funcs
 
@@ -222,3 +224,12 @@ std::string	CGIForward(std::string &path);
 std::string	getStatus(int status);
 std::string	getErrorPath(struct client *client, int error);
 std::string	getErrorResponse(struct client *client, int error);
+
+//MULTIMAP
+typedef std::multimap<std::string, std::string>::iterator itmap;
+typedef std::pair<itmap, itmap> itr;
+std::string *getMultiMapValue(std::multimap<std::string, std::string> &map, std::string key);
+bool		isInMultiMapKey(std::multimap<std::string, std::string> &map, std::string key);
+bool		isInMultiMapValue(std::multimap<std::string, std::string> &map, std::string key, std::string value);
+bool 		isInMultiMapValues(std::multimap<std::string, std::string> &map, std::string key, std::string values[], size_t len);
+std::string	getMultiMapValueKeys(std::multimap<std::string, std::string> &map, std::string keys[], size_t len);

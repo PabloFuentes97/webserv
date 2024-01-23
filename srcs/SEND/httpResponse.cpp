@@ -20,11 +20,13 @@ std::string getResponseBody(std::string fileToReturn) {
 
 	std::string fileLine;
 	std::cout << "File a responder: " << fileToReturn << std::endl;
+	if (access(fileToReturn.c_str(), F_OK | R_OK))
+		throw (404);
 	std::ifstream file (fileToReturn, std::ios::binary);
     if (!file.is_open())
 	{
         std::cerr << "File error" << std::endl;
-        exit (1);
+        throw (500);
 	}
 	std::cout << "Lee bien el fichero para enviar la respuesta" << std::endl;
 	char c;

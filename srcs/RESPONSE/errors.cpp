@@ -5,6 +5,8 @@ std::string	getStatus(int status)
 	switch (status) {
         case 201:
             return "201 Created";
+		case 301:
+			return "301 Moved Permanently";
         case 400:
             return "400 Bad Request"; //El formato de la request está mal
         case 403:
