@@ -106,7 +106,7 @@ int	createClient(std::vector<client> &clients, int socket, t_ports *ports, pollf
 	if (accept_socket == -1)
 	{
 		std::cout << "ACCEPT ERROR" << std::endl;
-		return (0);
+		return (0); //throw
 	}
 	setNonBlocking(accept_socket);
 	//CLIENTE
@@ -142,6 +142,7 @@ int	createClient(std::vector<client> &clients, int socket, t_ports *ports, pollf
 
 int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, pollfd &event, int &events_n)
 {
+	//TRY
 	client *curr_client = findClientFd(clients, event.fd);
 	if (curr_client && curr_client->state < 2)
 	{
@@ -162,6 +163,10 @@ int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, p
 			}
 		}
 	}
+	//CATCH	CODIGO DE ERROR
+	/*
+		ESCRIBIR HEADER + HTML DE ERROR
+	*/
 	return (1);
 }
 

@@ -15,7 +15,8 @@ COMPILE         =   $(CC) $(FLAGS)
 # ************ CODE ************
 NAME            =   webserv
 
-DATA_STRUCTURES = 	seLst.cpp
+DATA_STRUCTURES = 	seLst.cpp \
+					multimapFuncs.cpp
 PARSER   		=   parse.cpp \
 					binaryInsert.cpp \
 					directories.cpp

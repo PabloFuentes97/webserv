@@ -337,7 +337,10 @@ std::string ResponseToMethod(client *client)
 	std::string response;
 	client->loc = findLocation(client);
 	if (!client->loc)
+	{
+		std::cout << "Pablo ha dejado un throw sin catch?\n";	
 		throw (1);
+	}
 	if (!checkMethods(client))
 		throw (2);
 	//redirigir a otra location y enviarla por la respuesta

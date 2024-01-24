@@ -1,6 +1,6 @@
 #include "../../includes/webserv.hpp"
 
-size_t locate_boundary(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize)
+size_t locate(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize)
 {
 	size_t	n = i;
 	size_t	e;
@@ -11,7 +11,7 @@ size_t locate_boundary(const char *haystack, const char *needle, size_t i, size_
 		while (haystack[n] == needle[e])
 		{
 			if (n == size)
-				throw (400);
+				return (-1);
 			e++;
 			n++;
 			if (e == nsize)
@@ -20,7 +20,7 @@ size_t locate_boundary(const char *haystack, const char *needle, size_t i, size_
 		n = n - e;
 		n++;
 	}
-	throw (400);
+	return (-1);
 }
 
 std::string	get_filename(std::vector<char> &header)
@@ -29,7 +29,9 @@ std::string	get_filename(std::vector<char> &header)
 	char cheader[header.size()];
 	for (size_t i = 0; i < header.size(); i++)
 		cheader[i] = header[i];
-	size_t start = locate_boundary(cheader, "filename=\"", 0, header.size(), 10) + 10;
+	size_t start = locate(cheader, "filename=\"", 0, header.size(), 10) + 10;
+	if (start == (size_t)-1)
+		throw (400);
 	while (start < header.size() && header[start] != '\"')
 	{
 		filename += cheader[start];
@@ -68,7 +70,9 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 		c++;
 		if (c >= 4 && fheader[c - 1] == '\n' && fheader[c - 2] == '\r' && fheader[c - 3] == '\n' && fheader[c - 4] == '\r')
 		{
-			limit = locate_boundary(body, ("\r\n--" + boundary).c_str(), i, size, ("\r\n--" + boundary).size() - 1);	
+			limit = locate(body, ("\r\n--" + boundary).c_str(), i, size, ("\r\n--" + boundary).size() - 1);	
+			if (limit == (size_t)-1)
+				throw (400);
 			while (i < limit)
 			{
 				fcont.push_back(body[i]);
@@ -91,17 +95,14 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 
 int	callMultiPart(struct client *client, std::string &path)
 {
-	//std::cout << "Entra en callMultiPart" << std::endl;
 	std::pair <std::multimap<std::string, std::string>::iterator, std::multimap<std::string, std::string>::iterator> itm;
 	itm = client->request.headers.equal_range("Content-Type");
 	char	*boundary = NULL;
 	for (std::multimap<std::string, std::string>::iterator itb = itm.first; itb != itm.second; itb++)
 	{
-		//std::cout << "Key: " << itb->first << " Value: " << itb->second << std::endl;
 		if (!itb->second.compare(0, 9, "boundary="))
 		{
 			boundary = (char *)(itb->second.c_str() + 9);
-			//std::cout << "Encuentro el boundary: " << boundary;
 			break ;
 		}
 	}
