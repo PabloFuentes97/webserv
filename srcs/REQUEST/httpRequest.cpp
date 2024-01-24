@@ -187,7 +187,7 @@ int	readBody(struct client *client)
 	{
 		
 	}
-	else
+	else //no hay variable content-length en el mapa
 	{
 		size_t	contentLen;
 		itm	it = client->request.headers.find("Content-Length");
@@ -232,11 +232,10 @@ int	readEvent(struct client *client)
 	client->request.buf.resize(client->request.bufLen);
 	for (size_t j = 0; size < client->request.bufLen; size++, j++)
 		client->request.buf[size] = buf[j];
-	for (size_t i = 0; i < client->request.bufLen; i++)
 	if (client->state == 0) //ESTOY EN MODO DE LEER EL HEADER
-		readHeader(client);
+		ret = readHeader(client);
 	if (client->state == 1)
-		readBody(client);
+		ret = readBody(client);
 	system("leaks -q webserv");
 	return (0);
 }
