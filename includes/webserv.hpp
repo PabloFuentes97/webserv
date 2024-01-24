@@ -122,6 +122,7 @@ typedef struct client {
 			return (1);
 		return (0);
 	}
+	size_t	timer;
 	//server *SocketServer;
 } client;
 
@@ -213,10 +214,10 @@ std::string getResponseBody(std::string fileToReturn);
 std::string	getStatus(int status);
 std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
 std::string GetResponse(bTreeNode	*server, std::string &url);
-std::string ResponseToMethod(client *client);
+void ResponseToMethod(client *client);
 
 //HTTP METHODS
-int		callMultiPart(struct client *client, std::string &path);
+void	callMultiPart(struct client *client, std::string &path);
 void	postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size);
 void	postText(std::string &route, const char *body, size_t size);
 void	postUrlEncoded(std::string &route, const char *body, size_t size);
@@ -236,7 +237,7 @@ std::string CGIForward(std::string &path, client *client);
 //ERRORS
 std::string	getStatus(int status);
 std::string	getErrorPath(struct client *client, int error);
-std::string	getErrorResponse(struct client *client, int error);
+void	getErrorResponse(struct client *client, int error);
 
 //MULTIMAP
 typedef std::multimap<std::string, std::string>::iterator itmap;
