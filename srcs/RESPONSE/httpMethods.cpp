@@ -1,11 +1,14 @@
 #include "../../includes/webserv.hpp"
 
-std::string	getRedir(struct client *client, std::string &absPath, itmap &redir, std::string &file)
+std::string	getRedir(struct client *client, itmap &redir, std::string &file)
 //pasar en vez del iterador con la clave y el valor ambos por separado
 {
 	std::cout << "En getRedir" << std::endl;
 	std::string redirs[] = {"postdir", "alias", "root"};
 	std::string	&loc = client->loc->contextArgs[0];
+	//coger path absoluto
+	char	buf[1000];
+	std::string absPath = getcwd(buf, 1000);
 	std::string path;
 	size_t		i;
 
@@ -62,7 +65,7 @@ std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs)
 		pathFile = getIndex(client, absPath);*/
 	//es un fichero
 	file = client->request.url.substr(locLen, client->request.url.length() - locLen + 1);
-	pathFile = getRedir(client, absPath, itm, file);
+	pathFile = getRedir(client, itm, file);
 	return (pathFile);
 }
 
@@ -85,9 +88,9 @@ std::string	getRequestedFile(struct client *client, std::vector<std::string> &re
 
 std::string	getIndex(client *client)
 {
-	char	buf[1000];
-	std::string absPath = getcwd(buf, 1000) + client->request.url;
-	std::cout << "Abspath: " << absPath << std::endl;
+	//char	buf[1000];
+	//std::string absPath = getcwd(buf, 1000) + client->request.url;
+	//std::cout << "Abspath: " << absPath << std::endl;
 
 	std::cout << "Es un directorio, usar index" << std::endl;
 	bTreeNode &loc = *(client->loc);
@@ -95,9 +98,12 @@ std::string	getIndex(client *client)
 	if (itk.first != loc.directivesMap.end())
 		std::cout << "Encontró la key de index: " << std::endl;
 	std::string	path;
+	std::vector<std::string>	redirs;
+	redirs.push_back("alias");
+	redirs.push_back("root");
 	for (itmap itb = itk.first, ite = itk.second; itb != ite; itb++)
 	{
-		path = absPath + itb->second; //volver a añadir el path absoluto
+		path = getPathFileRequest(client, redirs) + itb->second;  //itb->second absPath +
 		std::cout << "path de file index: " << path << std::endl;
 		if (!access(path.c_str(), F_OK | R_OK))
 		{

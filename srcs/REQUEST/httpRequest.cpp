@@ -137,7 +137,7 @@ int	readHeader(struct client *client)
 	loadRequest(&client->request);
 	client->state = 1;
 	//std::cout << "Pasa a estado 1" << std::endl;
-	return (1);
+	return (0);
 }
 
 int	readBodyChunked(struct client *client)
@@ -189,6 +189,7 @@ int	readBodyContentLen(struct client *client)
 	return (0);
 }
 
+//0 - bien, 1 - hay body pero no debería 2 - el body es mayor que el cont_len
 int	readBody(struct client *client)
 {
 	//std::cout << "Tiene que leer el body" << std::endl;
@@ -200,16 +201,18 @@ int	readBody(struct client *client)
 		std::pair<itm, itm>	keyVal = client->request.headers.equal_range("Content-Length");
 		contentLen = atoi(keyVal.first->second.c_str());
 	}
-	else
+	else //no hay variable content-length en el mapa
 	{
+		if (client->request.bufLen > 0)
+			return (1);
 		//std::cout << "No hay content-length" << std::endl;
 		client->state = 2;
 		//std::cout << "Pasa a estado 2" << std::endl;
-		return (1);
+		return (0);
 	}
 	//std::cout << "BufLen: " << client->request.bufLen << " , contentLen: " << contentLen << std::endl;
 	if (client->request.bufLen > contentLen) //o es mayor que el límite del servidor
-		return (-1);
+		return (2);
 	if (client->request.bufLen == contentLen)
 	{
 		//std::cout << "Leyó ya todo el body" << std::endl;
@@ -219,7 +222,7 @@ int	readBody(struct client *client)
 		//std::cout << std::endl;
 		//std::cout << "Pasa a estado 2" << std::endl;
 		client->state = 2;
-		return (1);
+		return (0);
 	}
 	return (0);
 }
@@ -255,17 +258,15 @@ int	readEvent(struct client *client)
 	{
 		client->request.buf[i] = buf[j];
 	}
-	//std::cout << "Imprimir buf concatenado: " << std::endl;
-	for (size_t i = 0; i < client->request.bufLen; i++)
-		//std::cout << client->request.buf[i];
 	//std::cout << std::endl;
 	//std::cout << "Longitud de buffer concantenado: " << client->request.bufLen << std::endl;
+	int	ret;
 	if (client->state == 0) //ESTOY EN MODO DE LEER EL HEADER
-		readHeader(client);
+		ret = readHeader(client);
 	if (client->state == 1)
-		readBody(client);
+		ret = readBody(client);
 	system("leaks -q webserv");
-	return (0);
+	return (ret);
 }
 
 /*int	readEvent(struct kevent *cli)
