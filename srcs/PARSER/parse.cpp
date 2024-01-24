@@ -5,7 +5,7 @@ bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &d
 	std::fstream	readTokens(file);
 	if (readTokens.fail())
 	{
-		std::cout << "Invalid file!" << std::endl;
+		//std::cout << "Invalid file!" << std::endl;
 		return (false);
 	}
 	std::string	tokenStr;
@@ -46,6 +46,20 @@ bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &d
 					start = end;
 					flag = 1;
 					break ;
+				}
+			}
+			if (tokens.size() > 1)
+			{
+				if (tokens[tokens.size() - 2].value == "{" && tokens[tokens.size() - 1].value == "}")
+				{
+					std::cout << "Error: contexto está vacío" << std::endl;
+					return (false);
+				}
+				if ((tokens[tokens.size() - 2].value == "{" || tokens[tokens.size() - 2].value == ";")
+						&& (tokens[tokens.size() - 1].value == ";"))
+				{
+					std::cout << "Error: antes de punto y coma no hay directiva" << std::endl;
+					return (false);
 				}
 			}
 		}
@@ -126,10 +140,10 @@ bool	validDirectivesCmp(std::string	&context, std::string &directive)
 bool	strInVector(std::string &str, std::vector<std::string> &vector) //usar para comparar tanto directivas como contextos
 //hacer que en vez de devolver un bool devuelva un puntero, si no está es NULL, si está puedo acceder a él directamente
 {
-	std::cout << "Buscar si str: " << str << " está en vector: " << std::endl; 
+	//std::cout << "Buscar si str: " << str << " está en vector: " << std::endl; 
 	for (size_t i = 0; i < vector.size(); i++)
 	{
-		std::cout << "A comparar: " << vector[i] << std::endl;
+		//std::cout << "A comparar: " << vector[i] << std::endl;
 		if (str == vector[i])
 			return (true);
 	}
@@ -145,28 +159,28 @@ bTreeNode	*copyBTreeNode(bTreeNode *node)
 
 void	binaryInsert(std::vector<bTreeNode *> &vec, bTreeNode *insert) //hacer mejor un template de esto
 {
-	std::cout << "Entro en binary insert" << std::endl;
+	//std::cout << "Entro en binary insert" << std::endl;
 	if (vec.empty())
 	{
 		vec.push_back(insert);
 		return ;
 	}
 	int	res = binarySearch(vec, insert);
-	std::cout << "Resultado de binarySearch: " << res << std::endl;
+	//std::cout << "Resultado de binarySearch: " << res << std::endl;
 	//hacer un switch
 	if (res == -1)
 	{
-		std::cout << "Lo añade al principio" << std::endl;
+		//std::cout << "Lo añade al principio" << std::endl;
 		vec.insert(vec.begin(), insert);
 	}
 	else if (res == -2)
 	{
-		std::cout << "Lo añade al final o vector está vacío" << std::endl;
+		//std::cout << "Lo añade al final o vector está vacío" << std::endl;
 		vec.push_back(insert);
 	}
 	else
 	{
-		std::cout << "Guardar elemento en pos: " << res << std::endl;
+		//std::cout << "Guardar elemento en pos: " << res << std::endl;
 		vec.insert(vec.begin() + res, insert);
 	}
 }
@@ -210,7 +224,7 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 			endDirective = i;
 			if (!validDirectivesCmp(root->contextName, tokens[initDirective].value))
 			{
-				std::cout << "Directiva no está entre las posbles" << std::endl;
+				//std::cout << "Directiva no está entre las posbles" << std::endl;
 				return (false);
 			}
 			std::pair<std::string, std::vector<std::string> >	keyVal;
@@ -271,11 +285,11 @@ bTreeNode	*parseFile(char	*file)
 	std::vector<t_token>	tokens;
 	if (!tokenizeFile(file, tokens, del))
 	{
-		std::cout << "Error al tokenizar" << std::endl;
+		//std::cout << "Error al tokenizar" << std::endl;
 		return (NULL);
 	}
-	for (size_t i = 0; i < tokens.size(); i++)
-		std::cout << "Token: " << tokens[i].value << std::endl;
+	//for (size_t i = 0; i < tokens.size(); i++)
+	//	std::cout << "Token: " << tokens[i].value << std::endl;
 	bTreeNode	*root = new bTreeNode();
 	root->contextName = "main";
 	if (!parseContextTokens(root, tokens))
@@ -283,8 +297,8 @@ bTreeNode	*parseFile(char	*file)
 		//funcion de liberar el arbol
 		return (NULL);
 	}
-	std::cout << "---------------Imprimir árbol de fichero de configuración---------------" << std::endl;
-	printBTree(root);
+	//std::cout << "---------------Imprimir árbol de fichero de configuración---------------" << std::endl;
+	//printBTree(root);
 	return (root);
 }
 
