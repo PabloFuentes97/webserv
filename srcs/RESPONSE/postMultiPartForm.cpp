@@ -93,7 +93,7 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 	create_files(files, route);
 }
 
-int	callMultiPart(struct client *client, std::string &path)
+void	callMultiPart(struct client *client, std::string &path)
 {
 	std::pair <std::multimap<std::string, std::string>::iterator, std::multimap<std::string, std::string>::iterator> itm;
 	itm = client->request.headers.equal_range("Content-Type");
@@ -109,13 +109,5 @@ int	callMultiPart(struct client *client, std::string &path)
 	if (!boundary)
 		throw (400);
 	std::string	boundaryStr(boundary);
-	try
-	{
 		postMultiPartForm(path, client->request.buf.c_str(), boundaryStr, client->request.bufLen);
-	}
-	catch(int s)
-	{
-		std::cerr << "ESTO ES UNA RESPONSE DE ERROR " << s << '\n';
-	}	
-	return (1);
 }

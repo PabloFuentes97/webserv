@@ -87,13 +87,19 @@ std::string	getErrorPath(struct client *client, int error)
 	return (errorPath);
 }
 
-std::string	getErrorResponse(struct client *client, int error)
+void	getErrorResponse(struct client *client, int error)
 {
 	std::string	resp;
 	std::string	path;
-
+	std::string body;
 	path = getErrorPath(client, error);
-	std::string body = getResponseBody(path);
-	resp = getResponseHeader(client->request, body) + body;
-	return (resp);
+	try
+	{
+		body = getResponseBody(path);
+	}
+	catch(const int e)
+	{
+		body = "<html><body><h1>ERROR FILE NOT FOUND</h1></body></html>";
+	}
+	client->response.response = getResponseHeader(client->request, body) + body;
 }

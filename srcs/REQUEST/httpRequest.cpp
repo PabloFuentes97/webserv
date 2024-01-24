@@ -31,7 +31,7 @@ void	loadRequest(HttpRequest *request)
     }
 	else
 	{
-    	perror("invalid HTTP request");
+    	//perror("invalid HTTP request");
 		//return (1);
 		throw (400);
     }
@@ -162,7 +162,7 @@ int	readHeader(struct client *client)
 		}
 	}
 	client->state = 1;
-	return (1);
+	return (0);
 }
 
 int	readBodyChunked(struct client *client)
@@ -184,9 +184,7 @@ int	readBody(struct client *client)
 {
 	typedef std::multimap<std::string, std::string>::iterator itm;
 	if (client->request.chunk.isChunked)
-	{
-		
-	}
+		return (readBodyChunked(client));
 	else //no hay variable content-length en el mapa
 	{
 		size_t	contentLen;
@@ -196,17 +194,17 @@ int	readBody(struct client *client)
 			std::pair<itm, itm>	keyVal = client->request.headers.equal_range("Content-Length");
 			contentLen = atoi(keyVal.first->second.c_str());
 			if (client->request.bufLen > contentLen)
-				return (-1); // ESTO ES UN THROW
+				return (1); // ESTO ES UN THROW
 			if (client->request.bufLen == contentLen)
 			{
 				client->state = 2;
-				return (1);
+				return (0);
 			}
 		}
 		else
 		{
 			client->state = 2;
-			return (1);
+			return (0);
 		}
 	}
 	return (0);
@@ -232,10 +230,11 @@ int	readEvent(struct client *client)
 	client->request.buf.resize(client->request.bufLen);
 	for (size_t j = 0; size < client->request.bufLen; size++, j++)
 		client->request.buf[size] = buf[j];
+	int ret;
 	if (client->state == 0) //ESTOY EN MODO DE LEER EL HEADER
 		ret = readHeader(client);
 	if (client->state == 1)
 		ret = readBody(client);
 	system("leaks -q webserv");
-	return (0);
+	return (ret);
 }

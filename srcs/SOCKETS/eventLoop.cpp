@@ -157,30 +157,41 @@ int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers,
 
 int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, pollfd &event)
 {
-	//TRY
 	client *curr_client = findClientFd(clients, event.fd);
-	if (curr_client && curr_client->state < 2)
+	try
 	{
-		std::cout << "READ EVENT" << std::endl;
-		if (readEvent(curr_client))
-			deleteClient(clients, *curr_client, event);
-		else
+		if (curr_client && curr_client->state < 2)
 		{
-			//std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
-			if (curr_client->state == 2)
+			std::cout << "READ EVENT" << std::endl;
+			if (readEvent(curr_client))
+				deleteClient(clients, *curr_client, event);
+			else 
 			{
-				setEvent(&event, -1, 0, 0);
-				curr_client->server = findServerByClient(servers, curr_client);
-				if (!curr_client->server)
-					deleteClient(clients, *curr_client, event);
-				else
-					curr_client->response.response = ResponseToMethod(curr_client);
+				//std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
+				if (curr_client->state == 2)
+				{
+					setEvent(&event, -1, 0, 0);
+					curr_client->server = findServerByClient(servers, curr_client);
+					if (!curr_client->server)
+						deleteClient(clients, *curr_client, event);
+					else
+						ResponseToMethod(curr_client);
+				}
 			}
 		}
 	}
+	catch(const int error)
+	{
+		curr_client->request.status = error;
+		getErrorResponse(curr_client, error);
+		curr_client->state = 3;
+	}
+	
+	
 	//CATCH	CODIGO DE ERROR
 	/*
-		ESCRIBIR HEADER + HTML DE ERROR
+		ESCRIBIR HEADER + HTML DE ERROR	curr_client.response.response = "";
+		PONER ESTADO DEL CLIENTE A ESPERAR PARA RESPONDER (curr_client->state = 3)
 	*/
 	return (1);
 }
