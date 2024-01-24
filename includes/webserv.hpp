@@ -76,7 +76,17 @@ struct HttpResponse {
 	//constructor y métodos
 };
 
+typedef struct	chunk{
+	bool		isChunked; // If true the request body is chunk encoded;
+	bool		readingSize; // If true we are currently reading the HEX value of the chunk size
+	std::string	stringHex; // String of the HEX value of the chunk size
+	size_t		size; // Size of the current chunk
+	size_t		read; // Bytes read at the current chunk
+}	chunk;
+
 typedef struct HttpRequest {
+	
+	chunk		chunk;
 	std::string	buf;
 	size_t		bufLen;
 	std::string	header;
@@ -210,6 +220,8 @@ int		callMultiPart(struct client *client, std::string &path);
 void	postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size);
 void	postText(std::string &route, const char *body, size_t size);
 void	postUrlEncoded(std::string &route, const char *body, size_t size);
+//LOCATE
+size_t locate(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize);
 
 //---SOCKET---
 void 	setNonBlocking(int fd);

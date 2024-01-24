@@ -120,8 +120,8 @@ int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers,
 	//std::cout << "Socket de cliente aceptado: " << accept_socket << std::endl;
 	if (accept_socket == -1)
 	{
-		//std::cout << "ACCEPT ERROR" << std::endl;
-		return (0);
+		std::cout << "ACCEPT ERROR" << std::endl;
+		return (0); //throw
 	}
 	setNonBlocking(accept_socket);
 	//CLIENTE
@@ -157,6 +157,7 @@ int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers,
 
 int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, pollfd &event)
 {
+	//TRY
 	client *curr_client = findClientFd(clients, event.fd);
 	if (curr_client && curr_client->state < 2)
 	{
@@ -177,6 +178,10 @@ int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, p
 			}
 		}
 	}
+	//CATCH	CODIGO DE ERROR
+	/*
+		ESCRIBIR HEADER + HTML DE ERROR
+	*/
 	return (1);
 }
 
