@@ -24,6 +24,7 @@ bTreeNode *findServerByClient(std::vector<bTreeNode *> servers, struct client *c
 {
 	std::multimap<std::string, std::string>::iterator	it;
 	//std::cout << "BUSCAR POR HOSTNAME" << std::endl;
+	//Busca por hostname
 	it = client->request.headers.find("hostname");
 	if (it != client->request.headers.end())
 	{
@@ -40,7 +41,7 @@ bTreeNode *findServerByClient(std::vector<bTreeNode *> servers, struct client *c
 			}
 		}
 	}
-	//busca por puerto
+	//Busca por puerto
 	//std::cout << "BUSCAR POR PUERTO" << std::endl;
 	for (size_t i = 0; i < servers.size(); i++)
 	{
@@ -76,18 +77,15 @@ void	setEvent(pollfd *event, int _fd, short _event, short _revent)
 void	deleteClient(std::vector<client> &clients, client &c) //int i, int events_n
 {
 	close(c.fd);
-	/*event.fd = -1;
-	event.events = 0;
-	event.revents = 0;*/
 	setEvent(c.events[0], -1, 0, 0);
 	setEvent(c.events[1], -1, 0, 0);
 	std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), c);
 	if (it != clients.end())
 	{
-		std::cout << "Ha encontrado un cliente para borrar: " << it->fd << std::endl;
+		//std::cout << "Ha encontrado un cliente para borrar: " << it->fd << std::endl;
 	}
 	clients.erase(it);
-	//std::cerr << "Elimina cliente" << std::endl;
+	std::cerr << "Elimina cliente" << std::endl;
 	/*
 	if (i == events_n)
 	{
@@ -247,11 +245,9 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 
 	for (;;)
 	{
-		
 		sign_events = poll(events, events_n, 0);
         if (sign_events == -1) {
             perror("poll failed: ");
-            //exit(1);
         }
 		if (sign_events > 0)
 		{
@@ -267,9 +263,7 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 						//continue ;
 					}
 					else // SOCKET DE CLIENTE, LEER REQUEST
-					{
 						readClient(clients, servers, events[i]);
-					}
 					j++;
 				}
 				else if (events[i].revents & POLLOUT) // SOCKET DE CLIENTE, ESCRIBIR REQUEST
@@ -282,8 +276,7 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 						{
 							std::cout << "Termina de escribir, BORRA" << std::endl;
 							deleteClient(clients, *curr_client);
-						}
-							
+						}		
 					}
 					j++;
 				}		
