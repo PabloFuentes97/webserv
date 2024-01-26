@@ -27,7 +27,7 @@ char **getCgiEnv(std::string &path, client* client) {
 			contentLengthVal = atoi((*getMultiMapValue(client->request.headers, "Content-Length")).c_str());
 			contentLength = "CONTENT_LENGTH=" + *contentLengthStr;
 		}
-
+ 
 		client->request.query = client->request.buf.substr(0, contentLengthVal);
 		std::cout << "BUF IS: " << client->request.buf << std::endl;
 		std::cout << "POST QUERY IS: " << client->request.query << std::endl;
@@ -132,4 +132,5 @@ void CGIForward(client *client)
 	client->response.response = Response.firstLine + Response.body;
 
     return ;
+	
 }
