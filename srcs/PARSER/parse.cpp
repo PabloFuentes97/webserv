@@ -111,7 +111,7 @@ bool	validDirectivesCmp(std::string	&context, std::string &directive)
 	const char	*events[] = {"prueba", NULL};
 	const char	*http[] = {"hola", NULL};
 	const char	*types[] = {"text/html", "text/css", "text/xml"};
-	const char	*server[] = {"listen", "limit_body_size", "server_name", "error_page", "root", "index", NULL};
+	const char	*server[] = {"listen", "limit_body_size", "server_name", "timeout", "error_page", "root", "index", NULL};
 	const char	*location[] = {"autoindex", "root", "methods", "alias", "error_files", "index", "redirect", 
 								"try_files", "postdir", "cgi_pass", NULL};
 

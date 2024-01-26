@@ -204,11 +204,12 @@ void	getMethod(client *client) {
 void	postMethod(client *client)
 {
 	std::cout << "ESTOY EN POST" << std::endl;
-	std::cout << "BODY REQUEST: " << client->request.buf << std::endl;
+	//std::cout << "BODY REQUEST: " << client->request.buf << std::endl;
 	std::string filePath;
 	std::vector<std::string>	redirs;
 	redirs.push_back("postdir");
 	filePath = getRequestedFile(client, redirs);
+	std::cout << "FILEPATH: " << filePath << std::endl;
 	std::multimap<std::string, std::string>::iterator itm;
 	itm = client->request.headers.find("Content-Type");
 	if (itm != client->request.headers.end())
@@ -224,6 +225,8 @@ void	postMethod(client *client)
 	else if (itm->second == "text/plain\r")
 		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else
+	{
+		std::cout << "Lanza 400" << std::endl;
 		throw (400);
 	client->response.response = "HTTP/1.1 201 Created\r\n\r\n";
 }

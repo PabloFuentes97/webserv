@@ -235,6 +235,6 @@ int	readEvent(struct client *client)
 		ret = readHeader(client);
 	if (client->state == 1)
 		ret = readBody(client);
-	system("leaks -q webserv");
+	//system("leaks -q webserv");
 	return (ret);
 }
