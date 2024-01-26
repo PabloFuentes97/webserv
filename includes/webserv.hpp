@@ -130,11 +130,6 @@ typedef struct client {
 			return (1);
 		return (0);
 	}
-<<<<<<< HEAD
-=======
-	size_t	timer;
-	//server *SocketServer;
->>>>>>> 27c57c395951d3e08b462822ddb37b7b243bd75f
 } client;
 
 class	clientQueue {
