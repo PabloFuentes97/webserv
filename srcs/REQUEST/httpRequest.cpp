@@ -203,7 +203,7 @@ int	readBody(struct client *client)
 	}
 	else //no hay variable content-length en el mapa
 	{
-		if (client->request.bufLen > 0)
+		if (client->request.bufLen > 0) //esta mal, no tiene content-length pero sí hay body
 			return (1);
 		//std::cout << "No hay content-length" << std::endl;
 		client->state = 2;
@@ -265,7 +265,7 @@ int	readEvent(struct client *client)
 		ret = readHeader(client);
 	if (client->state == 1)
 		ret = readBody(client);
-	system("leaks -q webserv");
+	//system("leaks -q webserv");
 	return (ret);
 }
 

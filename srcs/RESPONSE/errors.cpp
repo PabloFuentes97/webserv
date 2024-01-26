@@ -47,6 +47,7 @@ std::string	defaultErrorPath(int error)
 		case 400: {errorPath = absPath + "/errors" + "/error400.html" ; break ; }
 		case 403: {errorPath = absPath + "/errors" + "/error403.html" ; break ; }
 		case 404: {errorPath = absPath + "/errors" + "/error404.html" ; break ; }
+		case 408: {errorPath = absPath + "/errors" + "/error408.html" ; break ; }
 		//server errors
 		case 500: {errorPath = absPath + "/errors" + "/error500.html" ; break ; }
 	}
@@ -61,25 +62,28 @@ std::string	getErrorPath(struct client *client, int error)
 
 	std::cout << "---------Hubo error: " << error << " , mandar error path--------" << std::endl;
 	//mirar si en config hay ficheros de error redirigidos
-	bTreeNode	&loc = *(client->loc);
-	typedef std::multimap<std::string, std::string>::iterator itm;
-	
-	itm it = loc.directivesMap.find("error_files");
-	if (it != loc.directivesMap.end())
+	if (client->loc)
 	{
-		std::pair<itm, itm> itr = loc.directivesMap.equal_range("error_files");
-		std::cout << "Encuentra error_files en location" << std::endl;
-		for (itm ib = itr.first, ie = itr.second; ib != ie; ib++)
+		std::cout << "Buscar en location error_files" << std::endl;
+		typedef std::multimap<std::string, std::string>::iterator itm;
+		
+		itm it = client->loc->directivesMap.find("error_files");
+		if (it != client->loc->directivesMap.end())
 		{
-			std::cout << "Key: " << ib->first << " | Value: " << ib->second << std::endl;
-			int	n = atoi(ib->second.c_str());
-			std::cout << "error de error_files: " << n << std::endl;
-			if (n == error)
+			std::pair<itm, itm> itr = client->loc->directivesMap.equal_range("error_files");
+			std::cout << "Encuentra error_files en location" << std::endl;
+			for (itm ib = itr.first, ie = itr.second; ib != ie; ib++)
 			{
-				ie--;
-				std::cout << "Fichero a redirigir: " << "Key: " << ie->first << " | Value: " << ie->second << std::endl;
-				errorPath = absPath + ie->second;
-				return (errorPath);
+				std::cout << "Key: " << ib->first << " | Value: " << ib->second << std::endl;
+				int	n = atoi(ib->second.c_str());
+				std::cout << "error de error_files: " << n << std::endl;
+				if (n == error)
+				{
+					ie--;
+					std::cout << "Fichero a redirigir: " << "Key: " << ie->first << " | Value: " << ie->second << std::endl;
+					errorPath = absPath + ie->second;
+					return (errorPath);
+				}
 			}
 		}
 	}
@@ -93,6 +97,7 @@ std::string	getErrorResponse(struct client *client, int error)
 	std::string	path;
 
 	path = getErrorPath(client, error);
+	std::cout << "ERROR PATH: " << path << std::endl;
 	std::string body = getResponseBody(path);
 	resp = getResponseHeader(client->request, body) + body;
 	return (resp);
