@@ -1,7 +1,5 @@
 #include "../../includes/webserv.hpp"
 
-
-
 void	findNode(bTreeNode *root, bTreeNode **find_node, std::string	find)
 //quiza pasar un puntero a una funcion de comparar, que ya compare los valores para determinar si coincide o no
 {
@@ -328,11 +326,11 @@ std::vector<int_tuple>	setRangesDelRev(std::string &s, char del, int pos)
 	size_t					find;
 	std::vector<int_tuple>	rangesVec;
 
-	if (s.size() == 1)
+	if (s.size() <= 1)
 		return (rangesVec);
-	for (; pos >= 0; )
+	while (pos > 0)
 	{
-		std::cout << "Pos de final: " << pos << std::endl;
+		std::cout << "Iterador de final: " << pos << std::endl;
 		//sleep(2);
 		ranges.e = pos;
 		find = s.rfind(del, pos);
@@ -343,13 +341,18 @@ std::vector<int_tuple>	setRangesDelRev(std::string &s, char del, int pos)
 			break ;
 		}
 		ranges.i = find + 1;
+		std::cout << "Iterador de principio: " << ranges.i << std::endl;
 		rangesVec.insert(rangesVec.begin(), ranges);
 		pos = find - 1;
-		std::cout << "Pos tras find - 1: " << pos << std::endl;
-		if (pos < 0)
-			break ;
-		for (; s[pos] == del && pos >= 0; pos--);
+		//std::cout << "Pos restado: " << pos << std::endl;
+		while (pos > 0 && s[pos] == del)
+		{
+			pos--;
+			std::cout << "RESTA A POS: " << pos << std::endl;
+		}
+		std::cout << "Pos restado: " << pos << std::endl;
 	}
+	std::cout << "SALGO DE BUCLE" << std::endl;
 	for (size_t i = 0; i < rangesVec.size(); i++)
 	{
 		std::cout << "RANGE: START: " << rangesVec[i].i << " | END: " << rangesVec[i].e << std::endl;
@@ -358,22 +361,37 @@ std::vector<int_tuple>	setRangesDelRev(std::string &s, char del, int pos)
 		std::cout << std::endl;
 		//sleep(3);
 	}
+	std::cout << "TERMINO RANGO" << std::endl;
 	return (rangesVec);
 }
 
 int	cmpLocUri(std::string &loc, std::string &url)//, std::string &url
 {
 	int	i = loc.size() - 1;
+	std::cout << "------------HACER RANGOS DE LOC------------" << std::endl;
+	if (loc[i] == '/')
+	{
+		for (; loc[i] != '/' && i >= 0; i--);
+	}
 	std::vector<int_tuple>	rangesLoc = setRangesDelRev(loc, '/', i);
 	if (!rangesLoc.size())
 		return (0);
 	i = url.size() - 1;
-	for (; url[i] != '/' && i >= 0; i--);
+	if (url[i] == '/')
+	{
+		for (; url[i] != '/' && i >= 0; i--);
+	}
+	std::cout << "------------HACER RANGOS DE URI------------" << std::endl;
 	std::vector<int_tuple>	rangesURI = setRangesDelRev(url, '/', i);
 	std::cout << "Size de rangesLoc: " << rangesLoc.size() << std::endl;
-	if (!rangesURI.size() && rangesLoc.size())
-		return (1);
-	if (!rangesURI.size() && !rangesLoc.size())
+	//if (!rangesURI.size() && rangesLoc.size())
+	//	return (1);
+	if (!rangesURI.size())
+	{
+		int_tuple	tuple = {1, url.size() - 1};
+		rangesURI.push_back(tuple);
+	}
+	else if (!rangesURI.size() && !rangesLoc.size())
 		return (0);
 	for (size_t i = 0; i < rangesLoc.size(); i++)
 	{

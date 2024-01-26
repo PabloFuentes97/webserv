@@ -141,7 +141,10 @@ int	main(int argc, char **argv) {
 	//guardar arbol con config
 	bTreeNode	*root = parseFile(argv[1]);
 	if (!root)
+	{
+		std::cout << "BAD CONFIG FILE " << std::endl;
 		return (2);
+	}	
 	bTreeNode	*http = NULL;
 	findNode(root, &http, "http");
 	if (!http)

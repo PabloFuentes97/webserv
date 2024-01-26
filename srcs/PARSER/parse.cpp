@@ -112,7 +112,7 @@ bool	validDirectivesCmp(std::string	&context, std::string &directive)
 	const char	*http[] = {"hola", NULL};
 	const char	*types[] = {"text/html", "text/css", "text/xml"};
 	const char	*server[] = {"listen", "limit_body_size", "server_name", "timeout", "error_page", "root", "index", NULL};
-	const char	*location[] = {"autoindex", "root", "methods", "alias", "error_files", "index", "redirect", 
+	const char	*location[] = {"autoindex", "limit_body_size", "root", "methods", "alias", "error_files", "index", "redirect", 
 								"try_files", "postdir", "cgi_pass", NULL};
 
 	const char	**find = NULL;
@@ -224,7 +224,7 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 			endDirective = i;
 			if (!validDirectivesCmp(root->contextName, tokens[initDirective].value))
 			{
-				//std::cout << "Directiva no está entre las posbles" << std::endl;
+				std::cout << "Directiva no está entre las posibles: " << tokens[initDirective].value << std::endl;
 				return (false);
 			}
 			std::pair<std::string, std::vector<std::string> >	keyVal;

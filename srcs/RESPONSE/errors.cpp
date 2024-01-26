@@ -2,6 +2,7 @@
 
 std::string	getStatus(int status)
 {
+	std::cout << "REQUEST STATUS: " << status << std::endl;
 	switch (status) {
         case 201:
             return "201 Created";
@@ -103,6 +104,7 @@ void	getErrorResponse(struct client *client, int error)
 	}
 	catch(const int e)
 	{
+		//client->request.status  = 400;
 		body = "<html><body><h1>ERROR FILE NOT FOUND</h1></body></html>";
 	}
 	client->response.response = getResponseHeader(client->request, body) + body;
