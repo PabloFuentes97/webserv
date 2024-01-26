@@ -4,7 +4,7 @@ std::string	getRedir(struct client *client, itmap &redir, std::string &file)
 //pasar en vez del iterador con la clave y el valor ambos por separado
 {
 	std::cout << "En getRedir" << std::endl;
-	std::string redirs[] = {"postdir", "alias", "root"};
+	std::string redirs[] = {"postdir", "alias", "root", "cgi_pass"};
 	std::string	&loc = client->loc->contextArgs[0];
 	//coger path absoluto
 	char	buf[1000];
@@ -22,11 +22,13 @@ std::string	getRedir(struct client *client, itmap &redir, std::string &file)
 				case 0 : { path = absPath + redir->second; break ;} //postdir
 				case 1 : { path = absPath + redir->second + file; break ;} //alias
 				case 2 : { path = absPath + redir->second + loc + file; break ;} //root
+				case 3 : { path = absPath + redir->second; break ;} //cgi_pass
 			}
 			break ;
 		}
 	}
-	if (i == 3)
+	std::cout << "•••••••PATH IS: " << path << std::endl;
+	if (i == 4)
 		throw (404);
 	return (path);
 }
@@ -318,7 +320,7 @@ void ResponseToMethod(client *client)
 
 	if (client->request.cgi) {
 		std::cout << "Entra en CGI" << std::endl;
-		//CGI
+		CGIForward(client);
 	}
 	else 
 	{

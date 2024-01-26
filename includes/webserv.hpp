@@ -21,11 +21,13 @@
 #include <vector>
 #include <list>
 #include <algorithm>
+#include <libc.h>
 
 #define MAX_SE_ELEM 64
 #define MAX_READ 17
 #define BUF_SIZE 200000
 #define PORT 8080
+#define CGITIMEOUT 3
 
 typedef struct seNode{
 	size_t			elem_n;
@@ -209,7 +211,7 @@ int		writeEvent(struct client *client);
 //void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq);
 //HttpRequest loadRequest(char *buffer);
 void		loadRequest(HttpRequest *request);
-std::string	getRequestedFile(bTreeNode	*server, client *client);
+std::string	getRequestedFile(struct client *client, std::vector<std::string> &redirs);
 std::string getResponseBody(std::string fileToReturn);
 std::string	getStatus(int status);
 std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
@@ -232,7 +234,7 @@ int		pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports);
 
 //---CGI---
 std::string getCgi(std::string script);
-std::string CGIForward(std::string &path, client *client);
+void		CGIForward(client *client);
 
 //ERRORS
 std::string	getStatus(int status);

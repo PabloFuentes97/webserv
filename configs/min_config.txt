@@ -40,10 +40,6 @@ server{
             autoindex on;
             alias /documents/;
         }
-        location    /cgi
-        {
-            cgi_pass    /cgi/;
-        }
         location    /redirect
         {
             redirect /documents;
@@ -52,6 +48,7 @@ server{
             alias      /documents/;
             methods   GET POST DELETE;
             postdir   /postfiles/;
+			cgi_pass   /cgi/;
             index   /documents/index.html /documents/index.htm;
         }
         location    /manolo

@@ -28,6 +28,14 @@ void	loadRequest(HttpRequest *request)
 			request->query = request->url.substr(request->url.find('?') + 1);
 			request->url = request->url.substr(0, request->url.find('?'));
 		}
+		if (request->url.find(".py") != std::string::npos ||
+			request->url.find(".pl") != std::string::npos ||
+			request->url.find(".php") != std::string::npos)
+		{
+			request->cgi = true;
+		}
+		else
+			request->cgi = false;
     }
 	else
 	{
