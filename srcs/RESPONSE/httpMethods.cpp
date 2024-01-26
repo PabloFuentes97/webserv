@@ -60,30 +60,10 @@ std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs)
 	}
 	if (i == redirs.size())
 		throw (400);
-	//sacar la parte del directorio fuera
-	/*if (client->request.url[client->request.url.size() - 1] == '/') //es un directorio
-		pathFile = getIndex(client, absPath);*/
-	//es un fichero
+
 	file = client->request.url.substr(locLen, client->request.url.length() - locLen + 1);
 	pathFile = getRedir(client, itm, file);
 	return (pathFile);
-}
-
-std::string	getRequestedFile(struct client *client, std::vector<std::string> &redirs) //sacar location y pasarlo como argumento
-{
-	std::cout << "URL: " << client->request.url << std::endl;
-	//bTreeNode	*loc = findLocation(server, client->request.url);
-	std::string	filePath;
-	std::string path;
-	if (!client->loc)
-	{
-		std::cout << "No encontró loc" << std::endl;
-		client->request.status = 404;
-		throw (404);
-	}
-	filePath = getPathFileRequest(client, redirs);
-	std::cout << std::endl << "FILEPATH IS:" << filePath << std::endl; 
-	return (filePath); 
 }
 
 void	getIndex(client *client)
@@ -99,7 +79,10 @@ void	getIndex(client *client)
 	redirs.push_back("root");
 	for (itmap itb = itk.first, ite = itk.second; itb != ite; itb++)
 	{
-		path = getPathFileRequest(client, redirs) + itb->second;
+		if (itb->second[0] != '/')
+			path = getPathFileRequest(client, redirs) + '/' + itb->second;
+		else
+			path = getPathFileRequest(client, redirs) + itb->second;
 		std::cout << "path de file index: " << path << std::endl;
 		if (!access(path.c_str(), F_OK | R_OK))
 		{
@@ -132,12 +115,7 @@ void	autoIndexListing(client *client)
 		std::cout << elem->d_name << std::endl;
 		if (elem->d_name[0] != '.')
 		{
-			//body += "<h1>";
 			body += "<a href=\"http://";
-			//body += '"';
-			//body += "http://";
-			//sustituir esto por una funcion que devuelva la primera key que encuentra en un array de prioridades
-			//body += getRequestedFile(client, redirs);
 			body += *(getMultiMapValue(client->request.headers, "Host"));
 			body += getMultiMapValueKeys(client->loc->directivesMap, redirs, 2);
 			body += elem->d_name;
@@ -146,8 +124,6 @@ void	autoIndexListing(client *client)
 			body += "\">";
 			body += elem->d_name;
 			body += "\n</a>";
-			//body += "</a>";
-			//body += "</h1>";
 		}
 		elem = readdir(dir);
 	}
@@ -173,32 +149,45 @@ static void pathIsDirectory(client *client)
 	throw (400);
 }
 
+static void	pathIsFile(client *client, std::string &path)
+{
+	/*struct stat	st;
+	std::string 				filePath;
+	std::vector<std::string>	redirs;
+	redirs.push_back("alias");
+	redirs.push_back("root");
+	filePath = getPathFileRequest(client, redirs);
+	std::cout << "filePath: " << filePath << std::endl;
+	if (stat(filePath.c_str(), &st) == 0 && st.st_mode & S_IFDIR)
+	{
+		throw (404);
+	}*/
+	if (access(path.c_str(), F_OK) != 0)
+		throw (404);
+	if (access(path.c_str(), R_OK) != 0)
+		throw (403);
+
+	HttpResponse Response;
+	client->request.status = 200;
+	Response.body = getResponseBody(path);
+	Response.firstLine = getResponseHeader(client->request, Response.body);
+	client->response.response = Response.firstLine + Response.body;
+}
+
 void	getMethod(client *client) {
 	
 	std::cout << "GET METHOD" << std::endl;
-
-	if (client->request.url[client->request.url.size() - 1] == '/') //es un directorio
-			pathIsDirectory(client);
+	std::vector<std::string>	redirs;
+	redirs.push_back("alias");
+	redirs.push_back("root");
+	std::string	path = getPathFileRequest(client, redirs);
+	struct stat	st;
+	if (stat(path.c_str(), &st) == 0 && st.st_mode & S_IFDIR)
+		pathIsDirectory(client);
+	//if (client->request.url[client->request.url.size() - 1] == '/') //es un directorio
+	//	pathIsDirectory(client);
 	else
-	{
-		std::string 				filePath;
-		std::vector<std::string>	redirs;
-		redirs.push_back("alias");
-		redirs.push_back("root");
-		filePath = getRequestedFile(client, redirs);
-		std::cout << "filePath: " << filePath << std::endl;
-		if (access(filePath.c_str(), F_OK) != 0)
-			throw (404);
-		if (filePath[filePath.size() - 1] == '/')
-			return (pathIsDirectory(client));
-		if (access(filePath.c_str(), R_OK) != 0)
-			throw (403);
-		HttpResponse Response;
-		client->request.status = 200;
-		Response.body = getResponseBody(filePath);
-		Response.firstLine = getResponseHeader(client->request, Response.body);
-		client->response.response = Response.firstLine + Response.body;
-	}
+		pathIsFile(client, path);
 }
 
 void	postMethod(client *client)
@@ -208,15 +197,12 @@ void	postMethod(client *client)
 	std::string filePath;
 	std::vector<std::string>	redirs;
 	redirs.push_back("postdir");
-	filePath = getRequestedFile(client, redirs);
+	filePath = getPathFileRequest(client, redirs);
 	std::cout << "FILEPATH: " << filePath << std::endl;
 	std::multimap<std::string, std::string>::iterator itm;
 	itm = client->request.headers.find("Content-Type");
-	if (itm != client->request.headers.end())
-	{
-		std::cout << "Encontró la key: " << itm->first << " , Value: " << itm->second << std::endl;
-	}
-	//DIFERENTES TIPOS DE POST: APPLICATION, MULTIPART-FORM, TEXT-PLAIN
+	if (itm == client->request.headers.end())
+		throw (400);
 	std::cout << "TIPO DE POST: " << itm->second << std::endl;
 	if (itm->second == "application/x-www-form-urlencoded\r")
 		postUrlEncoded(filePath, client->request.buf.c_str(), client->request.bufLen);
@@ -239,7 +225,7 @@ void	deleteMethod(client *client)
 	std::vector<std::string>	redirs;
 	redirs.push_back("alias");
 	redirs.push_back("root");
-	filePath = getRequestedFile(client, redirs);
+	filePath = getPathFileRequest(client, redirs);
 	if (stat(filePath.c_str(), &st) == 0 && st.st_mode & S_IFDIR)
     {
 		std::cout << "Es un directorio"  <<std::endl;
@@ -255,7 +241,7 @@ void	deleteMethod(client *client)
 	client->response.response = "HTTP/1.1 200 OK\r\n\r\n<html><body><h1>File deleted.</h1>\n</body>\n</html>\n";
 }
 
-std::string	httpRedirect(client *client)
+void	httpRedirect(client *client)
 {
 	std::string response;
 	std::string	*redir = getMultiMapValue(client->loc->directivesMap, "redirect");
@@ -269,14 +255,10 @@ std::string	httpRedirect(client *client)
 							client->request.url.length() - client->loc->contextArgs[0].length());
 	std::string body;
 	std::string redirect = "Location: " + http + host + *redir + file;
-	std::cout << "Host: " << host << std::endl;
-	std::cout << "Redir: " << *redir << std::endl;
-	std::cout << "File: " << file << std::endl;
-	std::cout << "Body completo: " << body << std::endl;
-	//response = getResponseHeader(client->request, body);
 	response = "HTTP/1.1 301 Moved Permanently\r\n" + redirect + "\r\n\r\n";
 	std::cout << "Response de redirect: " << response << std::endl;
-	return (response);
+	client->response.response = response;
+	client->state = 3;
 }
 
 bool	checkMethods(client *client)
@@ -292,12 +274,23 @@ bool	checkMethods(client *client)
 	return (false);
 }
 
-bool	checkBodySize(client *client, int bodyLen)
+bool	checkBodySize(client *client)
 {
-	std::string	bodySize = *getMultiMapValue(client->server->directivesMap, "limit_body_size");
-	int	bodySizeInt = atoi(bodySize.c_str());
-	if (bodySizeInt > bodyLen)
+	std::cout << "Entro en bodySize" << std::endl;
+	std::string	*bodySize = getMultiMapValue(client->loc->directivesMap, "limit_body_size");
+	if (!bodySize)
+	{
+		std::cout << "No hay limit_bodysize" << std::endl;
+		return (true);
+	}
+		
+	size_t	bodySizeInt = atoi((*bodySize).c_str());
+	if (bodySizeInt < client->request.bufLen)
+	{
+		std::cout << "bodySizeInt: " << bodySizeInt << " | bufLen: " << client->request.bufLen << std::endl;
 		return (false);
+	}
+	std::cout << "Está bien" << std::endl;
 	return (true);
 }
 
@@ -308,19 +301,19 @@ void ResponseToMethod(client *client)
 	client->loc = findLocation(client);
 	if (!client->loc)
 		throw (404);
-	if (!checkMethods(client))
+	if (checkBodySize(client) == false)
+		throw (413);
+	if (checkMethods(client) == false)
 		throw (405);
 	//redirigir a otra location y enviarla por la respuesta
 	if (isInMultiMapKey(client->loc->directivesMap, "redirect"))
 	{
-		client->response.response = httpRedirect(client);
-		client->state = 3;
+		httpRedirect(client);
 		return ;
 	}
-	std::cout << "MÉTODO PERMITIDO: " << client->request.method << std::endl;
-	std::cout << "MÉTODO A EVALUAR: " << client->request.method_int << std::endl;
-
-	if (client->request.cgi) {
+	std::cout << "MÉTODO A EVALUAR " << client->request.method << " | TIPO: " << client->request.method_int << std::endl;
+	if (client->request.cgi)
+	{
 		std::cout << "Entra en CGI" << std::endl;
 		//CGI
 	}
