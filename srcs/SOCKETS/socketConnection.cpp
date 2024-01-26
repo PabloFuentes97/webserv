@@ -3,11 +3,11 @@
 void setNonBlocking(int fd) {
   int flags = fcntl(fd, F_GETFL, 0);
   if (flags == -1) {
-    perror("fcntl()");
+    perror("fcntl()"); //throw
     return;
   }
   if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-    perror("fcntl()");
+    perror("fcntl()"); //throw
   }
 }
 

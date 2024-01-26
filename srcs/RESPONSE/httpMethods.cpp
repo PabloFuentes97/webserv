@@ -86,12 +86,8 @@ std::string	getRequestedFile(struct client *client, std::vector<std::string> &re
 	return (filePath); 
 }
 
-std::string	getIndex(client *client)
+void	getIndex(client *client)
 {
-	//char	buf[1000];
-	//std::string absPath = getcwd(buf, 1000) + client->request.url;
-	//std::cout << "Abspath: " << absPath << std::endl;
-
 	std::cout << "Es un directorio, usar index" << std::endl;
 	bTreeNode &loc = *(client->loc);
 	itr itk = loc.directivesMap.equal_range("index");
@@ -103,22 +99,23 @@ std::string	getIndex(client *client)
 	redirs.push_back("root");
 	for (itmap itb = itk.first, ite = itk.second; itb != ite; itb++)
 	{
-		path = getPathFileRequest(client, redirs) + itb->second;  //itb->second absPath +
+		path = getPathFileRequest(client, redirs) + itb->second;
 		std::cout << "path de file index: " << path << std::endl;
 		if (!access(path.c_str(), F_OK | R_OK))
 		{
 			std::cout << "Existe fichero " << std::endl;
 			std::string body = getResponseBody(path);
-			std::string response = getResponseHeader(client->request, body) + body;
-			return (response);
+			client->response.response = getResponseHeader(client->request, body) + body;
+			return ;
 		}
-		//return (path);
 	}
 	throw (404);
 }
 
-std::string	autoIndexListing(client *client)
+void	autoIndexListing(client *client)
 {
+	if (!isInMultiMapValue(client->loc->directivesMap, "autoindex", "on"))
+		return ;
 	std::cout << "Entro en autoindex" << std::endl;
 	char	buf[1000];
 	std::string absPath = getcwd(buf, 1000) + client->request.url;
@@ -136,9 +133,9 @@ std::string	autoIndexListing(client *client)
 		if (elem->d_name[0] != '.')
 		{
 			//body += "<h1>";
-			body += "<a href=";
-			body += '"';
-			body += "http://";
+			body += "<a href=\"http://";
+			//body += '"';
+			//body += "http://";
 			//sustituir esto por una funcion que devuelva la primera key que encuentra en un array de prioridades
 			//body += getRequestedFile(client, redirs);
 			body += *(getMultiMapValue(client->request.headers, "Host"));
@@ -146,92 +143,65 @@ std::string	autoIndexListing(client *client)
 			body += elem->d_name;
 			if (elem->d_type == DT_DIR)
 				body += '/';
-			body += '"';
-			body += '>';
+			body += "\">";
 			body += elem->d_name;
-			body += '\n';
-			body += "</a>";
+			body += "\n</a>";
+			//body += "</a>";
 			//body += "</h1>";
 		}
-		//free(elem);
 		elem = readdir(dir);
 	}
 	body += "</body></html>";
 	closedir(dir);
-	system("leaks -q webserv");
-
 	client->request.status = 200;
-	std::string response = getResponseHeader(client->request, body);
-	response += body;
-	std::cout << "RESPONSE DE AUTOINDEX: " << response << std::endl;
-	return (response);
+	client->response.response = getResponseHeader(client->request, body) + body;
 }
 
-std::string pathIsDirectory(client *client)
+static void pathIsDirectory(client *client)
 {
-	if (client->request.url[client->request.url.size() - 1] != '/')
-		throw (1);
-	std::string dirs[] = {"index", "autoindex"};
-	std::string (*f[])(struct client *client) = {getIndex, autoIndexListing}; //añadir getIndex al principio
-	std::string	response;
+	std::string dirs[] = {"autoindex", "index"};
+	void (*f[])(struct client *client) = {autoIndexListing, getIndex}; //añadir getIndex al principio
 	for (size_t i = 0; i < 2; i++)
 	{
 		if (getMultiMapValue(client->loc->directivesMap, dirs[i]))
 		{
-			try
-			{
-				response = f[i](client);
-				return (response);
-			}
-			catch(int e)
-			{
-				response = getErrorResponse(client, e);
-				return (response);
-			}
+			f[i](client);
+			if (!client->response.response.empty())
+				return ;
 		}
 	}
 	throw (400);
 }
 
-std::string	getMethod(client *client) {
+void	getMethod(client *client) {
 	
 	std::cout << "GET METHOD" << std::endl;
 
 	if (client->request.url[client->request.url.size() - 1] == '/') //es un directorio
+			pathIsDirectory(client);
+	else
 	{
-		try
-		{
-			std::string	response = pathIsDirectory(client);
-			return (response);
-		}
-		catch (int e)
-		{
-			throw (e);
-		}
+		std::string 				filePath;
+		std::vector<std::string>	redirs;
+		redirs.push_back("alias");
+		redirs.push_back("root");
+		filePath = getRequestedFile(client, redirs);
+		std::cout << "filePath: " << filePath << std::endl;
+		if (access(filePath.c_str(), F_OK) != 0)
+			throw (404);
+		if (filePath[filePath.size() - 1] == '/')
+			return (pathIsDirectory(client));
+		if (access(filePath.c_str(), R_OK) != 0)
+			throw (403);
+		HttpResponse Response;
+		client->request.status = 200;
+		Response.body = getResponseBody(filePath);
+		Response.firstLine = getResponseHeader(client->request, Response.body);
+		client->response.response = Response.firstLine + Response.body;
 	}
-	std::string 				filePath;
-	std::vector<std::string>	redirs;
-	redirs.push_back("alias");
-	redirs.push_back("root");
-	filePath = getRequestedFile(client, redirs);
-	std::cout << "filePath: " << filePath << std::endl;
-	if (access(filePath.c_str(), F_OK) != 0)
-		throw (404);
-	if (filePath[filePath.size() - 1] == '/')
-		return (pathIsDirectory(client));
-	if (access(filePath.c_str(), R_OK) != 0)
-		throw (403);
-	HttpResponse Response;
-	client->request.status = 200;
-	Response.body = getResponseBody(filePath);
-	Response.firstLine = getResponseHeader(client->request, Response.body);
-	//if (client->request.cgi == 1)
-	//	Response.body = CGIForward(filePath);
-	std::string response = Response.firstLine + Response.body;
-	return (response);
 }
 
-std::string	postMethod(client *client)
+void	postMethod(client *client)
 {
 	std::cout << "ESTOY EN POST" << std::endl;
 	//std::cout << "BODY REQUEST: " << client->request.buf << std::endl;
@@ -258,45 +228,32 @@ std::string	postMethod(client *client)
 	{
 		std::cout << "Lanza 400" << std::endl;
 		throw (400);
-	}
-		
-	//REHACER
-	client->request.status = 201;
-	return ("HTTP/1.1 201 Created\r\n\r\n");
+	client->response.response = "HTTP/1.1 201 Created\r\n\r\n";
 }
 
-std::string	deleteMethod(client *client)
+void	deleteMethod(client *client)
 {
-	std::cout << "Delete method" << std::endl;
-	
 	struct stat	st;
 	std::string filePath;
 	std::vector<std::string>	redirs;
 	redirs.push_back("alias");
 	redirs.push_back("root");
 	filePath = getRequestedFile(client, redirs);
-	std::cout << "filePath: " << filePath << std::endl;
 	if (stat(filePath.c_str(), &st) == 0 && st.st_mode & S_IFDIR)
     {
 		std::cout << "Es un directorio"  <<std::endl;
 		if (rmdir(filePath.c_str()) < 0)
-		{
-			//client->request.status = 500;
 			throw(500);
-		}	
 	}
 	else
 	{
 		std::cout << "Es un fichero" << std::endl;
 		if (remove(filePath.c_str()) < 0)
-		{
-			//client->request.status = 500;
 			throw(500);
-		}
 	}
-	client->request.status = 200;
-	return ("HTTP/1.1 200 OK\r\n\r\n<html><body><h1>File deleted.</h1>\n</body>\n</html>\n");
+	client->response.response = "HTTP/1.1 200 OK\r\n\r\n<html><body><h1>File deleted.</h1>\n</body>\n</html>\n";
 }
+
 std::string	httpRedirect(client *client)
 {
 	std::string response;
@@ -323,12 +280,13 @@ std::string	httpRedirect(client *client)
 
 bool	checkMethods(client *client)
 {
-	std::string	methods[] = {"GET", "POST", "PUT", "DELETE"};
-
-	for (size_t i = 0; i < 4; i++)
+	if (!isInMultiMapKey(client->loc->directivesMap, "methods"))
+		return (true);
+	if (isInMultiMapValue(client->loc->directivesMap, "methods", client->request.method))
 	{
-		if (client->request.method == methods[i])
-			return (true);
+		if (client->request.method == "DELETE" && client->request.cgi == true)
+			return (false);
+		return (true);
 	}
 	return (false);
 }
@@ -342,40 +300,39 @@ bool	checkBodySize(client *client, int bodyLen)
 	return (true);
 }
 
-std::string ResponseToMethod(client *client)
+void ResponseToMethod(client *client)
 {
 	std::cout << "EN RESPONSE TO METHOD" << std::endl;
 	std::string response;
 	client->loc = findLocation(client);
 	if (!client->loc)
-		throw (1);
+		throw (404);
 	if (!checkMethods(client))
-		throw (2);
+		throw (405);
 	//redirigir a otra location y enviarla por la respuesta
 	if (isInMultiMapKey(client->loc->directivesMap, "redirect"))
 	{
-		response = httpRedirect(client);
+		client->response.response = httpRedirect(client);
 		client->state = 3;
-		return (response);
+		return ;
 	}
 	std::cout << "MÉTODO PERMITIDO: " << client->request.method << std::endl;
 	std::cout << "MÉTODO A EVALUAR: " << client->request.method_int << std::endl;
-	try
+
+	if (client->request.cgi) {
+		std::cout << "Entra en CGI" << std::endl;
+		//CGI
+	}
+	else 
 	{
-		//checkear cgi antes
+		//pasar filepath como parámetro o montarlo sobre el cliente en vez d en cada método
 		switch(client->request.method_int)
 		{
-			case HttpRequest::GET : {response = getMethod(client); break ;}
-			case HttpRequest::POST : {response = postMethod(client); break ;}
-			//case HttpRequest::PUT : {response = getMethod(server, client); break ;}
-			case HttpRequest::DELETE : {response = deleteMethod(client); break ;}
+			case HttpRequest::GET : {getMethod(client); break ;}
+			case HttpRequest::POST : {postMethod(client); break ;}
+			case HttpRequest::DELETE : {deleteMethod(client); break ;}
 		}
 	}
-	catch(int error)
-	{
-		client->request.status = error;
-		response = getErrorResponse(client, error);
-	}
 	client->state = 3;
-	return (response);
+	return ;
 }

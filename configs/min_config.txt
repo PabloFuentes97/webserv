@@ -51,8 +51,7 @@ server{
         }
         location      /{
             alias      /documents/;
-            methods   GET POST;
-            error_files 403 404 /documents/error.html;
+            methods   GET POST DELETE;
             postdir   /postfiles/;
             index   /index.html /index.htm;
         }

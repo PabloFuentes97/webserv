@@ -106,6 +106,29 @@
 	return (0);
 }*/
 
+
+int	setPorts(t_ports &ports, std::vector<bTreeNode *> &servers)
+{
+	int					id;
+	struct sockaddr_in	addr;
+
+	ports.n = 0;
+	for (size_t i = 0; i < servers.size(); i++)
+	{
+		std::string	*value = getMultiMapValue(servers[i]->directivesMap, "listen");
+		if (!value)
+			return (1);
+		id = atoi(value->c_str());
+		ports.id.push_back(id);
+		std::cout << "Port de server " << i << " es: " << id << std::endl;
+		ports.fd.push_back(getServerSocket(&addr, id));
+		std::cout << "Socket de servidor " << i << " es: " << ports.fd.back() << std::endl;
+		bindAndListen(ports.fd[i], &addr);
+		ports.n++;
+	}
+	return (0);
+}
+
 int	main(int argc, char **argv) {
 
 	if (argc != 2) {
@@ -115,11 +138,6 @@ int	main(int argc, char **argv) {
         std::cerr << "Inaccessible file" << std::endl;
         return 1; }
 	
-	
-	struct sockaddr_in	addr;
-	//struct sockaddr_in	client_addr;
-	//int					client_len;
-
 	//guardar arbol con config
 	bTreeNode	*root = parseFile(argv[1]);
 	if (!root)
@@ -134,27 +152,8 @@ int	main(int argc, char **argv) {
 		if (http->childs[i]->contextName == "server")
 			servers.push_back(http->childs[i]);
 	}
-	//std::vector<int>	ports;
-	//Socket del servidor
 	t_ports	ports;
-	int	id;
-	ports.n = 0;
-	for (size_t i = 0; i < servers.size(); i++)
-	{
-		
-		std::string	*value = getMultiMapValue(servers[i]->directivesMap, "listen");
-		if (!value)
-			return (3);
-		//if (!getValue(servers[i]->directives, "listen"))
-		//	return (3);
-		id = atoi(value->c_str());
-		ports.id.push_back(id);
-		std::cout << "Port de server " << i << " es: " << id << std::endl;
-		ports.fd.push_back(getServerSocket(&addr, id));
-		std::cout << "Socket de servidor " << i << " es: " << ports.fd.back() << std::endl;
-		bindAndListen(ports.fd[i], &addr);
-		ports.n++;
-	}
+	setPorts(ports, servers);
 	pollEvents(servers, &ports);	
 	return (0);
 }
