@@ -76,7 +76,17 @@ struct HttpResponse {
 	//constructor y métodos
 };
 
+typedef struct	chunk{
+	bool		isChunked; // If true the request body is chunk encoded;
+	bool		readingSize; // If true we are currently reading the HEX value of the chunk size
+	std::string	stringHex; // String of the HEX value of the chunk size
+	size_t		size; // Size of the current chunk
+	size_t		read; // Bytes read at the current chunk
+}	chunk;
+
 typedef struct HttpRequest {
+	
+	chunk		chunk;
 	std::string	buf;
 	size_t		bufLen;
 	std::string	header;
@@ -84,6 +94,7 @@ typedef struct HttpRequest {
 	int			method_int;
 	typedef enum methods{GET, POST, PUT, DELETE} methods;
     std::string url; //version
+	std::string query;
     std::multimap<std::string, std::string> headers;
 	//std::multimap<std::string, std::string>	bodyData;
 	bool	cgi;
@@ -111,6 +122,7 @@ typedef struct client {
 			return (1);
 		return (0);
 	}
+	size_t	timer;
 	//server *SocketServer;
 } client;
 
@@ -202,13 +214,15 @@ std::string getResponseBody(std::string fileToReturn);
 std::string	getStatus(int status);
 std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
 std::string GetResponse(bTreeNode	*server, std::string &url);
-std::string ResponseToMethod(client *client);
+void ResponseToMethod(client *client);
 
 //HTTP METHODS
-int		callMultiPart(struct client *client, std::string &path);
+void	callMultiPart(struct client *client, std::string &path);
 void	postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size);
 void	postText(std::string &route, const char *body, size_t size);
 void	postUrlEncoded(std::string &route, const char *body, size_t size);
+//LOCATE
+size_t locate(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize);
 
 //---SOCKET---
 void 	setNonBlocking(int fd);
@@ -218,12 +232,12 @@ int		pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports);
 
 //---CGI---
 std::string getCgi(std::string script);
-std::string	CGIForward(std::string &path);
+std::string CGIForward(std::string &path, client *client);
 
 //ERRORS
 std::string	getStatus(int status);
 std::string	getErrorPath(struct client *client, int error);
-std::string	getErrorResponse(struct client *client, int error);
+void	getErrorResponse(struct client *client, int error);
 
 //MULTIMAP
 typedef std::multimap<std::string, std::string>::iterator itmap;

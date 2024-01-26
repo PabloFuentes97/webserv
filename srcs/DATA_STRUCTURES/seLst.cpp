@@ -65,7 +65,7 @@ size_t	countCharinStr(char *str, char c)
 char	*readFileSeLst(int fd)
 {
 	seLst	lst = {newseNode(), lst.head, 0, 0};
-	int		lines = 0;
+	//int		lines = 0;
 	seNode 	*node = lst.head;
 	ssize_t	readBytes = read(fd, &node->elem, MAX_READ);
 	node->elem_n = readBytes;
@@ -83,7 +83,7 @@ char	*readFileSeLst(int fd)
 			seLstFree(lst);
 			return (NULL);
 		}
-		lines += countCharinStr(&node->elem[node->elem_n], '\n');
+		//lines += countCharinStr(&node->elem[node->elem_n], '\n');
 		readBytes = read(fd, &node->elem[node->elem_n], MAX_READ);
 		node->elem_n += readBytes;
 		lst.bytes += readBytes;
