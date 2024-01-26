@@ -228,6 +228,7 @@ void	postMethod(client *client)
 	{
 		std::cout << "Lanza 400" << std::endl;
 		throw (400);
+	}
 	client->response.response = "HTTP/1.1 201 Created\r\n\r\n";
 }
 

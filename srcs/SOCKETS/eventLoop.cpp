@@ -174,7 +174,7 @@ int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, p
 		{
 			std::cout << "READ EVENT" << std::endl;
 			if (readEvent(curr_client))
-				deleteClient(clients, *curr_client, event);
+				deleteClient(clients, *curr_client);
 			else 
 			{
 				//std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
@@ -183,7 +183,7 @@ int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, p
 					setEvent(&event, -1, 0, 0);
 					curr_client->server = findServerByClient(servers, curr_client);
 					if (!curr_client->server)
-						deleteClient(clients, *curr_client, event);
+						deleteClient(clients, *curr_client);
 					else
 						ResponseToMethod(curr_client);
 				}
@@ -231,7 +231,7 @@ int	checkTimerExpired(std::vector<client> &clients)
 					continue ;
 				}*/
 				clients[i].request.status = 408;
-				clients[i].response.response = getErrorResponse(&clients[i], 408);
+				getErrorResponse(&clients[i], 408);
 				setEvent(clients[i].events[0], -1, 0, 0);
 				clients[i].state = 3;
 			}
