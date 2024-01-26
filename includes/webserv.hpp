@@ -89,32 +89,37 @@ typedef struct HttpRequest {
 	bool	cgi;
 	std::map<std::string, std::string>	cookies;
 	int status;
-} HttpRequest;
+}	HttpRequest;
 
 typedef struct s_ports{
 	std::vector<int>	id; // id del puerto
 	std::vector<int>	fd; //fd del socket asociado a ese puerto
 	size_t				n;
-} t_ports ;
+}	t_ports ;
+
+typedef struct s_events{
+	pollfd	events[SOMAXCONN + 1];
+	size_t	n;
+	size_t	sig;
+}	t_events;
 
 typedef struct client {
-    int fd;
-	int	portID; //port id
-	int	state; // 0 - tiene que leer header, 1 - tiene que leer body, 2 - tiene que escribir
-	bTreeNode 	*server; //que cada cliente tenga un puntero a su servidor, para no tener que pasarlo como parametro por funciones
+    int 			fd;
+	int				portID; //port id
+	int				state; // 0 - tiene que leer header, 1 - tiene que leer body, 2 - tiene que escribir
+	bTreeNode 		*server; //que cada cliente tenga un puntero a su servidor, para no tener que pasarlo como parametro por funciones
 	HttpRequest 	request;
 	HttpResponse	response;
-	bTreeNode	*loc;
-	bool operator==(struct client const &cmp) const
+	bTreeNode		*loc;
+	pollfd 			*events[2];
+	size_t			timer;
+	bool 			operator==(struct client const &cmp) const
 	{
 		if (this->fd == cmp.fd)
 			return (1);
 		return (0);
 	}
-	//server *SocketServer;
 } client;
-
-
 
 class	clientQueue {
 
@@ -127,6 +132,7 @@ class	clientQueue {
 		int getPos(int);
 		int getServerId(int);
 };
+
 typedef struct	servers{
 	
 	int			*serversFd;
@@ -179,8 +185,6 @@ std::string *getMultiMapValue(std::multimap<std::string, std::string> &map, std:
 bool		isInMultiMapKey(std::multimap<std::string, std::string> &map, std::string key);
 bool		isInMultiMapValue(std::multimap<std::string, std::string> &map, std::string key, std::string value);
 
-//socket funcs
-
 //sort-insert funcs
 int		binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert);
 void	binaryInsert(std::vector<bTreeNode *> &vec, bTreeNode *insert);
@@ -191,11 +195,8 @@ int	cmpLocations(bTreeNode *loc, bTreeNode *cmp);
 int	cmpDirectives(void *loc, void *cmp);
 
 //--HTTP REQUEST---
-int		readEvent(struct client *client);
-//int		readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_event, int kq);
-int		writeEvent(struct client *client);
-//void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq);
-//HttpRequest loadRequest(char *buffer);
+int			readEvent(struct client *client);
+int			writeEvent(struct client *client);
 void		loadRequest(HttpRequest *request);
 std::string	getRequestedFile(bTreeNode	*server, client *client);
 std::string getResponseBody(std::string fileToReturn);
