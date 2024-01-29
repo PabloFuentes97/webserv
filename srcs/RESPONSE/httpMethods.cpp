@@ -330,7 +330,7 @@ void ResponseToMethod(client *client)
 	if (client->request.cgi)
 	{
 		std::cout << "Entra en CGI" << std::endl;
-		//CGIForward(client);
+		CGIForward(client);
 	}
 	else 
 	{
