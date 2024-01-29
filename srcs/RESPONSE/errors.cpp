@@ -68,10 +68,10 @@ std::string	getErrorPath(struct client *client, int error)
 		std::cout << "Buscar en location error_files" << std::endl;
 		typedef std::multimap<std::string, std::string>::iterator itm;
 		
-		itm it = client->loc->directivesMap.find("error_files");
-		if (it != client->loc->directivesMap.end())
+		itm it = client->loc->context._dirs.find("error_files");
+		if (it != client->loc->context._dirs.end())
 		{
-			std::pair<itm, itm> itr = client->loc->directivesMap.equal_range("error_files");
+			std::pair<itm, itm> itr = client->loc->context._dirs.equal_range("error_files");
 			std::cout << "Encuentra error_files en location" << std::endl;
 			for (itm ib = itr.first, ie = itr.second; ib != ie; ib++)
 			{
