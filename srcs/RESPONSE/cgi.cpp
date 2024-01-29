@@ -73,8 +73,8 @@ void CGIForward(client *client)
 	std::string 				path;
 	std::vector<std::string>	redirs;
 
-	redirs.push_back("alias");
-	redirs.push_back("root");
+	redirs.push_back("cgi_pass");
+	//redirs.push_back("root");
 	path = getRequestedFile(client, redirs);
 	std::cout << "filePath: " << path << std::endl;
 	if (access(path.c_str(), F_OK) != 0)
@@ -88,7 +88,22 @@ void CGIForward(client *client)
 
     pid_t exec_pid = fork();
 	
-	if (exec_pid > 0) {
+	if (exec_pid == 0)
+    {
+        std::cout << "path is: " << path << std::endl;
+    	char **cgiEnv = getCgiEnv(path, client);
+		std::string newPath = path.substr(0, path.find('?'));
+		for (int i = 0; cgiEnv[i]; i++) {
+			std::cout << "Array env var is: " << cgiEnv[i] << std::endl;
+		}
+        dup2(pipes[1], STDOUT_FILENO);
+        close(pipes[0]);
+        if (execve(newPath.c_str(), NULL, cgiEnv) != 0) {
+			strerror(errno);
+            throw(500);
+        }
+    }
+	else if (exec_pid > 0) {
 
 		time_t ref = std::time(NULL);
 		time_t now;
@@ -99,24 +114,12 @@ void CGIForward(client *client)
 			{
 				kill(exec_pid, SIGKILL);
 				client->request.status = 508;
-				throw (508); 
+				throw (504); 
 			}
 		}
 	}
-    else if (exec_pid == 0)
-    {
-        std::cout << "path is: " << path << std::endl;
-    	char **cgiEnv = getCgiEnv(path, client);
-		std::string newPath = path.substr(0, path.find('?'));
-		for (int i = 0; cgiEnv[i]; i++) {
-			std::cout << "Array env var is: " << cgiEnv[i] << std::endl;
-		}
-        dup2(pipes[1], STDOUT_FILENO);
-        close(pipes[0]);
-        if (execve(newPath.c_str(), NULL, cgiEnv) < 0) {
-            throw(500);
-        }
-    }
+	if (WEXITSTATUS(status) != 0)
+		throw(502);
     std::cout << "Estoy en proceso padre" << std::endl;
     close(pipes[1]);
     char    *readCGI = readFileSeLst(pipes[0]);
