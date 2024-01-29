@@ -66,7 +66,6 @@ pollfd *findUnusedPoll(pollfd *polls, int polls_n)
 	return (NULL);
 }
 
-
 void	setEvent(pollfd *event, int _fd, short _event, short _revent)
 {
 	event->fd = _fd;
@@ -111,7 +110,6 @@ void	setClient(struct client &client, int fd, int id, std::vector<parseTree*> se
 	client.request.bufLen = 0;
 	client.response.bytesSent = 0;
 	client.server = findServerByClient(servers, &client);
-	client.loc = NULL;
 	client.timer = getTimeSeconds();
 }
 
@@ -134,7 +132,7 @@ int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers,
 	client c;
 	setClient(c, accept_socket, findPortbySocket(ports, socket), servers);
 	//std::cout << "Añadir cliente al vector" << std::endl;
-	
+	clients.push_back(c);
 	//std::cout << "Añadió bien el cliente al vector" << std::endl;
 	short	poll_events[2] = {POLLIN, POLLOUT};
 	for (int e = 0; e < 2; e++)
@@ -160,7 +158,6 @@ int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers,
 			}
 		}
 	}
-	clients.push_back(c);
 	return (1);
 }
 
@@ -169,7 +166,6 @@ int	readClient(std::vector<client> &clients, std::vector<parseTree *> servers, p
 	client *curr_client = findClientFd(clients, event.fd);
 	try
 	{
-		//develop
     if (curr_client && curr_client->state < 2)
 		{
 			std::cout << "READ EVENT" << std::endl;

@@ -28,7 +28,6 @@ std::string getResponseBody(std::string fileToReturn) {
         std::cerr << "File error" << std::endl;
         throw (500);
 	}
-	//std::cout << "Lee bien el fichero para enviar la respuesta" << std::endl;
 	char c;
 	while (file.get(c))
 		fileLine.push_back(c);

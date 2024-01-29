@@ -22,6 +22,7 @@ std::string	getRedir(struct client *client, itmap &redir, std::string &file)
 				case 0 : { path = absPath + redir->second; break ;} //postdir
 				case 1 : { path = absPath + redir->second + file; break ;} //alias
 				case 2 : { path = absPath + redir->second + loc + file; break ;} //root
+				case 3 : { path = absPath + redir->second; break ;} //cgi_pass
 			}
 			break ;
 		}
@@ -59,10 +60,26 @@ std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs)
 	}
 	if (i == redirs.size())
 		throw (400);
-
 	file = client->request.url.substr(locLen, client->request.url.length() - locLen + 1);
 	pathFile = getRedir(client, itm, file);
 	return (pathFile);
+}
+
+std::string	getRequestedFile(struct client *client, std::vector<std::string> &redirs) //sacar location y pasarlo como argumento
+{
+	std::cout << "URL: " << client->request.url << std::endl;
+	//bTreeNode	*loc = findLocation(server, client->request.url);
+	std::string	filePath;
+	std::string path;
+	if (!client->loc)
+	{
+		std::cout << "No encontró loc" << std::endl;
+		client->request.status = 404;
+		throw (404);
+	}
+	filePath = getPathFileRequest(client, redirs);
+	std::cout << std::endl << "FILEPATH IS:" << filePath << std::endl; 
+	return (filePath); 
 }
 
 void	getIndex(client *client)
@@ -313,7 +330,7 @@ void ResponseToMethod(client *client)
 	if (client->request.cgi)
 	{
 		std::cout << "Entra en CGI" << std::endl;
-		//CGI
+		//CGIForward(client);
 	}
 	else 
 	{

@@ -129,6 +129,7 @@ int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
 	return (0);
 }
 
+
 int	main(int argc, char **argv) {
 
 	if (argc != 2) {

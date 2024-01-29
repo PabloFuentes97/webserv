@@ -21,11 +21,13 @@
 #include <vector>
 #include <list>
 #include <algorithm>
+#include <libc.h>
 
 #define MAX_SE_ELEM 64
 #define MAX_READ 17
 #define BUF_SIZE 200000
 #define PORT 8080
+#define CGITIMEOUT 3
 
 typedef struct seNode{
 	size_t			elem_n;
@@ -50,9 +52,7 @@ typedef struct	s_context{
 	std::multimap<std::string, std::string>	_dirs;
 } t_context;
 
-
 typedef struct parseTree 
-//llamarlo n-tree o m-tree no es un b-tree realmente
 {
 	t_context					context;
 	std::vector<parseTree *>	childs; //punteros a los hijos
@@ -92,13 +92,14 @@ typedef struct HttpRequest {
 	bool	cgi;
 	std::map<std::string, std::string>	cookies;
 	int status;
-}	HttpRequest;
+} HttpRequest;
 
 typedef struct s_ports{
 	std::vector<int>	id; // id del puerto
 	std::vector<int>	fd; //fd del socket asociado a ese puerto
 	size_t				n;
-}	t_ports ;
+} t_ports ;
+
 
 typedef struct s_events{
 	pollfd	events[SOMAXCONN + 1];
@@ -122,25 +123,13 @@ typedef struct client {
 			return (1);
 		return (0);
 	}
+	size_t	timer;
 } client;
-
-class	clientQueue {
-
-	public:
-		void clearRequest(int);
-		void addClient(int, int);
-		clientQueue();
-		~clientQueue();
-		std::vector<client> clientArray;
-		int getPos(int);
-		int getServerId(int);
-};
 
 typedef struct	servers{
 	
 	int			*serversFd;
 	int			servers_n;
-	clientQueue	clients;
 	std::vector<parseTree*>	serversPtr;
 }	servers ;
 
@@ -188,6 +177,17 @@ std::string *getMultiMapValue(std::multimap<std::string, std::string> &map, std:
 bool		isInMultiMapKey(std::multimap<std::string, std::string> &map, std::string key);
 bool		isInMultiMapValue(std::multimap<std::string, std::string> &map, std::string key, std::string value);
 
+//--HTTP REQUEST---
+int		readEvent(struct client *client);
+//int		readEvent(clientQueue &Queue, struct kevent *client, struct kevent *client_event, int kq);
+int		writeEvent(struct client *client);
+//void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq);
+//HttpRequest loadRequest(char *buffer);
+void		loadRequest(HttpRequest *request);
+std::string	getRequestedFile(struct client *client, std::vector<std::string> &redirs);
+std::string getResponseBody(std::string fileToReturn);
+std::string	getStatus(int status);
+std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
 //sort-insert funcs
 int		binarySearch(std::vector<parseTree*> &vec, parseTree *insert);
 void	binaryInsert(std::vector<parseTree *> &vec, parseTree *insert);
