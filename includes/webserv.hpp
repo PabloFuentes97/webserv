@@ -123,7 +123,6 @@ typedef struct client {
 			return (1);
 		return (0);
 	}
-	size_t	timer;
 } client;
 
 typedef struct	servers{
