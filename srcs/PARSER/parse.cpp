@@ -108,9 +108,13 @@ bool	validSubContextsCmp(std::string &context, std::string &subcontext)
 bool	validDirectivesCmp(std::string	&context, std::string &directive)
 {
 	const char	*main[] = {"workers", NULL};
+	//const int	main_size[] = {0, -1};
 	const char	*events[] = {"prueba", NULL};
+	//const int	events_size[] = {0, -1};
 	const char	*http[] = {"hola", NULL};
+	//const int	http_size[] = {0, -1};
 	const char	*types[] = {"text/html", "text/css", "text/xml"};
+	//const int	types_size[] = {0, -1};
 	const char	*server[] = {"listen", "limit_body_size", "server_name", "timeout", "error_page", "root", "index", NULL};
 	const char	*location[] = {"autoindex", "limit_body_size", "root", "methods", "alias", "error_files", "index", "redirect", 
 								"try_files", "postdir", "cgi_pass", NULL};
@@ -150,14 +154,7 @@ bool	strInVector(std::string &str, std::vector<std::string> &vector) //usar para
 	return (false);
 }
 
-bTreeNode	*copyBTreeNode(bTreeNode *node)
-{
-	bTreeNode	*copy = new bTreeNode();
-	copy->contextName = node->contextName;
-	return (copy);
-}
-
-void	binaryInsert(std::vector<bTreeNode *> &vec, bTreeNode *insert) //hacer mejor un template de esto
+void	binaryInsert(std::vector<parseTree *> &vec, parseTree *insert) //hacer mejor un template de esto
 {
 	//std::cout << "Entro en binary insert" << std::endl;
 	if (vec.empty())
@@ -185,10 +182,10 @@ void	binaryInsert(std::vector<bTreeNode *> &vec, bTreeNode *insert) //hacer mejo
 	}
 }
 
-bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
+bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 {
-	std::list<bTreeNode *>	nodes; //stack de nodos - se añade cuando entra a un contexto, se borra cuando termina, vuelve al anterior, evitar recursividad
-	bTreeNode	*child; //hijo del nodo del árbol a crear
+	std::list<parseTree *>	nodes; //stack de nodos - se añade cuando entra a un contexto, se borra cuando termina, vuelve al anterior, evitar recursividad
+	parseTree	*child; //hijo del nodo del árbol a crear
 	//context		*subcontext; // subcontexto a crear y añadir al arbol
 
 	nodes.push_front(root);
@@ -198,17 +195,22 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 	{
 		if (tokens[i].value == "{") //tiene que abrir contexto y saltar al siguiente
 		{
-			if (!validSubContextsCmp(root->contextName, tokens[initDirective].value))
+			if (!validSubContextsCmp(root->context._name, tokens[initDirective].value))
+			{
+				std::cout << "Subcontexto invalido" << std::endl;
 				return (false);
-			child = new bTreeNode();
-			child->contextName = tokens[initDirective].value;
+			}
+			child = new parseTree();
+			child->context._name = tokens[initDirective].value;
+			//child->contextName = tokens[initDirective].value;
 			for (size_t start = initDirective + 1; start < i; start++) //añade argumentos del contexto si los hay
-				child->contextArgs.push_back(tokens[start].value);
-			if (child->contextName == "location")
+				//child->contextName = tokens[initDirective].value;
+				child->context._args.push_back(tokens[start].value);
+			if (root->context._name == "location")
 				binaryInsert(root->childs, child);
 			else
 				root->childs.push_back(child);
-			root->childsNames.push_back(child->contextName);
+			//root->childsNames.push_back(child->contextName);
 			nodes.push_front(child);
 			root = child;
 			initDirective = i + 1;
@@ -222,64 +224,40 @@ bool	parseContextTokens(bTreeNode *root, std::vector<t_token> &tokens)
 		else if (tokens[i].value == ";") // final de directiva, añadir a lista
 		{
 			endDirective = i;
-			if (!validDirectivesCmp(root->contextName, tokens[initDirective].value))
+			//if (!validDirectivesCmp(root->contextName, tokens[initDirective].value))
+			if (!validDirectivesCmp(root->context._name, tokens[initDirective].value))
 			{
 				std::cout << "Directiva no está entre las posibles: " << tokens[initDirective].value << std::endl;
 				return (false);
 			}
-			std::pair<std::string, std::vector<std::string> >	keyVal;
-			keyVal.first = tokens[initDirective].value;
-			for (int j = initDirective + 1; j < endDirective; j++) //añade values
-				keyVal.second.push_back(tokens[j].value);
-			root->directives.push_back(keyVal); //añade key-values
+			//std::pair<std::string, std::vector<std::string> >	keyVal;
+			//keyVal.first = tokens[initDirective].value;
+			//for (int j = initDirective + 1; j < endDirective; j++) //añade values
+			//	keyVal.second.push_back(tokens[j].value);
+			//root->directives.push_back(keyVal); //añade key-values
 			for (int j = initDirective + 1; j < endDirective; j++)
-				root->directivesMap.insert(std::pair<std::string, std::string>(tokens[initDirective].value, tokens[j].value));
+				root->context._dirs.insert(std::pair<std::string, std::string>(tokens[initDirective].value, tokens[j].value));
 			initDirective = i + 1;
 		}
 	}
 	return (true);
 }
-void	printBTree(bTreeNode *root)
+void	freeParseTree(parseTree *root)
 {
-	std::cout << "Context: " << root->contextName << std::endl;
-	if (root->contextArgs.size() > 0)
+	std::list<parseTree *>	freeNodes;
+	parseTree	*curr = root;
+	freeNodes.push_front(root);
+	while (!freeNodes.empty())
 	{
-		std::cout << "Argumentos del contexto: {";
-		for (size_t i = 0; i < root->contextArgs.size(); i++)
-		{
-			std::cout << root->contextArgs[i];
-			if (i < root->contextArgs.size() - 1)
-				std::cout << ", ";
-		}
-		std::cout << "}" << std::endl;
-	}
-	/*std::cout << "Directivas: " << std::endl;
-	for (int i = 0; i < root->directives.size(); i++)
-	{
-		std::cout << "Key: " << root->directives[i].first << ": ";
-		std::cout << "Values: {";
-		for (int j = 0; j < root->directives[i].second.size(); j++)
-		{
-			std::cout << root->directives[i].second[j];
-			if (j < root->directives[i].second.size() - 1)
-				std::cout << ", ";
-		}
-		std::cout << "}" << std::endl;
-	}*/
-	typedef std::multimap<std::string, std::string>::iterator	itm;
-	for (itm ib = root->directivesMap.begin(); ib != root->directivesMap.end(); ib++)
-	{
-		std::cout << "Key: " << ib->first << ": ";
-		std::cout << "Value: " << ib->second << std::endl;
-	}
-	for (size_t i = 0; i < root->childs.size(); i++)
-	{
-		std::cout << "Hijo " << i << " de: " << root->contextName << std::endl;
-		printBTree(root->childs[i]);
+		for (size_t i = 0; i < curr->childs.size(); i++)
+				freeNodes.push_front(root);
+		curr = freeNodes.front();
+		free(curr);
+		freeNodes.pop_front();
 	}
 }
 
-bTreeNode	*parseFile(char	*file)
+parseTree	*parseFile(char	*file)
 {
 	std::string	del = "{};=";
 	std::vector<t_token>	tokens;
@@ -290,11 +268,12 @@ bTreeNode	*parseFile(char	*file)
 	}
 	//for (size_t i = 0; i < tokens.size(); i++)
 	//	std::cout << "Token: " << tokens[i].value << std::endl;
-	bTreeNode	*root = new bTreeNode();
-	root->contextName = "main";
+	parseTree	*root = new parseTree();
+	root->context._name = "main";
 	if (!parseContextTokens(root, tokens))
 	{
-		//funcion de liberar el arbol
+		//llamar a funcion de liberar el arbol
+		freeParseTree(root);
 		return (NULL);
 	}
 	//std::cout << "---------------Imprimir árbol de fichero de configuración---------------" << std::endl;

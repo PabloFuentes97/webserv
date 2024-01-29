@@ -1,6 +1,6 @@
 #include "../includes/webserv.hpp"
 
-/*int	kqueue_events(std::vector<bTreeNode *>servers, std::vector<int> &sockets)
+/*int	kqueue_events(std::vector<parseTree *>servers, std::vector<int> &sockets)
 {
 	struct kevent event[SOMAXCONN + 1];
 
@@ -107,7 +107,7 @@
 }*/
 
 
-int	setPorts(t_ports &ports, std::vector<bTreeNode *> &servers)
+int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
 {
 	int					id;
 	struct sockaddr_in	addr;
@@ -115,7 +115,7 @@ int	setPorts(t_ports &ports, std::vector<bTreeNode *> &servers)
 	ports.n = 0;
 	for (size_t i = 0; i < servers.size(); i++)
 	{
-		std::string	*value = getMultiMapValue(servers[i]->directivesMap, "listen");
+		std::string	*value = getMultiMapValue(servers[i]->context._dirs, "listen");
 		if (!value)
 			return (1);
 		id = atoi(value->c_str());
@@ -139,20 +139,20 @@ int	main(int argc, char **argv) {
         return 1; }
 	
 	//guardar arbol con config
-	bTreeNode	*root = parseFile(argv[1]);
+	parseTree	*root = parseFile(argv[1]);
 	if (!root)
 	{
 		std::cout << "BAD CONFIG FILE " << std::endl;
 		return (2);
 	}	
-	bTreeNode	*http = NULL;
+	parseTree	*http = NULL;
 	findNode(root, &http, "http");
 	if (!http)
 		return (2);
-	std::vector<bTreeNode*>	servers;
+	std::vector<parseTree*>	servers;
 	for (size_t i = 0; i < http->childs.size(); i++)
 	{
-		if (http->childs[i]->contextName == "server")
+		if (http->childs[i]->context._name == "server")
 			servers.push_back(http->childs[i]);
 	}
 	t_ports	ports;

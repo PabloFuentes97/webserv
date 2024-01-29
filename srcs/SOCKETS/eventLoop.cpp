@@ -20,7 +20,7 @@ int	findPortbySocket(t_ports *ports, int socket)
 	return (-1);
 }
 
-bTreeNode *findServerByClient(std::vector<bTreeNode *> servers, struct client *client)
+parseTree *findServerByClient(std::vector<parseTree *> servers, struct client *client)
 {
 	std::multimap<std::string, std::string>::iterator	it;
 	//std::cout << "BUSCAR POR HOSTNAME" << std::endl;
@@ -33,8 +33,8 @@ bTreeNode *findServerByClient(std::vector<bTreeNode *> servers, struct client *c
 		//std::cout << "SERVER_NAME: " << serverName << std::endl;
 		for (size_t i = 0; i < servers.size(); i++)
 		{
-			it = servers[i]->directivesMap.find("server_name");
-			if (it != servers[i]->directivesMap.end())
+			it = servers[i]->context._dirs.find("server_name");
+			if (it != servers[i]->context._dirs.end())
 			{
 				if (it->second == serverName)
 					return (servers[i]);
@@ -45,8 +45,8 @@ bTreeNode *findServerByClient(std::vector<bTreeNode *> servers, struct client *c
 	//std::cout << "BUSCAR POR PUERTO" << std::endl;
 	for (size_t i = 0; i < servers.size(); i++)
 	{
-		it = servers[i]->directivesMap.find("listen");
-		if (it != servers[i]->directivesMap.end())
+		it = servers[i]->context._dirs.find("listen");
+		if (it != servers[i]->context._dirs.end())
 		{
 			int	port = atoi(it->second.c_str());
 			if (port == client->portID)
@@ -102,7 +102,7 @@ size_t	getTimeSeconds()
 	return (seconds);
 }
 
-void	setClient(struct client &client, int fd, int id, std::vector<bTreeNode*> servers)
+void	setClient(struct client &client, int fd, int id, std::vector<parseTree*> servers)
 {
 	client.fd = fd;
 	client.portID = id;
@@ -115,7 +115,7 @@ void	setClient(struct client &client, int fd, int id, std::vector<bTreeNode*> se
 	client.timer = getTimeSeconds();
 }
 
-int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, int socket, t_ports *ports, pollfd *events, int &events_n)
+int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers, int socket, t_ports *ports, pollfd *events, int &events_n)
 {
 	struct sockaddr_in	client_addr;
 	int					client_len;
@@ -164,7 +164,7 @@ int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers,
 	return (1);
 }
 
-int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, pollfd &event)
+int	readClient(std::vector<client> &clients, std::vector<parseTree *> servers, pollfd &event)
 {
 	client *curr_client = findClientFd(clients, event.fd);
 	try
@@ -211,25 +211,19 @@ int	checkTimerExpired(std::vector<client> &clients)
 	//std::list<client>	deleteQueue;
 	for (size_t i = 0; i < clients.size(); i++)
 	{
-		std::string *timeoutStr = getMultiMapValue(clients[i].server->directivesMap, "timeout");
+		std::string *timeoutStr = getMultiMapValue(clients[i].server->context._dirs, "timeout");
 		if (timeoutStr)
 		{
 			size_t	timeoutInt = atoi(timeoutStr->c_str());
 			size_t	time = getTimeSeconds();
 			if ((time - clients[i].timer) >= timeoutInt && clients[i].state < 2)
 			{
-				std::cout << "CLIENT: " << clients[i].fd << std::endl;
 				std::cout << "Te pasaste de tiempo" << std::endl;
+				std::cout << "CLIENT: " << clients[i].fd << std::endl;
 				std::cout << "Timeout: " << timeoutInt << std::endl;
 				std::cout << "Client timer: " << clients[i].timer << std::endl;
 				std::cout << "Time: " << time << std::endl;
 				std::cout << "Tiempo que ha pasado: " << time - clients[i].timer << std::endl;
-				/*if (clients[i].state == 3)
-				{
-					deleteQueue.push_back(clients[i]);
-					//deleteClient(clients, clients[i]);
-					continue ;
-				}*/
 				clients[i].request.status = 408;
 				getErrorResponse(&clients[i], 408);
 				setEvent(clients[i].events[0], -1, 0, 0);
@@ -237,18 +231,11 @@ int	checkTimerExpired(std::vector<client> &clients)
 			}
 		}
 	}
-	/*
-	for ( ; deleteQueue.size() > 0 ;)
-	{
-		std::cout << "DELETE QUEUE: CLIENT: " << deleteQueue.front().fd << std::endl;
-		deleteClient(clients, deleteQueue.front());
-		deleteQueue.pop_front();
-	}*/
 		
 	return (0);
 }
 
-int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
+int	pollEvents(std::vector<parseTree *> &servers, t_ports *ports)
 {
 	//std::cout << "EN POLLEVENTS" << std::endl;
 	pollfd	events[SOMAXCONN + 1];
