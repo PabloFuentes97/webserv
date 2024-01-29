@@ -38,8 +38,18 @@ server{
         location        /documents
         {
             autoindex on;
+<<<<<<< HEAD
             alias /documents/;
         }
+=======
+            postdir   /postfiles/;
+            alias /documents/;
+        }
+        location    /cgi
+        {
+            cgi_pass    /cgi/;
+        }
+>>>>>>> origin/develop
         location    /redirect
         {
             redirect /documents;
@@ -48,15 +58,23 @@ server{
             alias      /documents/;
             methods   GET POST DELETE;
             postdir   /postfiles/;
+<<<<<<< HEAD
 			cgi_pass   /cgi/;
             index   /documents/index.html /documents/index.htm;
+=======
+            index   /index.html /index.htm;
+>>>>>>> origin/develop
         }
         location    /manolo
         {
             alias     /documents/;
             methods   GET POST;
             postdir   /postfiles/;
+<<<<<<< HEAD
             try_files index.html index.htm;
+=======
+            index index.html index.htm;
+>>>>>>> origin/develop
         }
         location      /pepe/juan{
             root      jeje;
