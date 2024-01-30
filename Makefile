@@ -10,7 +10,7 @@ LBLUE   =   \033[1;34m
 TITLE   =   \033[1;36m
 # Compile variables
 CC              =   c++
-FLAGS           =   -Wall -Wextra -Werror -std=c++98 #-fsanitize=address
+FLAGS           =   -Wall -Wextra -Werror -std=c++98 #-g3 -fsanitize=address
 COMPILE         =   $(CC) $(FLAGS)
 # ************ CODE ************
 NAME            =   webserv
@@ -22,7 +22,8 @@ PARSER   		=   parse.cpp \
 					directories.cpp
 SOCKETS   		=   socketConnection.cpp \
 					eventLoop.cpp
-REQUEST    		=  	httpRequest.cpp
+REQUEST    		=  	httpRequest.cpp \
+					readChunkedRequest.cpp
 RESPONSE    	=   httpMethods.cpp \
 					cgi.cpp \
 					postMultiPartForm.cpp \

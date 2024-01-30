@@ -18,6 +18,8 @@ std::string	getStatus(int status)
             return "405 Method Not Allowed"; //Método que no gestionamos (DELETE de CGI o cualquier otro)
         case 408:
             return "408 Request Timeout"; //Timeout
+		case 409:
+            return "409 Conflict";
         case 413:
             return "413 Payload Too Large"; //Request muy grande
         case 429:

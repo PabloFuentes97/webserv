@@ -219,11 +219,11 @@ void	postMethod(client *client)
 	if (itm == client->request.headers.end())
 		throw (400);
 	std::cout << "TIPO DE POST: " << itm->second << std::endl;
-	if (itm->second == "application/x-www-form-urlencoded\r")
+	if (itm->second == "application/x-www-form-urlencoded\r" || itm->second == "application/x-www-form-urlencoded")
 		postUrlEncoded(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else if (itm->second == "multipart/form-data")
 		callMultiPart(client, filePath);
-	else if (itm->second == "text/plain\r")
+	else if (itm->second == "text/plain\r" || itm->second == "text/plain")
 		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else
 	{
