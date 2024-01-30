@@ -21,11 +21,13 @@
 #include <vector>
 #include <list>
 #include <algorithm>
+#include <libc.h>
 
 #define MAX_SE_ELEM 64
 #define MAX_READ 17
 #define BUF_SIZE 200000
 #define PORT 8080
+#define CGITIMEOUT 3
 
 enum statusCodes {CREATED = 201,
 				MOVED_PERMANENTLY = 301,
@@ -57,30 +59,20 @@ typedef struct	seLst{
 	size_t	bytes;
 } seLst;
 
-typedef struct	context{
+typedef struct	s_context{
 	std::string							_name;
 	typedef enum types{MAIN, MIME_TYPES, HTTP, SERVER, LOCATION} types;
 	short								_type;
 	short								_op;
 	std::vector<std::string>			_args;
-	std::map<std::string, std::string>	_dirs;
-} context;
+	std::multimap<std::string, std::string>	_dirs;
+} t_context;
 
-
-typedef struct bTreeNode 
-//llamarlo n-tree o m-tree no es un b-tree realmente
+typedef struct parseTree 
 {
-	std::string					contextName;
-	size_t						contextType;
-	std::vector<std::string>	contextArgs;
-	//cambiar contenido a <pair>: key-value, pero valores puede ser una lista, múltiples valores
-	std::multimap<std::string, std::string>	directivesMap;
-	std::vector<std::pair<std::string, std::vector<std::string> > >	directives;
-	std::vector<std::string>	childsNames; //nombre del tipo de cada hijo añadido
-	//int							*childsTypes; //tipos de cada hijo, id para saber donde moverse
-	void						*_content;
-	std::vector<bTreeNode*>		childs; //punteros a los hijos
-} bTreeNode;
+	t_context					context;
+	std::vector<parseTree *>	childs; //punteros a los hijos
+} parseTree ;
 
 struct HttpResponse {
 	std::string firstLine; //method, version
@@ -126,43 +118,36 @@ typedef struct s_ports{
 	size_t				n;
 } t_ports ;
 
+
+typedef struct s_events{
+	pollfd	events[SOMAXCONN + 1];
+	size_t	n;
+	size_t	sig;
+}	t_events;
+
 typedef struct client {
-    int fd;
-	int	portID; //port id
-	int	state; // 0 - tiene que leer header, 1 - tiene que leer body, 2 - tiene que escribir
-	bTreeNode 	*server; //que cada cliente tenga un puntero a su servidor, para no tener que pasarlo como parametro por funciones
+    int 			fd;
+	int				portID; //port id
+	int				state; // 0 - tiene que leer header, 1 - tiene que leer body, 2 - tiene que escribir
+	parseTree 		*server; //que cada cliente tenga un puntero a su servidor, para no tener que pasarlo como parametro por funciones
 	HttpRequest 	request;
 	HttpResponse	response;
-	bTreeNode	*loc;
-	bool operator==(struct client const &cmp) const
+	parseTree		*loc;
+	pollfd 			*events[2];
+	size_t			timer;
+	bool 			operator==(struct client const &cmp) const
 	{
 		if (this->fd == cmp.fd)
 			return (1);
 		return (0);
 	}
-	size_t	timer;
-	//server *SocketServer;
 } client;
 
-
-
-class	clientQueue {
-
-	public:
-		void clearRequest(int);
-		void addClient(int, int);
-		clientQueue();
-		~clientQueue();
-		std::vector<client> clientArray;
-		int getPos(int);
-		int getServerId(int);
-};
 typedef struct	servers{
 	
 	int			*serversFd;
 	int			servers_n;
-	clientQueue	clients;
-	std::vector<bTreeNode*>	serversPtr;
+	std::vector<parseTree*>	serversPtr;
 }	servers ;
 
 enum	token_type{word, openBracket, closeBracket, endDeclare}; //enums para tipos de token
@@ -198,27 +183,16 @@ size_t	countCharinStr(const char *str, char c);
 //parse files
 bool		tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &del);
 char		*readFileSeLst(int fd);
-bTreeNode	*parseFile(char	*file);
+parseTree	*parseFile(char	*file);
 
 //tree funcs - find, search
 
-void		findNode(bTreeNode *root, bTreeNode **find_node, std::string find);
-bTreeNode	*findLocation(struct client *client);
+void		findNode(parseTree *root, parseTree **find_node, std::string find);
+parseTree	*findLocation(struct client *client);
 bool		findFile(std::string &dirFind, std::string &file);
 std::string *getMultiMapValue(std::multimap<std::string, std::string> &map, std::string key);
 bool		isInMultiMapKey(std::multimap<std::string, std::string> &map, std::string key);
 bool		isInMultiMapValue(std::multimap<std::string, std::string> &map, std::string key, std::string value);
-
-//socket funcs
-
-//sort-insert funcs
-int		binarySearch(std::vector<bTreeNode*> &vec, bTreeNode *insert);
-void	binaryInsert(std::vector<bTreeNode *> &vec, bTreeNode *insert);
-
-//directories-locations
-int	cmpDirectories(std::string &s1, std::string &s2);
-int	cmpLocations(bTreeNode *loc, bTreeNode *cmp);
-int	cmpDirectives(void *loc, void *cmp);
 
 //--HTTP REQUEST---
 int		readEvent(struct client *client);
@@ -231,7 +205,24 @@ std::string	getRequestedFile(struct client *client, std::vector<std::string> &re
 std::string getResponseBody(std::string fileToReturn);
 std::string	getStatus(int status);
 std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
-std::string GetResponse(bTreeNode	*server, std::string &url);
+//sort-insert funcs
+int		binarySearch(std::vector<parseTree*> &vec, parseTree *insert);
+void	binaryInsert(std::vector<parseTree *> &vec, parseTree *insert);
+
+//directories-locations
+int	cmpDirectories(std::string &s1, std::string &s2);
+int	cmpLocations(parseTree *loc, parseTree *cmp);
+int	cmpDirectives(void *loc, void *cmp);
+
+//--HTTP REQUEST---
+int			readEvent(struct client *client);
+int			writeEvent(struct client *client);
+void		loadRequest(HttpRequest *request);
+std::string	getRequestedFile(parseTree	*server, client *client);
+std::string getResponseBody(std::string fileToReturn);
+std::string	getStatus(int status);
+std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
+std::string GetResponse(parseTree	*server, std::string &url);
 void ResponseToMethod(client *client);
 
 //CHUNKED REQUEST
@@ -250,11 +241,11 @@ size_t locate(const char *haystack, const char *needle, size_t i, size_t size, s
 void 	setNonBlocking(int fd);
 int		getServerSocket(sockaddr_in *addr, int port);
 void	bindAndListen(int sock, sockaddr_in *addr);
-int		pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports);
+int		pollEvents(std::vector<parseTree *> &servers, t_ports *ports);
 
 //---CGI---
 std::string getCgi(std::string script);
-std::string CGIForward(std::string &path, client *client);
+void		CGIForward(client *client);
 
 //ERRORS
 std::string	getStatus(int status);

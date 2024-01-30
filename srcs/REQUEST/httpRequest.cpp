@@ -24,10 +24,19 @@ void	loadRequest(HttpRequest *request)
 		}
 		std::cout << "Id de method: " << request->method_int << std::endl;
         request->url = line.substr(methodLength + 1, urlLength - methodLength - 1);
+		std::cout << "••••URL IS: " << request->url << std::endl;
 		if (request->url.find('?') != std::string::npos) {
 			request->query = request->url.substr(request->url.find('?') + 1);
 			request->url = request->url.substr(0, request->url.find('?'));
 		}
+		if (request->url.find(".py") != std::string::npos ||
+			request->url.find(".pl") != std::string::npos ||
+			request->url.find(".php") != std::string::npos)
+		{
+			request->cgi = true;
+		}
+		else
+			request->cgi = false;
     }
 	else
 		throw (400);

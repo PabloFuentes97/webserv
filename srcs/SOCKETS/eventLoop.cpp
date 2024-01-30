@@ -20,34 +20,46 @@ int	findPortbySocket(t_ports *ports, int socket)
 	return (-1);
 }
 
-bTreeNode *findServerByClient(std::vector<bTreeNode *> servers, struct client *client)
+parseTree *findServerByClient(std::vector<parseTree *> servers, struct client *client)
 {
-	std::multimap<std::string, std::string>::iterator	it;
+	typedef std::multimap<std::string, std::string>::iterator	it;
 	//std::cout << "BUSCAR POR HOSTNAME" << std::endl;
-	it = client->request.headers.find("hostname");
-	if (it != client->request.headers.end())
+	//Busca por hostname
+	it ith = client->request.headers.find("Hostname");
+	if (ith != client->request.headers.end())
 	{
-		std::string &serverName = it->second;
+		std::cout << "HAY HOSTNAME" << std::endl;
 		//busca por servername
 		//std::cout << "SERVER_NAME: " << serverName << std::endl;
 		for (size_t i = 0; i < servers.size(); i++)
 		{
-			it = servers[i]->directivesMap.find("server_name");
-			if (it != servers[i]->directivesMap.end())
+			it its = servers[i]->context._dirs.find("server_name");
+			it itp = servers[i]->context._dirs.find("listen");
+			std::cout << "SERVER_NAME DEL HEADER: " << ith->second << std::endl;
+			std::cout << "SERVER_NAME DEL CONFIG: " << its->second << std::endl;
+			std::cout << "PUERTO DEL CONFIG: "	<< itp->second << std::endl;
+			std::cout << "PUERTO DEL CLIENTE: "	<< client->portID << std::endl;
+			if (its != servers[i]->context._dirs.end()
+				&& itp != servers[i]->context._dirs.end())
 			{
-				if (it->second == serverName)
+				if (!strncmp(ith->second.c_str(), its->second.c_str(), its->second.length())
+						&& atoi(itp->second.c_str()) == client->portID)
+				{
+					std::cout << "COINCIDEN" << std::endl;
 					return (servers[i]);
+				}
+					
 			}
 		}
 	}
-	//busca por puerto
+	//Busca por puerto
 	//std::cout << "BUSCAR POR PUERTO" << std::endl;
 	for (size_t i = 0; i < servers.size(); i++)
 	{
-		it = servers[i]->directivesMap.find("listen");
-		if (it != servers[i]->directivesMap.end())
+		ith = servers[i]->context._dirs.find("listen");
+		if (ith != servers[i]->context._dirs.end())
 		{
-			int	port = atoi(it->second.c_str());
+			int	port = atoi(ith->second.c_str());
 			if (port == client->portID)
 				return (servers[i]);
 		}
@@ -65,15 +77,25 @@ pollfd *findUnusedPoll(pollfd *polls, int polls_n)
 	return (NULL);
 }
 
-void	deleteClient(std::vector<client> &clients, client &c, pollfd &event) //int i, int events_n
+void	setEvent(pollfd *event, int _fd, short _event, short _revent)
+{
+	event->fd = _fd;
+	event->events = _event;
+	event->revents = _revent;
+}
+
+void	deleteClient(std::vector<client> &clients, client &c) //int i, int events_n
 {
 	close(c.fd);
-	event.fd = -1;
-	event.events = 0;
-	event.revents = 0;
+	setEvent(c.events[0], -1, 0, 0);
+	setEvent(c.events[1], -1, 0, 0);
 	std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), c);
+	if (it != clients.end())
+	{
+		//std::cout << "Ha encontrado un cliente para borrar: " << it->fd << std::endl;
+	}
 	clients.erase(it);
-	//std::cerr << "Elimina cliente" << std::endl;
+	std::cerr << "Elimina cliente" << std::endl;
 	/*
 	if (i == events_n)
 	{
@@ -87,10 +109,10 @@ size_t	getTimeSeconds()
 	time_t	seconds;
 
 	seconds = time(NULL);
-	return (seconds / 3600);
+	return (seconds);
 }
 
-void	setClient(struct client &client, int fd, int id, std::vector<bTreeNode*> servers)
+void	setClient(struct client &client, int fd, int id, std::vector<parseTree*> servers)
 {
 	client.fd = fd;
 	client.portID = id;
@@ -102,14 +124,7 @@ void	setClient(struct client &client, int fd, int id, std::vector<bTreeNode*> se
 	client.timer = getTimeSeconds();
 }
 
-void	setEvent(pollfd *event, int _fd, short _event, short _revent)
-{
-	event->fd = _fd;
-	event->events = _event;
-	event->revents = _revent;
-}
-
-int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, int socket, t_ports *ports, pollfd *events, int &events_n)
+int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers, int socket, t_ports *ports, pollfd *events, int &events_n)
 {
 	struct sockaddr_in	client_addr;
 	int					client_len;
@@ -138,6 +153,7 @@ int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers,
 		{
 			//std::cout << "Hay evento a -1 para sobreescribir";
 			setEvent(event, accept_socket, poll_events[e], 0);
+			c.events[e] = event;
 			std::cout << "NEW CLIENT | FD: " << event->fd << " | EVENTS: " << event->events << std::endl;
 		}
 		else
@@ -146,6 +162,7 @@ int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers,
 			{
 				//std::cout << "No hay evento a -1 para sobreescribir, escribo en el máximo actual" << std::endl;
 				setEvent(&events[events_n], accept_socket, poll_events[e], 0);
+				c.events[e] = &events[events_n];
 				std::cout << "NEW CLIENT | FD: " << events[events_n].fd << " | EVENTS: " << events[events_n]
 					.events << std::endl;
 				events_n++;
@@ -155,16 +172,16 @@ int	createClient(std::vector<client> &clients, std::vector<bTreeNode *> servers,
 	return (1);
 }
 
-int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, pollfd &event)
+int	readClient(std::vector<client> &clients, std::vector<parseTree *> servers, pollfd &event)
 {
 	client *curr_client = findClientFd(clients, event.fd);
 	try
 	{
-		if (curr_client && curr_client->state < 2)
+    if (curr_client && curr_client->state < 2)
 		{
 			std::cout << "READ EVENT" << std::endl;
 			if (readEvent(curr_client))
-				deleteClient(clients, *curr_client, event);
+				deleteClient(clients, *curr_client);
 			else 
 			{
 				//std::cout << "Estado de cliente tras leer: " << curr_client->state << std::endl;
@@ -173,7 +190,7 @@ int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, p
 					setEvent(&event, -1, 0, 0);
 					curr_client->server = findServerByClient(servers, curr_client);
 					if (!curr_client->server)
-						deleteClient(clients, *curr_client, event);
+						deleteClient(clients, *curr_client);
 					else
 						ResponseToMethod(curr_client);
 				}
@@ -196,7 +213,36 @@ int	readClient(std::vector<client> &clients, std::vector<bTreeNode *> servers, p
 	return (1);
 }
 
-int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
+int	checkTimerExpired(std::vector<client> &clients)
+{
+	//std::list<client>	deleteQueue;
+	for (size_t i = 0; i < clients.size(); i++)
+	{
+		std::string *timeoutStr = getMultiMapValue(clients[i].server->context._dirs, "timeout");
+		if (timeoutStr)
+		{
+			size_t	timeoutInt = atoi(timeoutStr->c_str());
+			size_t	time = getTimeSeconds();
+			if ((time - clients[i].timer) >= timeoutInt && clients[i].state < 2)
+			{
+				std::cout << "Te pasaste de tiempo" << std::endl;
+				std::cout << "CLIENT: " << clients[i].fd << std::endl;
+				std::cout << "Timeout: " << timeoutInt << std::endl;
+				std::cout << "Client timer: " << clients[i].timer << std::endl;
+				std::cout << "Time: " << time << std::endl;
+				std::cout << "Tiempo que ha pasado: " << time - clients[i].timer << std::endl;
+				clients[i].request.status = 408;
+				getErrorResponse(&clients[i], 408);
+				setEvent(clients[i].events[0], -1, 0, 0);
+				clients[i].state = 3;
+			}
+		}
+	}
+		
+	return (0);
+}
+
+int	pollEvents(std::vector<parseTree *> &servers, t_ports *ports)
 {
 	//std::cout << "EN POLLEVENTS" << std::endl;
 	pollfd	events[SOMAXCONN + 1];
@@ -213,34 +259,35 @@ int	pollEvents(std::vector<bTreeNode *> &servers, t_ports *ports)
 		sign_events = poll(events, events_n, 0);
         if (sign_events == -1) {
             perror("poll failed: ");
-            //exit(1);
         }
 		if (sign_events > 0)
 		{
 			int	events_it = events_n;
 			for (int i = 0, j = 0; i < events_it && j < sign_events; i++)
 			{
+				checkTimerExpired(clients);
 				if (events[i].revents & POLLIN) // EVENTO DE LECTURA
 				{
 					if (events[i].fd < (int)(ports->n + 3)) //ES SOCKET DE PUERTO, CREAR NUEVO CLIENTE
 					{
 						createClient(clients, servers, events[i].fd, ports, events, events_n);
-						continue ;
+						//continue ;
 					}
 					else // SOCKET DE CLIENTE, LEER REQUEST
-					{
 						readClient(clients, servers, events[i]);
-					}
 					j++;
 				}
-				if (events[i].revents & POLLOUT) // SOCKET DE CLIENTE, ESCRIBIR REQUEST
+				else if (events[i].revents & POLLOUT) // SOCKET DE CLIENTE, ESCRIBIR REQUEST
 				{
 					client *curr_client = findClientFd(clients, events[i].fd);
 					if (curr_client && curr_client->state == 3)
 					{
 						std::cout << "WRITE EVENT" << std::endl;
-						if (!writeEvent(curr_client))
-							deleteClient(clients, *curr_client, events[i]);
+						if (writeEvent(curr_client) <= 0)
+						{
+							std::cout << "Termina de escribir, BORRA" << std::endl;
+							deleteClient(clients, *curr_client);
+						}		
 					}
 					j++;
 				}		

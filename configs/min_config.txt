@@ -20,7 +20,7 @@ server{
         root    hola;
     }
     location    /{
-        alias    /about.html;
+        alias    /documents/about.html;
     }
     location    /prueba
     {
@@ -29,7 +29,7 @@ server{
 }
     server{
         server_name   serbre;
-        listen        8080;
+        listen        127;
         limit_body_size 121212121;
         error_page    502 503 504  /50x.html;
 
@@ -38,6 +38,7 @@ server{
         location        /documents
         {
             autoindex on;
+            postdir   /postfiles/;
             alias /documents/;
         }
         location    /cgi
@@ -52,14 +53,14 @@ server{
             alias      /documents/;
             methods   GET POST DELETE;
             postdir   /postfiles/;
-            index   /documents/index.html /documents/index.htm;
+            index   /index.html /index.htm;
         }
         location    /manolo
         {
             alias     /documents/;
             methods   GET POST;
             postdir   /postfiles/;
-            try_files index.html index.htm;
+            index index.html index.htm;
         }
         location      /pepe/juan{
             root      jeje;

@@ -28,7 +28,6 @@ std::string getResponseBody(std::string fileToReturn) {
         std::cerr << "File error" << std::endl;
         throw (500);
 	}
-	std::cout << "Lee bien el fichero para enviar la respuesta" << std::endl;
 	char c;
 	while (file.get(c))
 		fileLine.push_back(c);
@@ -39,7 +38,7 @@ std::string getResponseBody(std::string fileToReturn) {
 
 int	writeEvent(struct client *client)
 {
-	std::cout << "---WRITE EVENT---" << std::endl;
+	std::cout << "---WRITE EVENT---: CLIENT: " << client->fd << std::endl;
 	//std::string finalRequest  = ResponseToMethod(server, client);
 	
 	//size_t requestLength = strlen(finalRequest.c_str());
@@ -47,11 +46,16 @@ int	writeEvent(struct client *client)
 	std::cout << "LEN DE RESPONSE: " << responseLen << std::endl;
 	//std::cout << "\033[1;31mRESPONSE IS: " << client->response.response << "\033[0m" << std::endl;
 	//while (bytes_sent < requestLength)
-	client->response.bytesSent += send(client->fd, 
+	size_t	bytesSent = send(client->fd, 
 				&client->response.response.c_str()[client->response.bytesSent], responseLen - client->response.bytesSent, MSG_DONTWAIT);
+	if (bytesSent < 0)
+		return (-1);
+	client->response.bytesSent += bytesSent;
 	std::cout << "\033[1;31mENVIADO: " << client->response.bytesSent << "\033[0m" << std::endl;
+	std::cout << "LONGITUD DE RESPONSE: " << responseLen << std::endl;
 	if (client->response.bytesSent == responseLen)
 	{
+		std::cout << "Terminar de escribir, cerrar client" << std::endl;
 		client->state = -1;
 		return (0);
 	}

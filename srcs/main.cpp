@@ -1,6 +1,6 @@
 #include "../includes/webserv.hpp"
 
-/*int	kqueue_events(std::vector<bTreeNode *>servers, std::vector<int> &sockets)
+/*int	kqueue_events(std::vector<parseTree *>servers, std::vector<int> &sockets)
 {
 	struct kevent event[SOMAXCONN + 1];
 
@@ -106,6 +106,43 @@
 	return (0);
 }*/
 
+
+int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
+{
+	int					id;
+	struct sockaddr_in	addr;
+
+	ports.n = 0;
+	for (size_t i = 0; i < servers.size(); i++)
+	{
+		std::string	*value = getMultiMapValue(servers[i]->context._dirs, "listen");
+		if (!value)
+			return (1);
+		id = atoi(value->c_str());
+		//ports.id.push_back(id);
+		bool rep = true;
+		for (size_t j = 0; j < ports.n; i++)
+		{
+			if (ports.id[j] == id)
+			{
+				rep = false;
+				break ;
+			}
+		}
+		if (rep == true)
+		{
+			std::cout << "Port de server " << i << " es: " << id << std::endl;
+			ports.id.push_back(id);
+			ports.fd.push_back(getServerSocket(&addr, id));
+			std::cout << "Socket de servidor " << i << " es: " << ports.fd.back() << std::endl;
+			bindAndListen(ports.fd[i], &addr);
+			ports.n++;
+		}
+	}
+	return (0);
+}
+
+
 int	main(int argc, char **argv) {
 
 	if (argc != 2) {
@@ -115,46 +152,25 @@ int	main(int argc, char **argv) {
         std::cerr << "Inaccessible file" << std::endl;
         return 1; }
 	
-	
-	struct sockaddr_in	addr;
-	//struct sockaddr_in	client_addr;
-	//int					client_len;
-
 	//guardar arbol con config
-	bTreeNode	*root = parseFile(argv[1]);
+	parseTree	*root = parseFile(argv[1]);
 	if (!root)
+	{
+		std::cout << "BAD CONFIG FILE " << std::endl;
 		return (2);
-	bTreeNode	*http = NULL;
+	}	
+	parseTree	*http = NULL;
 	findNode(root, &http, "http");
 	if (!http)
 		return (2);
-	std::vector<bTreeNode*>	servers;
+	std::vector<parseTree*>	servers;
 	for (size_t i = 0; i < http->childs.size(); i++)
 	{
-		if (http->childs[i]->contextName == "server")
+		if (http->childs[i]->context._name == "server")
 			servers.push_back(http->childs[i]);
 	}
-	//std::vector<int>	ports;
-	//Socket del servidor
 	t_ports	ports;
-	int	id;
-	ports.n = 0;
-	for (size_t i = 0; i < servers.size(); i++)
-	{
-		
-		std::string	*value = getMultiMapValue(servers[i]->directivesMap, "listen");
-		if (!value)
-			return (3);
-		//if (!getValue(servers[i]->directives, "listen"))
-		//	return (3);
-		id = atoi(value->c_str());
-		ports.id.push_back(id);
-		std::cout << "Port de server " << i << " es: " << id << std::endl;
-		ports.fd.push_back(getServerSocket(&addr, id));
-		std::cout << "Socket de servidor " << i << " es: " << ports.fd.back() << std::endl;
-		bindAndListen(ports.fd[i], &addr);
-		ports.n++;
-	}
+	setPorts(ports, servers);
 	pollEvents(servers, &ports);	
 	return (0);
 }

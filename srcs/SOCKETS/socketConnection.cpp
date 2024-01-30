@@ -22,7 +22,7 @@ int	getServerSocket(sockaddr_in *addr, int port) {
  	}
 	//Setear el socket a non-blocking
 	int enable = 1;
-  	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) == -1) {
+  	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) == -1) {
     	perror("setsockopt()");
     	exit (1);
   	}
