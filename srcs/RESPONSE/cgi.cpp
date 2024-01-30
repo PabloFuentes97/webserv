@@ -75,7 +75,7 @@ void CGIForward(client *client)
 
 	redirs.push_back("cgi_pass");
 	//redirs.push_back("root");
-	path = getRequestedFile(client, redirs);
+	path = getPathFileRequest(client, redirs);
 	std::cout << "filePath: " << path << std::endl;
 	if (access(path.c_str(), F_OK) != 0)
 		throw (404);
