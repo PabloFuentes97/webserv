@@ -22,22 +22,33 @@ int	findPortbySocket(t_ports *ports, int socket)
 
 parseTree *findServerByClient(std::vector<parseTree *> servers, struct client *client)
 {
-	std::multimap<std::string, std::string>::iterator	it;
+	typedef std::multimap<std::string, std::string>::iterator	it;
 	//std::cout << "BUSCAR POR HOSTNAME" << std::endl;
 	//Busca por hostname
-	it = client->request.headers.find("hostname");
-	if (it != client->request.headers.end())
+	it ith = client->request.headers.find("Hostname");
+	if (ith != client->request.headers.end())
 	{
-		std::string &serverName = it->second;
+		std::cout << "HAY HOSTNAME" << std::endl;
 		//busca por servername
 		//std::cout << "SERVER_NAME: " << serverName << std::endl;
 		for (size_t i = 0; i < servers.size(); i++)
 		{
-			it = servers[i]->context._dirs.find("server_name");
-			if (it != servers[i]->context._dirs.end())
+			it its = servers[i]->context._dirs.find("server_name");
+			it itp = servers[i]->context._dirs.find("listen");
+			std::cout << "SERVER_NAME DEL HEADER: " << ith->second << std::endl;
+			std::cout << "SERVER_NAME DEL CONFIG: " << its->second << std::endl;
+			std::cout << "PUERTO DEL CONFIG: "	<< itp->second << std::endl;
+			std::cout << "PUERTO DEL CLIENTE: "	<< client->portID << std::endl;
+			if (its != servers[i]->context._dirs.end()
+				&& itp != servers[i]->context._dirs.end())
 			{
-				if (it->second == serverName)
+				if (!strncmp(ith->second.c_str(), its->second.c_str(), its->second.length())
+						&& atoi(itp->second.c_str()) == client->portID)
+				{
+					std::cout << "COINCIDEN" << std::endl;
 					return (servers[i]);
+				}
+					
 			}
 		}
 	}
@@ -45,10 +56,10 @@ parseTree *findServerByClient(std::vector<parseTree *> servers, struct client *c
 	//std::cout << "BUSCAR POR PUERTO" << std::endl;
 	for (size_t i = 0; i < servers.size(); i++)
 	{
-		it = servers[i]->context._dirs.find("listen");
-		if (it != servers[i]->context._dirs.end())
+		ith = servers[i]->context._dirs.find("listen");
+		if (ith != servers[i]->context._dirs.end())
 		{
-			int	port = atoi(it->second.c_str());
+			int	port = atoi(ith->second.c_str());
 			if (port == client->portID)
 				return (servers[i]);
 		}

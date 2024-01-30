@@ -18,6 +18,8 @@ std::string	getStatus(int status)
             return "405 Method Not Allowed"; //Método que no gestionamos (DELETE de CGI o cualquier otro)
         case 408:
             return "408 Request Timeout"; //Timeout
+		case 409:
+            return "409 Conflict";
         case 413:
             return "413 Payload Too Large"; //Request muy grande
         case 429:
@@ -35,32 +37,8 @@ std::string	getStatus(int status)
     }
 }
 
-std::string	defaultErrorPath(int error)
-{
-	std::cout << "DEFAULT ERROR PATH" << std::endl;
-	char		buf[1000];
-	std::string	absPath = getcwd(buf, 1000);
-	std::string	errorPath;
-	
-	switch (error)
-	{
-		//client errors
-		case 400: {errorPath = absPath + "/errors" + "/error400.html" ; break ; }
-		case 403: {errorPath = absPath + "/errors" + "/error403.html" ; break ; }
-		case 404: {errorPath = absPath + "/errors" + "/error404.html" ; break ; }
-		case 408: {errorPath = absPath + "/errors" + "/error408.html" ; break ; }
-		//server errors
-		case 500: {errorPath = absPath + "/errors" + "/error500.html" ; break ; }
-	}
-	return (errorPath);
-}
-
 std::string	getErrorPath(struct client *client, int error)
 {
-	char		buf[1000];
-	std::string	absPath = getcwd(buf, 1000);
-	std::string	errorPath;
-
 	std::cout << "---------Hubo error: " << error << " , mandar error path--------" << std::endl;
 	//mirar si en config hay ficheros de error redirigidos
 	if (client->loc)
@@ -82,14 +60,12 @@ std::string	getErrorPath(struct client *client, int error)
 				{
 					ie--;
 					std::cout << "Fichero a redirigir: " << "Key: " << ie->first << " | Value: " << ie->second << std::endl;
-					errorPath = absPath + ie->second;
-					return (errorPath);
+					return (ie->second);
 				}
 			}
 		}
 	}
-	errorPath = defaultErrorPath(error);
-	return (errorPath);
+	return ("errors/error" + std::to_string(error) + ".html");
 }
 
 void	getErrorResponse(struct client *client, int error)

@@ -13,18 +13,18 @@ server{
     server_name pfuentes.42;
     listen 127;
     location    /about.html{
-        alias   /documents/tour.html;
+        alias   documents/tour.html;
     }
 
     location    /del_prueba{
         root    hola;
     }
     location    /{
-        alias    /about.html;
+        alias    documents/about.html;
     }
     location    /prueba
     {
-        root    /documents/;
+        root    documents/;
     }
 }
     server{
@@ -38,33 +38,33 @@ server{
         location        /documents
         {
             autoindex on;
-            postdir   /postfiles/;
-            alias /documents/;
+            postdir   postfiles/;
+            alias 	documents/;
         }
         location    /cgi
         {
-            cgi_pass    /cgi/;
+            cgi_pass    cgi/;
         }
         location    /redirect
         {
-            redirect /documents;
+            redirect documents/;
         }
         location      /{
-            alias      /documents/;
+            alias      documents/;
             methods   GET POST DELETE;
-            postdir   /postfiles/;
-            index   /index.html /index.htm;
+            postdir   postfiles/;
+            index   index.html index.htm;
         }
         location    /manolo
         {
-            alias     /documents/;
+            alias     documents/;
             methods   GET POST;
-            postdir   /postfiles/;
+            postdir   postfiles/;
             index index.html index.htm;
         }
         location      /pepe/juan{
             root      jeje;
-            alias     /documents/;
+            alias     documents/;
         }
         location      /pepe{
             root      jejeje;
