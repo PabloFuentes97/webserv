@@ -218,7 +218,7 @@ int	cmpDirectives(void *loc, void *cmp);
 int			readEvent(struct client *client);
 int			writeEvent(struct client *client);
 void		loadRequest(HttpRequest *request);
-std::string	getRequestedFile(parseTree	*server, client *client);
+std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs);
 std::string getResponseBody(std::string fileToReturn);
 std::string	getStatus(int status);
 std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);

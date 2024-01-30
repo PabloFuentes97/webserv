@@ -121,7 +121,7 @@ int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
 		id = atoi(value->c_str());
 		//ports.id.push_back(id);
 		bool rep = true;
-		for (size_t j = 0; j < ports.n; i++)
+		for (size_t j = 0; j < ports.n; j++)
 		{
 			if (ports.id[j] == id)
 			{
@@ -145,24 +145,36 @@ int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
 
 int	main(int argc, char **argv) {
 
-	if (argc != 2) {
-        std::cerr << "Format: ./webserv [configuration file]" << std::endl;
-        return (1); }
-    if (access(argv[1], R_OK) != 0) {
+	std::string file;
+	if (argc > 2)
+	{
+		std::cerr << "Format: ./webserv [configuration file]" << std::endl;
+		return (1);
+	}
+	else if (argc == 1)
+	{
+		std::cout << "Using default config file" << std::endl;
+		file = "configs/min_config.txt";
+	}
+	else
+		file = argv[1];
+    if (access(file.c_str(), R_OK) != 0)
+	{
         std::cerr << "Inaccessible file" << std::endl;
-        return 1; }
+        return (2);
+	}
 	
 	//guardar arbol con config
-	parseTree	*root = parseFile(argv[1]);
+	parseTree	*root = parseFile((char *)file.c_str());
 	if (!root)
 	{
 		std::cout << "BAD CONFIG FILE " << std::endl;
-		return (2);
+		return (3);
 	}	
 	parseTree	*http = NULL;
 	findNode(root, &http, "http");
 	if (!http)
-		return (2);
+		return (4);
 	std::vector<parseTree*>	servers;
 	for (size_t i = 0; i < http->childs.size(); i++)
 	{
