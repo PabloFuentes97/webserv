@@ -27,6 +27,22 @@
 #define BUF_SIZE 200000
 #define PORT 8080
 
+enum statusCodes {CREATED = 201,
+				MOVED_PERMANENTLY = 301,
+				BAD_REQUEST = 400,
+				FORBIDDEN = 403,
+				NOT_FOUND = 404,
+				METHOD_NOT_ALLOWED = 405,
+				TIMEOUT = 408,
+				CONFLICT = 409,
+				PAYLOAD_TOO_LARGE = 413,
+				TOO_MANY_REQUESTS = 429,
+				INTERNAL_SERVER_ERROR = 500,
+				NOT_IMPLEMENTED = 501,
+				BAD_GATEWAY = 502,
+				GATEWAY_TIMEOUT = 504
+};
+
 typedef struct seNode{
 	size_t			elem_n;
 	char 			elem[MAX_SE_ELEM];
@@ -77,11 +93,13 @@ struct HttpResponse {
 };
 
 typedef struct	chunk{
-	bool		isChunked; // If true the request body is chunk encoded;
+	bool		isChunked; // If true the request body is chunk encoded
+	bool		complete; // If true DeChunking complete
 	bool		readingSize; // If true we are currently reading the HEX value of the chunk size
-	std::string	stringHex; // String of the HEX value of the chunk size
 	size_t		size; // Size of the current chunk
-	size_t		read; // Bytes read at the current chunk
+	size_t		index; // Extra bytes from the body that are not content (necesarios para mirar max body length)
+	std::string	stringHex; // String of the HEX value of the chunk size
+	std::string	buf; // Content
 }	chunk;
 
 typedef struct HttpRequest {
@@ -209,12 +227,16 @@ int		writeEvent(struct client *client);
 //void	writeEvent(bTreeNode *server, clientQueue &Queue, int ident, struct kevent *client_event, int kq);
 //HttpRequest loadRequest(char *buffer);
 void		loadRequest(HttpRequest *request);
-std::string	getRequestedFile(bTreeNode	*server, client *client);
+std::string	getRequestedFile(struct client *client, std::vector<std::string> &redirs);
 std::string getResponseBody(std::string fileToReturn);
 std::string	getStatus(int status);
 std::string getResponseHeader(HttpRequest &currentRequest, std::string &body);
 std::string GetResponse(bTreeNode	*server, std::string &url);
 void ResponseToMethod(client *client);
+
+//CHUNKED REQUEST
+void 	postHeaderChunk(struct client *client, size_t lim);
+void	readBodyChunked(struct client *client);
 
 //HTTP METHODS
 void	callMultiPart(struct client *client, std::string &path);

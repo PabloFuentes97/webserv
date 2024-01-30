@@ -30,11 +30,7 @@ void	loadRequest(HttpRequest *request)
 		}
     }
 	else
-	{
-    	//perror("invalid HTTP request");
-		//return (1);
 		throw (400);
-    }
 	std::cout << std::endl << "METHOD: " << request->method << std::endl;
 	std::cout << std::endl << "URL: " << request->url << std::endl;
 	//checkear que tipo de accion deberia hacer en base a url - directorio, fichero normal, cgi
@@ -91,13 +87,23 @@ int find_str(const char *haystack, const char *needle, size_t i, size_t size, si
 int	readHeader(struct client *client)
 {
 	int		lim = find_str(client->request.buf.c_str(), (const char*)"\r\n\r\n", 0, client->request.buf.size(), 4);
+	
 	if (lim < 0)
 		return (0);
+	
 	if ((size_t)(lim + 4) == client->request.buf.size()) //NO HAY NADA MÁS DESPUÉS DEL HEADER
 	{
+		
 		client->request.header = client->request.buf;
 		client->request.bufLen = 0;
 		loadRequest(&client->request);
+		if(isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked\r") || isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked"))
+		{
+			client->request.chunk.isChunked = true;
+			client->request.chunk.complete = false;
+			client->request.chunk.readingSize = true;
+			client->request.chunk.index = 0;
+		}
 	}
 	else
 	{
@@ -105,86 +111,35 @@ int	readHeader(struct client *client)
 		client->request.bufLen -= lim + 4;
 		loadRequest(&client->request);
 		std::string	body;
-		if (isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked\r"))
+		
+		body.reserve(client->request.bufLen);
+		for (size_t i = 0, j = lim + 4; i < client->request.bufLen; i++, j++)
+			body[i] = client->request.buf[j];
+		client->request.buf.reserve(client->request.bufLen);
+		for (size_t i = 0; i < client->request.bufLen; i++)
+			client->request.buf[i] = body[i];
+		if (isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked\r") || isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked"))
 		{
 			client->request.chunk.isChunked = true;
-			client->request.buf.clear();
+			client->request.chunk.complete = false;
 			client->request.chunk.readingSize = true;
-			size_t	junk = 0;
-			size_t limit; //BARRAERREBARRAENE
-			for (size_t j = (lim + 4); j < client->request.bufLen;)
-			{
-				if (client->request.chunk.readingSize)
-				{
-					limit = locate(client->request.buf.c_str(), "\r\n", j, client->request.bufLen, 2);
-					while (std::strchr("0123456789ABCDEF", client->request.buf[j]) && j < client->request.bufLen)
-					{
-						client->request.chunk.stringHex += client->request.buf[j];
-						j++;
-					}
-					if (j >= client->request.bufLen)
-						break;
-					client->request.chunk.readingSize = false;
-					client->request.chunk.size = strtol(client->request.chunk.stringHex.c_str(), NULL, 16);
-				}
-				else
-				{
-					limit = locate(client->request.buf.c_str(), "\r\n", j, client->request.bufLen, 2);
-					if (limit == 0)
-					{
-						j += 2;
-						junk += 2;
-					}
-					else
-					{
-						while (j < limit && j < client->request.bufLen)
-						{
-							body += client->request.buf[j];
-							j++;
-						}
-					}
-				}
-			}
-			client->request.bufLen -= junk;
-			client->request.buf.reserve(client->request.bufLen);
-			for (size_t i = 0; i < client->request.bufLen; i++)
-				client->request.buf[i] = body[i];
+			client->request.chunk.index = 0;
+			readBodyChunked(client);
 		}
 		else
-		{
 			client->request.chunk.isChunked = false;
-			body.reserve(client->request.bufLen);
-			for (size_t i = 0, j = lim + 4; i < client->request.bufLen; i++, j++)
-				body[i] = client->request.buf[j];
-			client->request.buf.reserve(client->request.bufLen);
-			for (size_t i = 0; i < client->request.bufLen; i++)
-				client->request.buf[i] = body[i];
-		}
 	}
+	if (client->state == 2)
+		return(0);
 	client->state = 1;
 	return (0);
-}
-
-int	readBodyChunked(struct client *client)
-{
-	typedef std::multimap<std::string, std::string>::iterator itm;
-	itm	it = client->request.headers.find("Transfer-Encoding");
-	if (it != client->request.headers.end())
-	{
-		if (it->second == "chunked")
-		{
-			std::cout << "Chunked" << std::endl;
-		}
-		return (0);
-	}
-	return (1);
 }
 
 int	readBody(struct client *client)
 {
 	typedef std::multimap<std::string, std::string>::iterator itm;
 	if (client->request.chunk.isChunked)
-		return (readBodyChunked(client));
+		readBodyChunked(client);
 	else //no hay variable content-length en el mapa
 	{
 		size_t	contentLen;
@@ -231,10 +186,16 @@ int	readEvent(struct client *client)
 	for (size_t j = 0; size < client->request.bufLen; size++, j++)
 		client->request.buf[size] = buf[j];
 	int ret;
+	
 	if (client->state == 0) //ESTOY EN MODO DE LEER EL HEADER
 		ret = readHeader(client);
 	if (client->state == 1)
 		ret = readBody(client);
-	system("leaks -q webserv");
+	if (client->state == 2 && client->request.chunk.isChunked)
+	{
+		client->request.bufLen = client->request.chunk.buf.size();
+		client->request.buf = client->request.chunk.buf;
+	}
+	//system("leaks -q webserv");
 	return (ret);
 }

@@ -217,11 +217,11 @@ void	postMethod(client *client)
 	}
 	//DIFERENTES TIPOS DE POST: APPLICATION, MULTIPART-FORM, TEXT-PLAIN
 	std::cout << "TIPO DE POST: " << itm->second << std::endl;
-	if (itm->second == "application/x-www-form-urlencoded\r")
+	if (itm->second == "application/x-www-form-urlencoded\r" || itm->second == "application/x-www-form-urlencoded")
 		postUrlEncoded(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else if (itm->second == "multipart/form-data")
 		callMultiPart(client, filePath);
-	else if (itm->second == "text/plain\r")
+	else if (itm->second == "text/plain\r" || itm->second == "text/plain")
 		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else
 		throw (400);
@@ -277,6 +277,7 @@ std::string	httpRedirect(client *client)
 
 bool	checkMethods(client *client)
 {
+	//CHECKEAR SI LA FUNCION NO LA GESTIONAMOS "PUT" ERROR 501 NOT IMPLEMENTED
 	if (!isInMultiMapKey(client->loc->directivesMap, "methods"))
 		return (true);
 	if (isInMultiMapValue(client->loc->directivesMap, "methods", client->request.method))
