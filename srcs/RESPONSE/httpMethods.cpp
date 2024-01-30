@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 #include "../../includes/webserv.hpp"
 
 static std::string	getRedir(struct client *client, itmap &redir)
@@ -331,3 +333,4 @@ void ResponseToMethod(client *client)
 	client->state = 3;
 	return ;
 }
+>>>>>>> 8530eed3571046953b1c8862ce3a68c28294144d

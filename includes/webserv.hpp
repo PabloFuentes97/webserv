@@ -245,7 +245,11 @@ int		pollEvents(std::vector<parseTree *> &servers, t_ports *ports);
 
 //---CGI---
 std::string getCgi(std::string script);
+<<<<<<< HEAD
+void	CGIForward(client *client);
+=======
 void		CGIForward(client *client);
+>>>>>>> 8530eed3571046953b1c8862ce3a68c28294144d
 
 //ERRORS
 std::string	getStatus(int status);
