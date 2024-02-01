@@ -7,13 +7,10 @@ void	loadRequest(HttpRequest *request)
 	std::istringstream bufferFile(request->header.c_str());
 	std::string line;
 	std::cout << "Creó el istringstream" << std::endl;
-	//Coger la primera línea
 	std::getline(bufferFile, line);
-	//Sacar: método, url (y versión)
 	size_t methodLength = line.find(' ');
     size_t urlLength = line.find(' ', methodLength + 1);
     if (methodLength != std::string::npos && urlLength != std::string::npos) {
-        //request->method = line.substr(0, methodLength);
 		request->method = line.substr(0, methodLength);
 		std::cout << "Method a evaluar: " << request->method << std::endl;
 		std::string methods[] = {"GET", "POST", "PUT", "DELETE"};
@@ -39,7 +36,7 @@ void	loadRequest(HttpRequest *request)
 			request->cgi = false;
     }
 	else
-		throw (400);
+		throw (BAD_REQUEST);
 	std::cout << std::endl << "METHOD: " << request->method << std::endl;
 	std::cout << std::endl << "URL: " << request->url << std::endl;
 	//checkear que tipo de accion deberia hacer en base a url - directorio, fichero normal, cgi
@@ -93,12 +90,12 @@ int find_str(const char *haystack, const char *needle, size_t i, size_t size, si
 	return (-1);
 }
 
-int	readHeader(struct client *client)
+void readHeader(struct client *client)
 {
 	int		lim = find_str(client->request.buf.c_str(), (const char*)"\r\n\r\n", 0, client->request.buf.size(), 4);
 	
 	if (lim < 0)
-		return (0);
+		return ;
 	
 	if ((size_t)(lim + 4) == client->request.buf.size()) //NO HAY NADA MÁS DESPUÉS DEL HEADER
 	{
@@ -120,7 +117,6 @@ int	readHeader(struct client *client)
 		client->request.bufLen -= lim + 4;
 		loadRequest(&client->request);
 		std::string	body;
-		
 		body.reserve(client->request.bufLen);
 		for (size_t i = 0, j = lim + 4; i < client->request.bufLen; i++, j++)
 			body[i] = client->request.buf[j];
@@ -139,39 +135,36 @@ int	readHeader(struct client *client)
 			client->request.chunk.isChunked = false;
 	}
 	if (client->state == 2)
-		return(0);
+		return ;
 	client->state = 1;
-	return (0);
 }
 
-int	readBody(struct client *client)
+void	readBody(struct client *client)
 {
 	typedef std::multimap<std::string, std::string>::iterator itm;
 	if (client->request.chunk.isChunked)
 		readBodyChunked(client);
 	else //no hay variable content-length en el mapa
 	{
-		size_t	contentLen;
+		
 		itm	it = client->request.headers.find("Content-Length");
 		if (it != client->request.headers.end())
 		{
+			std::cout << "LEÍDO ACTUALMENTE: " << client->request.bufLen << std::endl;
 			std::pair<itm, itm>	keyVal = client->request.headers.equal_range("Content-Length");
-			contentLen = atoi(keyVal.first->second.c_str());
+			size_t	contentLen;
+			contentLen = atol(keyVal.first->second.c_str());
 			if (client->request.bufLen > contentLen)
-				return (1); // ESTO ES UN THROW
+				throw (413);
 			if (client->request.bufLen == contentLen)
 			{
+				std::cerr << "LEIDO ENTERO\n";
 				client->state = 2;
-				return (0);
 			}
 		}
 		else
-		{
 			client->state = 2;
-			return (0);
-		}
 	}
-	return (0);
 }
 
 int	readEvent(struct client *client)
@@ -179,32 +172,25 @@ int	readEvent(struct client *client)
     char buf[BUF_SIZE + 1];
 	memset(buf, 0, sizeof(BUF_SIZE));
 	int	bytes_read = recv(client->fd, buf, BUF_SIZE, MSG_DONTWAIT);
-	if (bytes_read == -1) {
-		perror("recv");
-		return (1); //HAY QUE HACER ALGO ¿?
-	}
-	if (bytes_read == 0) {
-		/*//std::cout << "[[CLOSE]]" << std::endl;
-		close(cli->ident);*/
+	if (bytes_read == -1)
+		return (1);
+	if (bytes_read == 0)
 		return (2);
-	}
 	buf[bytes_read] = '\0';
 	size_t	size = client->request.bufLen;
 	client->request.bufLen += bytes_read;
 	client->request.buf.resize(client->request.bufLen);
 	for (size_t j = 0; size < client->request.bufLen; size++, j++)
 		client->request.buf[size] = buf[j];
-	int ret;
-	
-	if (client->state == 0) //ESTOY EN MODO DE LEER EL HEADER
-		ret = readHeader(client);
+	if (client->state == 0)
+		readHeader(client);
 	if (client->state == 1)
-		ret = readBody(client);
+		readBody(client);
 	if (client->state == 2 && client->request.chunk.isChunked)
 	{
 		client->request.bufLen = client->request.chunk.buf.size();
 		client->request.buf = client->request.chunk.buf;
 	}
 	//system("leaks -q webserv");
-	return (ret);
+	return (0);
 }

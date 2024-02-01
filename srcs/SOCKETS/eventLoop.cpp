@@ -90,18 +90,8 @@ void	deleteClient(std::vector<client> &clients, client &c) //int i, int events_n
 	setEvent(c.events[0], -1, 0, 0);
 	setEvent(c.events[1], -1, 0, 0);
 	std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), c);
-	if (it != clients.end())
-	{
-		//std::cout << "Ha encontrado un cliente para borrar: " << it->fd << std::endl;
-	}
 	clients.erase(it);
 	std::cerr << "Elimina cliente" << std::endl;
-	/*
-	if (i == events_n)
-	{
-		for ( ; events[i].fd == -1 && i >= 0; i--, events_n);
-	}*/
-	//n--;
 }
 
 size_t	getTimeSeconds()
@@ -121,6 +111,7 @@ void	setClient(struct client &client, int fd, int id, std::vector<parseTree*> se
 	client.request.bufLen = 0;
 	client.response.bytesSent = 0;
 	client.server = findServerByClient(servers, &client);
+	client.loc = NULL;
 	client.timer = getTimeSeconds();
 }
 
@@ -136,7 +127,7 @@ int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers,
 	if (accept_socket == -1)
 	{
 		std::cout << "ACCEPT ERROR" << std::endl;
-		return (0); //throw
+		return (0);
 	}
 	setNonBlocking(accept_socket);
 	//CLIENTE
@@ -197,19 +188,12 @@ int	readClient(std::vector<client> &clients, std::vector<parseTree *> servers, p
 			}
 		}
 	}
-	catch(const int error)
+	catch(enum statusCodes error)
 	{
 		curr_client->request.status = error;
 		getErrorResponse(curr_client, error);
 		curr_client->state = 3;
 	}
-	
-	
-	//CATCH	CODIGO DE ERROR
-	/*
-		ESCRIBIR HEADER + HTML DE ERROR	curr_client.response.response = "";
-		PONER ESTADO DEL CLIENTE A ESPERAR PARA RESPONDER (curr_client->state = 3)
-	*/
 	return (1);
 }
 
@@ -231,8 +215,8 @@ int	checkTimerExpired(std::vector<client> &clients)
 				std::cout << "Client timer: " << clients[i].timer << std::endl;
 				std::cout << "Time: " << time << std::endl;
 				std::cout << "Tiempo que ha pasado: " << time - clients[i].timer << std::endl;
-				clients[i].request.status = 408;
-				getErrorResponse(&clients[i], 408);
+				clients[i].request.status = REQUEST_TIMEOUT;
+				getErrorResponse(&clients[i], REQUEST_TIMEOUT);
 				setEvent(clients[i].events[0], -1, 0, 0);
 				clients[i].state = 3;
 			}
@@ -245,15 +229,13 @@ int	checkTimerExpired(std::vector<client> &clients)
 int	pollEvents(std::vector<parseTree *> &servers, t_ports *ports)
 {
 	//std::cout << "EN POLLEVENTS" << std::endl;
-	pollfd	events[SOMAXCONN + 1];
+	pollfd	events[SOMAXCONN + 1]; //SOMAXCONN * ports->n * 2 + ports->n + 1
 	int		events_n = ports->n;
 	std::vector<client>	clients;
 	bzero(events, sizeof(pollfd) * (SOMAXCONN + 1));
 	for (size_t i = 0; i < ports->n; i++)
 		setEvent(&events[i], ports->fd[i], POLLIN, 0);
-
 	int	sign_events;
-
 	for (;;)
 	{
 		sign_events = poll(events, events_n, 0);

@@ -4,33 +4,35 @@ std::string	getStatus(int status)
 {
 	std::cout << "REQUEST STATUS: " << status << std::endl;
 	switch (status) {
-        case 201:
+        case CREATED:
             return "201 Created";
-		case 301:
+		case MOVED_PERMANENTLY:
 			return "301 Moved Permanently";
-        case 400:
+        case BAD_REQUEST:
             return "400 Bad Request"; //El formato de la request está mal
-        case 403:
+        case FORBIDDEN:
             return "403 Forbidden"; //Acceso no permitido
-        case 404:
+        case NOT_FOUND:
             return "404 Not Found"; //Archivo no encontrado
-        case 405:
+        case METHOD_NOT_ALLOWED:
             return "405 Method Not Allowed"; //Método que no gestionamos (DELETE de CGI o cualquier otro)
-        case 408:
+        case REQUEST_TIMEOUT:
             return "408 Request Timeout"; //Timeout
-		case 409:
+		case CONFLICT:
             return "409 Conflict";
-        case 413:
+		case LENGTH_REQUIRED:
+            return "411 Length Required";
+        case PAYLOAD_TOO_LARGE:
             return "413 Payload Too Large"; //Request muy grande
-        case 429:
+        case TOO_MANY_REQUESTS:
             return "429 Too Many Request"; //Muchas
-        case 500:
+        case INTERNAL_SERVER_ERROR:
             return "500 Internal Server Error";
-        case 501:
+        case NOT_IMPLEMENTED:
             return "501 Not Implemented";
-        case 502:
+        case BAD_GATEWAY:
             return "502 Bad Gateway";
-        case 504:
+        case GATEWAY_TIMEOUT:
             return "504 Gateway Timeout";
         default:
             return "200 OK";
@@ -80,7 +82,7 @@ void	getErrorResponse(struct client *client, int error)
 	}
 	catch(const int e)
 	{
-		//client->request.status  = 400;
+		//client->request.status  = BAD_REQUEST;
 		body = "<html><body><h1>ERROR FILE NOT FOUND</h1></body></html>";
 	}
 	client->response.response = getResponseHeader(client->request, body) + body;

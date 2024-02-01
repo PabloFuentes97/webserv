@@ -33,7 +33,7 @@ static std::string	getRedir(struct client *client, itmap &redir)
 		}
 	}
 	if (i == 4)
-		throw (404);
+		throw (NOT_FOUND);
 	return (path);
 }
 
@@ -61,7 +61,7 @@ std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs)
 		}
 	}
 	if (i == redirs.size())
-		throw (400);
+		throw (BAD_REQUEST);
 	if (client->request.url[client->request.url.length() -1] == '/')
 	{
 		std::cout << "Es directorio, no coger nada de después" << std::endl;
@@ -95,7 +95,7 @@ void	getIndex(client *client)
 			return ;
 		}
 	}
-	throw (404);
+	throw (NOT_FOUND);
 }
 
 void	autoIndexListing(client *client)
@@ -110,7 +110,7 @@ void	autoIndexListing(client *client)
 	std::cout << "Entro en autoindex" << std::endl;
 	DIR	*dir = opendir(path.c_str());
 	if (!dir)
-		throw (400);
+		throw (BAD_REQUEST);
 	dirent *elem = readdir(dir);
 	std::string body;
 	std::string	redirs[] = {"alias", "root"};
@@ -151,21 +151,21 @@ static void pathIsDirectory(client *client)
 				return ;
 		}
 	}
-	throw (400);
+	throw (BAD_REQUEST);
 }
 
 static void	pathIsFile(client *client, std::string &path)
 {
 	/*struct stat	st;
 	if (stat(path.c_str(), &st) == -1)
-		throw (404);
+		throw (NOT_FOUND);
 	if (st.st_mode & (~S_IRUSR))
-		throw (403);*/
+		throw (FORBIDDEN);*/
 
 	if (access(path.c_str(), F_OK) != 0)
-		throw (404);
+		throw (NOT_FOUND);
 	if (access(path.c_str(), R_OK) != 0)
-		throw (403);
+		throw (FORBIDDEN);
 
 	HttpResponse Response;
 	client->request.status = 200;
@@ -183,7 +183,7 @@ void	getMethod(client *client) {
 	std::string	path = getPathFileRequest(client, redirs);
 	struct stat	st;
 	if (stat(path.c_str(), &st) == -1)
-		throw (404);
+		throw (NOT_FOUND);
 	if (st.st_mode & S_IFDIR)
 		pathIsDirectory(client);
 	else
@@ -202,7 +202,7 @@ void	postMethod(client *client)
 	std::multimap<std::string, std::string>::iterator itm;
 	itm = client->request.headers.find("Content-Type");
 	if (itm == client->request.headers.end())
-		throw (400);
+		throw (BAD_REQUEST);
 	std::cout << "TIPO DE POST: " << itm->second << std::endl;
 	if (itm->second == "application/x-www-form-urlencoded\r" || itm->second == "application/x-www-form-urlencoded")
 		postUrlEncoded(filePath, client->request.buf.c_str(), client->request.bufLen);
@@ -212,8 +212,8 @@ void	postMethod(client *client)
 		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else
 	{
-		std::cout << "Lanza 400" << std::endl;
-		throw (400);
+		std::cout << "Lanza BAD_REQUEST" << std::endl;
+		throw (BAD_REQUEST);
 	}
 	client->response.response = "HTTP/1.1 201 Created\r\n\r\n";
 }
@@ -230,13 +230,13 @@ void	deleteMethod(client *client)
     {
 		std::cout << "Es un directorio"  <<std::endl;
 		if (rmdir(filePath.c_str()) < 0)
-			throw(500);
+			throw(INTERNAL_SERVER_ERROR);
 	}
 	else
 	{
 		std::cout << "Es un fichero" << std::endl;
 		if (remove(filePath.c_str()) < 0)
-			throw(500);
+			throw(INTERNAL_SERVER_ERROR);
 	}
 	client->response.response = "HTTP/1.1 200 OK\r\n\r\n<html><body><h1>File deleted.</h1>\n</body>\n</html>\n";
 }
@@ -247,7 +247,7 @@ void	httpRedirect(client *client)
 	std::string	*redir = getMultiMapValue(client->loc->context._dirs, "redirect");
 	if (!redir)
 		throw (1);
-	client->request.status = 301;
+	client->request.status = MOVED_PERMANENTLY;
 	std::string http("http://");
 	std::string	host = *(getMultiMapValue(client->request.headers, "Host"));
 	host = host.substr(0, host.length() - 1);
@@ -276,21 +276,12 @@ bool	checkMethods(client *client)
 
 bool	checkBodySize(client *client)
 {
-	std::cout << "Entro en bodySize" << std::endl;
 	std::string	*bodySize = getMultiMapValue(client->loc->context._dirs, "limit_body_size");
 	if (!bodySize)
-	{
-		std::cout << "No hay limit_bodysize" << std::endl;
 		return (true);
-	}
-		
 	size_t	bodySizeInt = atoi((*bodySize).c_str());
 	if (bodySizeInt < client->request.bufLen)
-	{
-		std::cout << "bodySizeInt: " << bodySizeInt << " | bufLen: " << client->request.bufLen << std::endl;
 		return (false);
-	}
-	std::cout << "Está bien" << std::endl;
 	return (true);
 }
 
@@ -300,11 +291,11 @@ void ResponseToMethod(client *client)
 	std::string response;
 	client->loc = findLocation(client);
 	if (!client->loc)
-		throw (404);
+		throw (NOT_FOUND);
 	if (checkBodySize(client) == false)
-		throw (413);
+		throw (PAYLOAD_TOO_LARGE);
 	if (checkMethods(client) == false)
-		throw (405);
+		throw (METHOD_NOT_ALLOWED);
 
 	//redirigir a otra location y enviarla por la respuesta
 	if (isInMultiMapKey(client->loc->context._dirs, "redirect"))

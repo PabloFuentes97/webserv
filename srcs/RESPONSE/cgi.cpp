@@ -78,9 +78,9 @@ void CGIForward(client *client)
 	path = getPathFileRequest(client, redirs);
 	std::cout << "filePath: " << path << std::endl;
 	if (access(path.c_str(), F_OK) != 0)
-		throw (404);
+		throw (NOT_FOUND);
 	if (access(path.c_str(), X_OK) != 0)
-		throw (500);
+		throw (INTERNAL_SERVER_ERROR);
     int pipes[2];
 	int status;
     if (pipe(pipes) == -1)
@@ -100,7 +100,7 @@ void CGIForward(client *client)
         close(pipes[0]);
         if (execve(newPath.c_str(), NULL, cgiEnv) != 0) {
 			strerror(errno);
-            throw(500);
+            throw(INTERNAL_SERVER_ERROR);
         }
     }
 	else if (exec_pid > 0) {
@@ -114,12 +114,12 @@ void CGIForward(client *client)
 			{
 				kill(exec_pid, SIGKILL);
 				client->request.status = 508;
-				throw (504); 
+				throw (GATEWAY_TIMEOUT); 
 			}
 		}
 	}
 	if (WEXITSTATUS(status) != 0)
-		throw(502);
+		throw(BAD_GATEWAY);
     std::cout << "Estoy en proceso padre" << std::endl;
     close(pipes[1]);
     char    *readCGI = readFileSeLst(pipes[0]);

@@ -23,8 +23,8 @@
 #include <algorithm>
 #include <libc.h>
 
-#define MAX_SE_ELEM 64
-#define MAX_READ 17
+#define MAX_SE_ELEM 500000
+#define MAX_READ 200000
 #define BUF_SIZE 200000
 #define PORT 8080
 #define CGITIMEOUT 3
@@ -35,8 +35,9 @@ enum statusCodes {CREATED = 201,
 				FORBIDDEN = 403,
 				NOT_FOUND = 404,
 				METHOD_NOT_ALLOWED = 405,
-				TIMEOUT = 408,
+				REQUEST_TIMEOUT = 408,
 				CONFLICT = 409,
+				LENGTH_REQUIRED = 411,
 				PAYLOAD_TOO_LARGE = 413,
 				TOO_MANY_REQUESTS = 429,
 				INTERNAL_SERVER_ERROR = 500,
@@ -115,15 +116,9 @@ typedef struct HttpRequest {
 typedef struct s_ports{
 	std::vector<int>	id; // id del puerto
 	std::vector<int>	fd; //fd del socket asociado a ese puerto
+	std::vector<int>	connections;
 	size_t				n;
 } t_ports ;
-
-
-typedef struct s_events{
-	pollfd	events[SOMAXCONN + 1];
-	size_t	n;
-	size_t	sig;
-}	t_events;
 
 typedef struct client {
     int 			fd;
