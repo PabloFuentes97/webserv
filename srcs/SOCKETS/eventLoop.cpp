@@ -188,8 +188,8 @@ int	checkTimerExpired(std::vector<client> &clients)
 			size_t	time = getTimeSeconds();
 			if ((time - clients[i].timer) >= timeoutInt && clients[i].state < 2)
 			{
-				clients[i].request.status = 408;
-				getErrorResponse(&clients[i], 408);
+				clients[i].request.status = REQUEST_TIMEOUT;
+				getErrorResponse(&clients[i], REQUEST_TIMEOUT);
 				setEvent(clients[i].events[0], -1, 0, 0);
 				clients[i].state = 3;
 			}

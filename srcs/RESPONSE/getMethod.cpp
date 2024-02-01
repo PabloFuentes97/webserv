@@ -22,7 +22,7 @@ static void	getIndex(client *client)
 			return ;
 		}
 	}
-	throw (404);
+	throw (NOT_FOUND);
 }
 
 static void	autoIndexListing(client *client)
@@ -37,7 +37,7 @@ static void	autoIndexListing(client *client)
 	std::cout << "Entro en autoindex" << std::endl;
 	DIR	*dir = opendir(path.c_str());
 	if (!dir)
-		throw (400);
+		throw (BAD_REQUEST);
 	dirent *elem = readdir(dir);
 	std::string body;
 	std::string	redirs[] = {"alias", "root"};
@@ -78,15 +78,15 @@ static void pathIsDirectory(client *client)
 				return ;
 		}
 	}
-	throw (400);
+	throw (BAD_REQUEST);
 }
 
 static void	pathIsFile(client *client, std::string &path)
 {
 	if (access(path.c_str(), F_OK) != 0)
-		throw (404);
+		throw (NOT_FOUND);
 	if (access(path.c_str(), R_OK) != 0)
-		throw (403);
+		throw (FORBIDDEN);
 
 	HttpResponse Response;
 	client->request.status = 200;
@@ -105,7 +105,7 @@ void	getMethod(client *client)
 	std::string	path = getPathFileRequest(client, redirs);
 	struct stat	st;
 	if (stat(path.c_str(), &st) == -1)
-		throw (404);
+		throw (NOT_FOUND);
 	if (st.st_mode & S_IFDIR)
 		pathIsDirectory(client);
 	else
