@@ -108,6 +108,7 @@ typedef struct HttpRequest {
 	typedef enum methods{GET, POST, PUT, DELETE} methods;
     std::string url; //version
 	std::string query;
+	std::string pathInfo;
     std::multimap<std::string, std::string> headers;
 	bool	cgi;
 	std::map<std::string, std::string>	cookies;

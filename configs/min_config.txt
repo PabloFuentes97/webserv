@@ -9,13 +9,6 @@ http{
         text/css                                         css;
         text/xml                                         xml;
     }
-server{
-    server_name pfuentes.42;
-    listen 127;
-    timeout 10;
-    location    /about.html{
-        alias   documents/tour.html;
-    }
 
     location    /del_prueba
     {

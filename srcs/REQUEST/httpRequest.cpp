@@ -24,24 +24,29 @@ void	loadRequest(HttpRequest *request)
 				request->method_int = i;
 		}
         request->url = line.substr(methodLength + 1, urlLength - methodLength - 1);
-		//PARSE CGI EXTENSION
-		if (request->url.find('?') != std::string::npos) {
-			request->query = request->url.substr(request->url.find('?') + 1);
-			request->url = request->url.substr(0, request->url.find('?'));
-		}
 		if (request->url.find(".py") != std::string::npos ||
-			request->url.find(".pl") != std::string::npos ||
-			request->url.find(".php") != std::string::npos)
+			request->url.find(".pl") != std::string::npos)
 		{
 			request->cgi = true;
+			if (request->url.find('?') != std::string::npos) {
+				request->query = request->url.substr(request->url.find('?') + 1);
+				request->url = request->url.substr(0, request->url.find('?'));
+			}
+			else if (request->url.find('.') + 3 != request->url.size()
+				&& request->url.at(request->url.find('.') + 3) == '/') {
+				request->pathInfo = request->url.substr(request->url.find('.') + 3);
+				request->url = request->url.substr(0, request->url.find('.') + 3);
+			}
 		}
 		else
 			request->cgi = false;
     }
 	else
 		throw (BAD_REQUEST);
-	std::cout << std::endl << "METHOD: " << request->method << std::endl;
+	std::cout << std::endl << "#####METHOD: " << request->method << std::endl;
 	std::cout << std::endl << "URL: " << request->url << std::endl;
+	std::cout << std::endl << "QUERY: " << request->query << std::endl;
+	std::cout << std::endl << "PATH INFO: " << request->pathInfo << std::endl;
 
 	std::string	tokenKey;
 	std::string	tokenValue;
@@ -105,6 +110,7 @@ void	readHeader(struct client *client)
 	
 	if ((size_t)(lim + 4) == client->request.buf.size()) // NO BODY AFTER HEADER
 	{
+		
 		client->request.header = client->request.buf;
 		client->request.bufLen = 0;
 		loadRequest(&client->request);
