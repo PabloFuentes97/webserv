@@ -29,7 +29,7 @@ void	readBodyChunked(struct client *client)
 			if (pos + 1 > client->request.bufLen)
 				return ;
 			if (client->request.buf[pos] != '\r' || client->request.buf[pos + 1] != '\n')
-				throw (400);
+				throw (BAD_REQUEST);
 			size_t read = 0;
 			while (read < client->request.chunk.size)
 			{

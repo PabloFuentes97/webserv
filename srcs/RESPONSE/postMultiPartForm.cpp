@@ -31,14 +31,14 @@ std::string	get_filename(std::vector<char> &header)
 		cheader[i] = header[i];
 	size_t start = locate(cheader, "filename=\"", 0, header.size(), 10) + 10;
 	if (start == (size_t)-1)
-		throw (400);
+		throw (BAD_REQUEST);
 	while (start < header.size() && header[start] != '\"')
 	{
 		filename += cheader[start];
 		start++;
 	}
 	if (header[start] != '\"')
-		throw (400);
+		throw (BAD_REQUEST);
 	return (filename);
 }
 
@@ -72,7 +72,7 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 		{
 			limit = locate(body, ("\r\n--" + boundary).c_str(), i, size, ("\r\n--" + boundary).size() - 1);	
 			if (limit == (size_t)-1)
-				throw (400);
+				throw (BAD_REQUEST);
 			while (i < limit)
 			{
 				fcont.push_back(body[i]);
@@ -80,10 +80,10 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 			}
 			filename = get_filename(fheader);
 			if (!access((route + filename).c_str(), F_OK))
-				throw(400);
+				throw(BAD_REQUEST);
 			for (std::map<std::string, std::vector<char> >::iterator iter = files.begin(); iter != files.end(); iter++)
 				if (filename == iter->first)
-					throw(400);
+					throw(BAD_REQUEST);
 			files.insert(std::pair<std::string, std::vector<char> >(filename, fcont));
 			fcont.clear();
 			fheader.clear();
@@ -107,7 +107,7 @@ void	callMultiPart(struct client *client, std::string &path)
 		}
 	}
 	if (!boundary)
-		throw (400);
+		throw (BAD_REQUEST);
 	std::string	boundaryStr(boundary);
 	postMultiPartForm(path, client->request.buf.c_str(), boundaryStr, client->request.bufLen);
 }

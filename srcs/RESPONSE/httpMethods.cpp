@@ -28,7 +28,7 @@ static std::string	getRedir(struct client *client, itmap &redir)
 		}
 	}
 	if (i == 4)
-		throw (404);
+		throw (NOT_FOUND);
 	return (path);
 }
 
@@ -47,13 +47,14 @@ std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs)
 			break ;
 	}
 	if (i == redirs.size())
-		throw (400);
+		throw (BAD_REQUEST);
 	if (client->request.url[client->request.url.length() -1] == '/')
 		file = client->request.url.substr(locLen, client->request.url.length() - locLen + 1);
 	pathFile = getRedir(client, itm);
 	std::cout << "PATH: " << pathFile << std::endl;
 	return (pathFile);
 }
+
 void	postMethod(client *client)
 {
 	std::cout << "POST METHOD" << std::endl;
@@ -66,7 +67,7 @@ void	postMethod(client *client)
 	itmap itm;
 	itm = client->request.headers.find("Content-Type");
 	if (itm == client->request.headers.end())
-		throw (400);
+		throw (BAD_REQUEST);
 	std::cout << "POST TYPE: " << itm->second << std::endl;
 	if (itm->second == "application/x-www-form-urlencoded\r" || itm->second == "application/x-www-form-urlencoded")
 		postUrlEncoded(filePath, client->request.buf.c_str(), client->request.bufLen);
@@ -75,7 +76,7 @@ void	postMethod(client *client)
 	else if (itm->second == "text/plain\r" || itm->second == "text/plain")
 		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else
-		throw (400);
+		throw (BAD_REQUEST);
 	client->response.response = "HTTP/1.1 201 Created\r\n\r\n";
 }
 
@@ -93,12 +94,12 @@ static void	deleteMethod(client *client)
 	if (stat(filePath.c_str(), &st) == 0 && st.st_mode & S_IFDIR)
     {
 		if (rmdir(filePath.c_str()) < 0)
-			throw(500);
+			throw(INTERNAL_SERVER_ERROR);
 	}
 	else
 	{
 		if (remove(filePath.c_str()) < 0)
-			throw(500);
+			throw(INTERNAL_SERVER_ERROR);
 	}
 	client->response.response = "HTTP/1.1 200 OK\r\n\r\n<html><body><h1>File deleted.</h1>\n</body>\n</html>\n";
 }
@@ -108,9 +109,8 @@ static void	httpRedirect(client *client)
 	std::string response;
 	std::string	*redir = getMultiMapValue(client->loc->context._dirs, "redirect");
 	if (!redir)
-		throw (1);
-	
-	client->request.status = 301;
+		return ;
+	client->request.status = MOVED_PERMANENTLY;
 	std::string http("http://");
 	std::string	host = *(getMultiMapValue(client->request.headers, "Host"));
 	host = host.substr(0, host.length() - 1);
@@ -153,11 +153,11 @@ void ResponseToMethod(client *client)
 
 	client->loc = matchLocation(client);
 	if (!client->loc)
-		throw (404);
+		throw (NOT_FOUND);
 	if (checkBodySize(client) == false)
-		throw (413);
+		throw (PAYLOAD_TOO_LARGE);
 	if (checkMethods(client) == false)
-		throw (405);
+		throw (METHOD_NOT_ALLOWED);
 	if (isInMultiMapKey(client->loc->context._dirs, "redirect"))
 	{
 		httpRedirect(client);

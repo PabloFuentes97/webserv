@@ -5,7 +5,6 @@ void	loadRequest(HttpRequest *request)
 	std::istringstream bufferFile(request->header.c_str());
 	std::string line;
 	std::getline(bufferFile, line);
-
 	size_t methodLength = line.find(' ');
     size_t urlLength = line.find(' ', methodLength + 1);
     if (methodLength != std::string::npos && urlLength != std::string::npos) {
@@ -32,7 +31,7 @@ void	loadRequest(HttpRequest *request)
 			request->cgi = false;
     }
 	else
-		throw (400);
+		throw (BAD_REQUEST);
 	std::cout << std::endl << "METHOD: " << request->method << std::endl;
 	std::cout << std::endl << "URL: " << request->url << std::endl;
 
@@ -109,12 +108,12 @@ void	setChunked(chunk &chunk, bool state, bool complete, bool size, int index)
 	chunk.index = index;
 }
 
-int	readHeader(struct client *client)
+void	readHeader(struct client *client)
 {
 	int		lim = find_str(client->request.buf.c_str(), (const char*)"\r\n\r\n", 0, client->request.buf.size(), 4);
 	
 	if (lim < 0)
-		return (0);
+		return ;
 	
 	if ((size_t)(lim + 4) == client->request.buf.size()) // NO BODY AFTER HEADER
 	{
@@ -161,12 +160,11 @@ int	readHeader(struct client *client)
 		}
 	}
 	if (client->state == 2)
-		return (0);
+		return ;
 	client->state = 1;
-	return (0);
 }
 
-int	readBody(struct client *client)
+void	readBody(struct client *client)
 {
 	if (client->request.chunk.isChunked)
 		readBodyChunked(client);
@@ -185,17 +183,13 @@ int	readBody(struct client *client)
 				throw (400);
 			if (client->request.bufLen == contentLen)
 			{
+				std::cerr << "LEIDO ENTERO\n";
 				client->state = 2;
-				return (0);
 			}
 		}
 		else
-		{
 			client->state = 2;
-			return (0);
-		}
 	}
-	return (0);
 }
 
 int	readEvent(struct client *client)
@@ -214,12 +208,11 @@ int	readEvent(struct client *client)
 	client->request.buf.resize(client->request.bufLen);
 	for (size_t j = 0; size < client->request.bufLen; size++, j++)
 		client->request.buf[size] = buf[j];
-	
 	int ret;
 	if (client->state == 0)
 		ret = readHeader(client);
 	if (client->state == 1)
-		ret = readBody(client);
+		readBody(client);
 	if (client->state == 2 && client->request.chunk.isChunked)
 	{
 		client->request.bufLen = client->request.chunk.buf.size();

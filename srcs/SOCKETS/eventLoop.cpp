@@ -168,7 +168,7 @@ int	readClient(std::vector<client> &clients, std::vector<parseTree *> servers, p
 			}
 		}
 	}
-	catch(const int error)
+	catch(enum statusCodes error)
 	{
 		curr_client->request.status = error;
 		getErrorResponse(curr_client, error);
@@ -207,9 +207,7 @@ int	pollEvents(std::vector<parseTree *> &servers, t_ports *ports)
 	bzero(events, sizeof(pollfd) * (SOMAXCONN + 1));
 	for (size_t i = 0; i < ports->n; i++)
 		setEvent(&events[i], ports->fd[i], POLLIN, 0);
-
 	int	sign_events;
-
 	for (;;)
 	{
 		sign_events = poll(events, events_n, 0);

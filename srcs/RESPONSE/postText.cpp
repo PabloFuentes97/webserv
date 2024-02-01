@@ -14,7 +14,7 @@ void	postText(std::string &route, const char *body, size_t size)
 			{
 				size_t equal = str.find('=');
 				if (equal == std::string::npos || equal == 0 || equal == str.size() -1)
-					throw (400);
+					throw (BAD_REQUEST);
 				map.insert(std::pair<std::string, std::string> (str.substr(0, equal), str.substr(equal + 1)));
 				str.clear();
 			}
@@ -32,7 +32,7 @@ void	postText(std::string &route, const char *body, size_t size)
 		}
 	}
 	if (!access((route + filename).c_str(), F_OK))
-		throw (400);
+		throw (BAD_REQUEST);
 	std::ofstream	newfile(route + filename, std::ios::binary | std::ios::trunc);
 	for (std::map<std::string, std::string>::iterator iter = map.begin(); iter != map.end(); iter++)
 	{

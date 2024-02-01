@@ -74,7 +74,8 @@ int	main(int argc, char **argv) {
 			servers.push_back(http->childs[i]);
 	}
 	t_ports	ports;
-	setPorts(ports, servers);
+	if (setPorts(ports, servers))
+		return (5);
 	pollEvents(servers, &ports);	
 	return (0);
 }
