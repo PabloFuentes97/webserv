@@ -95,7 +95,7 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 
 void	callMultiPart(struct client *client, std::string &path)
 {
-	std::pair <std::multimap<std::string, std::string>::iterator, std::multimap<std::string, std::string>::iterator> itm;
+	itr itm;
 	itm = client->request.headers.equal_range("Content-Type");
 	char	*boundary = NULL;
 	for (std::multimap<std::string, std::string>::iterator itb = itm.first; itb != itm.second; itb++)
@@ -109,5 +109,5 @@ void	callMultiPart(struct client *client, std::string &path)
 	if (!boundary)
 		throw (BAD_REQUEST);
 	std::string	boundaryStr(boundary);
-		postMultiPartForm(path, client->request.buf.c_str(), boundaryStr, client->request.bufLen);
+	postMultiPartForm(path, client->request.buf.c_str(), boundaryStr, client->request.bufLen);
 }

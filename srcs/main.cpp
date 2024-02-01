@@ -56,7 +56,6 @@ int	main(int argc, char **argv) {
         return (2);
 	}
 	
-	//guardar arbol con config
 	parseTree	*root = parseFile((char *)file.c_str());
 	if (!root)
 	{
@@ -67,6 +66,7 @@ int	main(int argc, char **argv) {
 	findNode(root, &http, "http");
 	if (!http)
 		return (4);
+
 	std::vector<parseTree*>	servers;
 	for (size_t i = 0; i < http->childs.size(); i++)
 	{

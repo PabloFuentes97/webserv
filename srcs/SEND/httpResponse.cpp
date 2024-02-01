@@ -8,9 +8,7 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 	if (!body.empty()) {
 		line.append("Content-Length: ");
 		line.append(std::to_string((body).size()));
-		//line.append("\r\n");
 	}
-	//line.append("Connection: close");
 	line.append("\r\n\r\n");
 	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
 	return (line);
@@ -19,7 +17,6 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 std::string getResponseBody(std::string fileToReturn)
 {
 	std::string fileLine;
-	std::cout << "File a responder: " << fileToReturn << std::endl;
 	if (access(fileToReturn.c_str(), F_OK | R_OK))
 		throw (NOT_FOUND);
 	std::ifstream file (fileToReturn, std::ios::binary);
@@ -37,7 +34,7 @@ std::string getResponseBody(std::string fileToReturn)
 
 int	writeEvent(struct client *client)
 {
-	std::cout << "---WRITE EVENT---: CLIENT: " << client->fd << std::endl;
+	std::cout << "WRITE EVENT | CLIENT: " << client->fd << std::endl;
 	size_t responseLen = client->response.response.size();
 	std::cout << "LEN DE RESPONSE: " << responseLen << std::endl;
 	size_t	bytesSent = send(client->fd, 

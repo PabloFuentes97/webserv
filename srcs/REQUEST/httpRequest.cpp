@@ -2,26 +2,21 @@
 
 void	loadRequest(HttpRequest *request) 
 {
-	std::cout << "~~~~LOAD REQUEST STAGE~~~~" << std::endl;
-	
 	std::istringstream bufferFile(request->header.c_str());
 	std::string line;
-	std::cout << "Creó el istringstream" << std::endl;
 	std::getline(bufferFile, line);
 	size_t methodLength = line.find(' ');
     size_t urlLength = line.find(' ', methodLength + 1);
     if (methodLength != std::string::npos && urlLength != std::string::npos) {
 		request->method = line.substr(0, methodLength);
-		std::cout << "Method a evaluar: " << request->method << std::endl;
 		std::string methods[] = {"GET", "POST", "PUT", "DELETE"};
 		for (int i = 0; i < 4; i++)
 		{
 			if (methods[i] == request->method)
 				request->method_int = i;
 		}
-		std::cout << "Id de method: " << request->method_int << std::endl;
         request->url = line.substr(methodLength + 1, urlLength - methodLength - 1);
-		std::cout << "••••URL IS: " << request->url << std::endl;
+		//PARSE CGI EXTENSION
 		if (request->url.find('?') != std::string::npos) {
 			request->query = request->url.substr(request->url.find('?') + 1);
 			request->url = request->url.substr(0, request->url.find('?'));
@@ -39,34 +34,49 @@ void	loadRequest(HttpRequest *request)
 		throw (BAD_REQUEST);
 	std::cout << std::endl << "METHOD: " << request->method << std::endl;
 	std::cout << std::endl << "URL: " << request->url << std::endl;
-	//checkear que tipo de accion deberia hacer en base a url - directorio, fichero normal, cgi
+
 	std::string	tokenKey;
 	std::string	tokenValue;
-	//Montar los headers
 	while (std::getline(bufferFile, line)) {
-        //Montar el mapa
 		std::stringstream	streamLine(line);
-		//std::cout << "Línea: " << line << std::endl;
         getline(streamLine, tokenKey, ':');
-		//std::cout << "TokenKey: " << tokenKey << std::endl;
 		while (getline(streamLine, tokenValue, ';'))
 		{
-			//std::cout << "TokenValue: " << tokenValue << std::endl;
 			size_t	space = tokenValue.find(' ', 0);
 			if (space != std::string::npos)
 				tokenValue.erase(space, 1);
 			request->headers.insert(std::pair<std::string, std::string>(tokenKey, tokenValue));
 		}
     }
+
+	//CHECK CONTENT-LENGTH
+	itmap	itm = request->headers.find("Content-Length");
+	if (itm != request->headers.end())
+	{
+		for (size_t i = 0; i < itm->second.size(); i++)
+		{
+			if (itm->second[i] != '\r')
+			{
+				if (!isdigit(itm->second[i]))
+					throw (400);
+			}
+		}
+	}
 	std::cout << "-------------------IMPRIMO MAPA-------------------\n\n\n";
-	typedef std::multimap<std::string, std::string>::iterator	itm;
-	for (itm b = request->headers.begin(), e = request->headers.end(); b != e; b++)
+	for (itmap b = request->headers.begin(), e = request->headers.end(); b != e; b++)
 	{
 		std::cout << "Key: " << b->first << " | Value: " << b->second << std::endl;
 	}
 	std::cout << "\n\n-------------------TERMINA DE IMPRIMIR MAPA-------------------\n\n\n";
 }
 
+bool	strIsDigit(std::string &s)
+{
+	for (size_t i = 0; i < s.size(); i++)
+		if (s[i] < '0' || s[i] > '9')
+			return (false);
+	return (true);
+}
 int find_str(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize)
 {
 	size_t	n = i;
@@ -90,28 +100,38 @@ int find_str(const char *haystack, const char *needle, size_t i, size_t size, si
 	return (-1);
 }
 
-void readHeader(struct client *client)
+void	setChunked(chunk &chunk, bool state, bool complete, bool size, int index)
+{
+	chunk.isChunked = state;
+	chunk.complete = complete;
+	chunk.readingSize = size;
+	chunk.index = index;
+}
+
+void	readHeader(struct client *client)
 {
 	int		lim = find_str(client->request.buf.c_str(), (const char*)"\r\n\r\n", 0, client->request.buf.size(), 4);
 	
 	if (lim < 0)
 		return ;
 	
-	if ((size_t)(lim + 4) == client->request.buf.size()) //NO HAY NADA MÁS DESPUÉS DEL HEADER
+	if ((size_t)(lim + 4) == client->request.buf.size()) // NO BODY AFTER HEADER
 	{
-		
 		client->request.header = client->request.buf;
 		client->request.bufLen = 0;
 		loadRequest(&client->request);
-		if(isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked\r") || isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked"))
+		if(isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked\r")
+				|| isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked"))
+			setChunked(client->request.chunk, true, false, true, 0);
+		else
 		{
-			client->request.chunk.isChunked = true;
-			client->request.chunk.complete = false;
-			client->request.chunk.readingSize = true;
-			client->request.chunk.index = 0;
+			if (!isInMultiMapKey(client->request.headers, "Content-Length"))
+				client->state = 2;
+			client->request.chunk.isChunked = false;
 		}
+			
 	}
-	else
+	else // BODY AFTER HEADER
 	{
 		client->request.header = client->request.buf.substr(0, lim);
 		client->request.bufLen -= lim + 4;
@@ -123,16 +143,21 @@ void readHeader(struct client *client)
 		client->request.buf.reserve(client->request.bufLen);
 		for (size_t i = 0; i < client->request.bufLen; i++)
 			client->request.buf[i] = body[i];
-		if (isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked\r") || isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked"))
+		if (isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked\r")
+				|| isInMultiMapValue(client->request.headers, "Transfer-Encoding", "chunked"))
 		{
-			client->request.chunk.isChunked = true;
-			client->request.chunk.complete = false;
-			client->request.chunk.readingSize = true;
-			client->request.chunk.index = 0;
+			setChunked(client->request.chunk, true, false, true, 0);
 			readBodyChunked(client);
 		}
 		else
+		{
+			std::cout << "NO HAY CHUNKED, MIRAR CONTENT-LEN" << std::endl;
 			client->request.chunk.isChunked = false;
+			if (!isInMultiMapKey(client->request.headers, "Content-Length"))
+				throw (411);
+			if (!multiMapCheckValidValue(client->request.headers, "Content-Length", strIsDigit))
+				throw (400);
+		}
 	}
 	if (client->state == 2)
 		return ;
@@ -141,21 +166,21 @@ void readHeader(struct client *client)
 
 void	readBody(struct client *client)
 {
-	typedef std::multimap<std::string, std::string>::iterator itm;
 	if (client->request.chunk.isChunked)
 		readBodyChunked(client);
-	else //no hay variable content-length en el mapa
+	else
 	{
-		
-		itm	it = client->request.headers.find("Content-Length");
-		if (it != client->request.headers.end())
+		std::cout << "READ BODY, MIRAR CONTENT-LEN" << std::endl;
+		if (!isInMultiMapKey(client->request.headers, "Content-Length"))
+			throw (411);
+		if (!multiMapCheckValidValue(client->request.headers, "Content-Length", strIsDigit))
+			throw (400);
+		std::string *contentLenStr = getMultiMapValue(client->request.headers, "Content-Length");
+		if (contentLenStr)
 		{
-			std::cout << "LEÍDO ACTUALMENTE: " << client->request.bufLen << std::endl;
-			std::pair<itm, itm>	keyVal = client->request.headers.equal_range("Content-Length");
-			size_t	contentLen;
-			contentLen = atol(keyVal.first->second.c_str());
+			size_t	contentLen = atoi(contentLenStr->c_str());
 			if (client->request.bufLen > contentLen)
-				throw (413);
+				throw (400);
 			if (client->request.bufLen == contentLen)
 			{
 				std::cerr << "LEIDO ENTERO\n";
@@ -177,13 +202,15 @@ int	readEvent(struct client *client)
 	if (bytes_read == 0)
 		return (2);
 	buf[bytes_read] = '\0';
+
 	size_t	size = client->request.bufLen;
 	client->request.bufLen += bytes_read;
 	client->request.buf.resize(client->request.bufLen);
 	for (size_t j = 0; size < client->request.bufLen; size++, j++)
 		client->request.buf[size] = buf[j];
+	int ret;
 	if (client->state == 0)
-		readHeader(client);
+		ret = readHeader(client);
 	if (client->state == 1)
 		readBody(client);
 	if (client->state == 2 && client->request.chunk.isChunked)
@@ -191,6 +218,5 @@ int	readEvent(struct client *client)
 		client->request.bufLen = client->request.chunk.buf.size();
 		client->request.buf = client->request.chunk.buf;
 	}
-	//system("leaks -q webserv");
-	return (0);
+	return (ret);
 }
