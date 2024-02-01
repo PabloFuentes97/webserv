@@ -4,94 +4,64 @@ std::string	getStatus(int status)
 {
 	std::cout << "REQUEST STATUS: " << status << std::endl;
 	switch (status) {
-        case 201:
+        case CREATED:
             return "201 Created";
-		case 301:
+		case MOVED_PERMANENTLY:
 			return "301 Moved Permanently";
-        case 400:
+        case BAD_REQUEST:
             return "400 Bad Request"; //El formato de la request está mal
-        case 403:
+        case FORBIDDEN:
             return "403 Forbidden"; //Acceso no permitido
-        case 404:
+        case NOT_FOUND:
             return "404 Not Found"; //Archivo no encontrado
-        case 405:
+        case METHOD_NOT_ALLOWED:
             return "405 Method Not Allowed"; //Método que no gestionamos (DELETE de CGI o cualquier otro)
-        case 408:
+        case REQUEST_TIMEOUT:
             return "408 Request Timeout"; //Timeout
-		case 409:
+		case CONFLICT:
             return "409 Conflict";
-        case 413:
+		case LENGTH_REQUIRED:
+            return "411 Length Required";
+        case PAYLOAD_TOO_LARGE:
             return "413 Payload Too Large"; //Request muy grande
-        case 429:
+        case TOO_MANY_REQUESTS:
             return "429 Too Many Request"; //Muchas
-        case 500:
+        case INTERNAL_SERVER_ERROR:
             return "500 Internal Server Error";
-        case 501:
+        case NOT_IMPLEMENTED:
             return "501 Not Implemented";
-        case 502:
+        case BAD_GATEWAY:
             return "502 Bad Gateway";
-        case 504:
+        case GATEWAY_TIMEOUT:
             return "504 Gateway Timeout";
         default:
             return "200 OK";
     }
 }
 
-std::string	defaultErrorPath(int error)
-{
-	std::cout << "DEFAULT ERROR PATH" << std::endl;
-	char		buf[1000];
-	std::string	absPath = getcwd(buf, 1000);
-	std::string	errorPath;
-	
-	switch (error)
-	{
-		//client errors
-		case 400: {errorPath = absPath + "/errors" + "/error400.html" ; break ; }
-		case 403: {errorPath = absPath + "/errors" + "/error403.html" ; break ; }
-		case 404: {errorPath = absPath + "/errors" + "/error404.html" ; break ; }
-		case 408: {errorPath = absPath + "/errors" + "/error408.html" ; break ; }
-		//server errors
-		case 500: {errorPath = absPath + "/errors" + "/error500.html" ; break ; }
-	}
-	return (errorPath);
-}
-
 std::string	getErrorPath(struct client *client, int error)
 {
-	char		buf[1000];
-	std::string	absPath = getcwd(buf, 1000);
-	std::string	errorPath;
-
-	std::cout << "---------Hubo error: " << error << " , mandar error path--------" << std::endl;
-	//mirar si en config hay ficheros de error redirigidos
+	std::cout << "ERROR: " << error << std::endl;
 	if (client->loc)
 	{
-		std::cout << "Buscar en location error_files" << std::endl;
 		typedef std::multimap<std::string, std::string>::iterator itm;
 		
 		itm it = client->loc->context._dirs.find("error_files");
 		if (it != client->loc->context._dirs.end())
 		{
 			std::pair<itm, itm> itr = client->loc->context._dirs.equal_range("error_files");
-			std::cout << "Encuentra error_files en location" << std::endl;
 			for (itm ib = itr.first, ie = itr.second; ib != ie; ib++)
 			{
-				std::cout << "Key: " << ib->first << " | Value: " << ib->second << std::endl;
 				int	n = atoi(ib->second.c_str());
-				std::cout << "error de error_files: " << n << std::endl;
 				if (n == error)
 				{
 					ie--;
-					std::cout << "Fichero a redirigir: " << "Key: " << ie->first << " | Value: " << ie->second << std::endl;
-					errorPath = absPath + ie->second;
-					return (errorPath);
+					return (ie->second);
 				}
 			}
 		}
 	}
-	errorPath = defaultErrorPath(error);
-	return (errorPath);
+	return ("errors/error" + std::to_string(error) + ".html");
 }
 
 void	getErrorResponse(struct client *client, int error)
@@ -106,7 +76,7 @@ void	getErrorResponse(struct client *client, int error)
 	}
 	catch(const int e)
 	{
-		//client->request.status  = 400;
+		//client->request.status  = BAD_REQUEST;
 		body = "<html><body><h1>ERROR FILE NOT FOUND</h1></body></html>";
 	}
 	client->response.response = getResponseHeader(client->request, body) + body;

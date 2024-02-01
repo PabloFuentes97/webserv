@@ -10,10 +10,23 @@ http{
         text/xml                                         xml;
     }
 
+    location    /del_prueba
+    {
+        root    hola;
+    }
+    location    /{
+        alias    documents/about.html;
+    }
+    location    /prueba
+    {
+        root    documents/;
+    }
+}
     server{
         server_name   serbre;
         listen        8080;
         limit_body_size 121212121;
+        timeout 10;
         error_page    502 503 504  /50x.html;
 
         error_page    500  /50x.html;
@@ -21,33 +34,33 @@ http{
         location        /documents
         {
             autoindex on;
-            postdir   /postfiles/;
-            alias /documents/;
+            postdir   postfiles/;
+            alias 	documents/;
         }
         location    /cgi
         {
-            cgi_pass    /cgi/;
+            cgi_pass    cgi/;
         }
         location    /redirect
         {
-            redirect /documents;
+            redirect documents/;
         }
         location      /{
-            alias      /documents/;
+            alias      documents/;
             methods   GET POST DELETE;
-            postdir   /postfiles/;
-            index   /index.html /index.htm;
+            postdir   postfiles/;
+            index   index.html index.htm;
         }
         location    /manolo
         {
-            alias     /documents/;
+            alias     documents/;
             methods   GET POST;
-            postdir   /postfiles/;
+            postdir   postfiles/;
             index index.html index.htm;
         }
         location      /pepe/juan{
             root      jeje;
-            alias     /documents/;
+            alias     documents/;
         }
         location      /pepe{
             root      jejeje;
