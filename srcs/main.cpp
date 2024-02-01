@@ -119,12 +119,25 @@ int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
 		if (!value)
 			return (1);
 		id = atoi(value->c_str());
-		ports.id.push_back(id);
-		std::cout << "Port de server " << i << " es: " << id << std::endl;
-		ports.fd.push_back(getServerSocket(&addr, id));
-		std::cout << "Socket de servidor " << i << " es: " << ports.fd.back() << std::endl;
-		bindAndListen(ports.fd[i], &addr);
-		ports.n++;
+		//ports.id.push_back(id);
+		bool rep = true;
+		for (size_t j = 0; j < ports.n; i++)
+		{
+			if (ports.id[j] == id)
+			{
+				rep = false;
+				break ;
+			}
+		}
+		if (rep == true)
+		{
+			std::cout << "Port de server " << i << " es: " << id << std::endl;
+			ports.id.push_back(id);
+			ports.fd.push_back(getServerSocket(&addr, id));
+			std::cout << "Socket de servidor " << i << " es: " << ports.fd.back() << std::endl;
+			bindAndListen(ports.fd[i], &addr);
+			ports.n++;
+		}
 	}
 	return (0);
 }

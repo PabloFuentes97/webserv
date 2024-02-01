@@ -5,6 +5,7 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 	std::string line = "HTTP/1.1 ";
 	line.append(getStatus(currentRequest.status));
 	line.append("\r\n");
+	line.append("Set-Cookie: hello=cookies\r\n");
 	if (!body.empty()) {
 		line.append("Content-Length: ");
 		line.append(std::to_string((body).size()));

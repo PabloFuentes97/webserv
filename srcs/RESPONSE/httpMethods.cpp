@@ -4,7 +4,7 @@ std::string	getRedir(struct client *client, itmap &redir, std::string &file)
 //pasar en vez del iterador con la clave y el valor ambos por separado
 {
 	std::cout << "En getRedir" << std::endl;
-	std::string redirs[] = {"postdir", "alias", "root"};
+	std::string redirs[] = {"postdir", "alias", "root", "cgi_pass"};
 	std::string	&loc = client->loc->context._name;
 	//coger path absoluto
 	char	buf[1000];
@@ -12,7 +12,7 @@ std::string	getRedir(struct client *client, itmap &redir, std::string &file)
 	std::string path;
 	size_t		i;
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 4; i++)
 	{
 		if (redir->first == redirs[i])
 		{
@@ -22,12 +22,12 @@ std::string	getRedir(struct client *client, itmap &redir, std::string &file)
 				case 0 : { path = absPath + redir->second; break ;} //postdir
 				case 1 : { path = absPath + redir->second + file; break ;} //alias
 				case 2 : { path = absPath + redir->second + loc + file; break ;} //root
-				case 3 : { path = absPath + redir->second; break ;} //cgi_pass
+				case 3 : { path = absPath + redir->second + file; break ;} //cgi_pass
 			}
 			break ;
 		}
 	}
-	if (i == 3)
+	if (i == 4)
 		throw (404);
 	return (path);
 }
@@ -219,11 +219,11 @@ void	postMethod(client *client)
 	if (itm == client->request.headers.end())
 		throw (400);
 	std::cout << "TIPO DE POST: " << itm->second << std::endl;
-	if (itm->second == "application/x-www-form-urlencoded\r")
+	if (itm->second == "application/x-www-form-urlencoded\r" || itm->second == "application/x-www-form-urlencoded")
 		postUrlEncoded(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else if (itm->second == "multipart/form-data")
 		callMultiPart(client, filePath);
-	else if (itm->second == "text/plain\r")
+	else if (itm->second == "text/plain\r" || itm->second == "text/plain")
 		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else
 	{
@@ -326,7 +326,7 @@ void ResponseToMethod(client *client)
 		httpRedirect(client);
 		return ;
 	}
-	std::cout << "MÉTODO A EVALUAR " << client->request.method << " | TIPO: " << client->request.method_int << std::endl;
+	std::cout << "MÉTODO A EVALUAR " << client->request.method << " | URL: " << client->request.url << std::endl;
 	if (client->request.cgi)
 	{
 		std::cout << "Entra en CGI" << std::endl;

@@ -9,24 +9,7 @@ http{
         text/css                                         css;
         text/xml                                         xml;
     }
-server{
-    server_name pfuentes.42;
-    listen 127;
-    location    /about.html{
-        alias   /documents/tour.html;
-    }
 
-    location    /del_prueba{
-        root    hola;
-    }
-    location    /{
-        alias    /about.html;
-    }
-    location    /prueba
-    {
-        root    /documents/;
-    }
-}
     server{
         server_name   serbre;
         listen        8080;

@@ -7,6 +7,19 @@
 	font-size: 25px;
 	justify-content: center;
 }
+h1 {
+    display: flex;
+	font-family: "Poppins", sans-serif;
+    justify-content: center;
+    align-items: center;
+    height: 10vh;
+}
+img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20vh;
+}
 body {
     display: flex;
     justify-content: center;
