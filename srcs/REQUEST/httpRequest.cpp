@@ -1,5 +1,13 @@
 #include "../../includes/webserv.hpp"
 
+bool	strIsDigit(std::string &s)
+{
+	for (size_t i = 0; i < s.size(); i++)
+		if (s[i] < '0' || s[i] > '9')
+			return (false);
+	return (true);
+}
+
 void	loadRequest(HttpRequest *request) 
 {
 	std::istringstream bufferFile(request->header.c_str());
@@ -50,33 +58,13 @@ void	loadRequest(HttpRequest *request)
     }
 
 	//CHECK CONTENT-LENGTH
-	itmap	itm = request->headers.find("Content-Length");
-	if (itm != request->headers.end())
-	{
-		for (size_t i = 0; i < itm->second.size(); i++)
-		{
-			if (itm->second[i] != '\r')
-			{
-				if (!isdigit(itm->second[i]))
-					throw (400);
-			}
-		}
-	}
-	std::cout << "-------------------IMPRIMO MAPA-------------------\n\n\n";
+	if (!multiMapCheckValidValue(request->headers, "Content-Length", strIsDigit))
+		throw (BAD_REQUEST);
+	
 	for (itmap b = request->headers.begin(), e = request->headers.end(); b != e; b++)
-	{
 		std::cout << "Key: " << b->first << " | Value: " << b->second << std::endl;
-	}
-	std::cout << "\n\n-------------------TERMINA DE IMPRIMIR MAPA-------------------\n\n\n";
 }
 
-bool	strIsDigit(std::string &s)
-{
-	for (size_t i = 0; i < s.size(); i++)
-		if (s[i] < '0' || s[i] > '9')
-			return (false);
-	return (true);
-}
 int find_str(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize)
 {
 	size_t	n = i;
@@ -154,9 +142,9 @@ void	readHeader(struct client *client)
 			std::cout << "NO HAY CHUNKED, MIRAR CONTENT-LEN" << std::endl;
 			client->request.chunk.isChunked = false;
 			if (!isInMultiMapKey(client->request.headers, "Content-Length"))
-				throw (411);
+				throw (LENGTH_REQUIRED);
 			if (!multiMapCheckValidValue(client->request.headers, "Content-Length", strIsDigit))
-				throw (400);
+				throw (BAD_REQUEST);
 		}
 	}
 	if (client->state == 2)
@@ -172,15 +160,15 @@ void	readBody(struct client *client)
 	{
 		std::cout << "READ BODY, MIRAR CONTENT-LEN" << std::endl;
 		if (!isInMultiMapKey(client->request.headers, "Content-Length"))
-			throw (411);
+			throw (LENGTH_REQUIRED);
 		if (!multiMapCheckValidValue(client->request.headers, "Content-Length", strIsDigit))
-			throw (400);
+			throw (BAD_REQUEST);
 		std::string *contentLenStr = getMultiMapValue(client->request.headers, "Content-Length");
 		if (contentLenStr)
 		{
 			size_t	contentLen = atoi(contentLenStr->c_str());
 			if (client->request.bufLen > contentLen)
-				throw (400);
+				throw (BAD_REQUEST);
 			if (client->request.bufLen == contentLen)
 			{
 				std::cerr << "LEIDO ENTERO\n";
@@ -208,9 +196,8 @@ int	readEvent(struct client *client)
 	client->request.buf.resize(client->request.bufLen);
 	for (size_t j = 0; size < client->request.bufLen; size++, j++)
 		client->request.buf[size] = buf[j];
-	int ret;
 	if (client->state == 0)
-		ret = readHeader(client);
+		readHeader(client);
 	if (client->state == 1)
 		readBody(client);
 	if (client->state == 2 && client->request.chunk.isChunked)
@@ -218,5 +205,5 @@ int	readEvent(struct client *client)
 		client->request.bufLen = client->request.chunk.buf.size();
 		client->request.buf = client->request.chunk.buf;
 	}
-	return (ret);
+	return (0);
 }
