@@ -39,27 +39,21 @@ std::string	getStatus(int status)
 
 std::string	getErrorPath(struct client *client, int error)
 {
-	std::cout << "---------Hubo error: " << error << " , mandar error path--------" << std::endl;
-	//mirar si en config hay ficheros de error redirigidos
+	std::cout << "ERROR: " << error << std::endl;
 	if (client->loc)
 	{
-		std::cout << "Buscar en location error_files" << std::endl;
 		typedef std::multimap<std::string, std::string>::iterator itm;
 		
 		itm it = client->loc->context._dirs.find("error_files");
 		if (it != client->loc->context._dirs.end())
 		{
 			std::pair<itm, itm> itr = client->loc->context._dirs.equal_range("error_files");
-			std::cout << "Encuentra error_files en location" << std::endl;
 			for (itm ib = itr.first, ie = itr.second; ib != ie; ib++)
 			{
-				std::cout << "Key: " << ib->first << " | Value: " << ib->second << std::endl;
 				int	n = atoi(ib->second.c_str());
-				std::cout << "error de error_files: " << n << std::endl;
 				if (n == error)
 				{
 					ie--;
-					std::cout << "Fichero a redirigir: " << "Key: " << ie->first << " | Value: " << ie->second << std::endl;
 					return (ie->second);
 				}
 			}

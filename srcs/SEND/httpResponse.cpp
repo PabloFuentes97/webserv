@@ -8,9 +8,7 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 	if (!body.empty()) {
 		line.append("Content-Length: ");
 		line.append(std::to_string((body).size()));
-		//line.append("\r\n");
 	}
-	//line.append("Connection: close");
 	line.append("\r\n\r\n");
 	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
 	return (line);
@@ -19,7 +17,6 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 std::string getResponseBody(std::string fileToReturn) {
 
 	std::string fileLine;
-	std::cout << "File a responder: " << fileToReturn << std::endl;
 	if (access(fileToReturn.c_str(), F_OK | R_OK))
 		throw (404);
 	std::ifstream file (fileToReturn, std::ios::binary);
@@ -32,20 +29,15 @@ std::string getResponseBody(std::string fileToReturn) {
 	while (file.get(c))
 		fileLine.push_back(c);
 	file.close();
-	//std::cout << std::endl << "RESPONSE BODY IS: " << fileLine << std::endl;
 	return (fileLine);
 }
 
 int	writeEvent(struct client *client)
 {
-	std::cout << "---WRITE EVENT---: CLIENT: " << client->fd << std::endl;
-	//std::string finalRequest  = ResponseToMethod(server, client);
-	
-	//size_t requestLength = strlen(finalRequest.c_str());
+	std::cout << "WRITE EVENT | CLIENT: " << client->fd << std::endl;
+
 	size_t responseLen = client->response.response.size();
 	std::cout << "LEN DE RESPONSE: " << responseLen << std::endl;
-	//std::cout << "\033[1;31mRESPONSE IS: " << client->response.response << "\033[0m" << std::endl;
-	//while (bytes_sent < requestLength)
 	size_t	bytesSent = send(client->fd, 
 				&client->response.response.c_str()[client->response.bytesSent], responseLen - client->response.bytesSent, MSG_DONTWAIT);
 	if (bytesSent < 0)

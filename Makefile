@@ -19,12 +19,13 @@ DATA_STRUCTURES = 	seLst.cpp \
 					multimapFuncs.cpp
 PARSER   		=   parse.cpp \
 					binaryInsert.cpp \
-					directories.cpp
+					cmpLocations.cpp
 SOCKETS   		=   socketConnection.cpp \
 					eventLoop.cpp
 REQUEST    		=  	httpRequest.cpp \
 					readChunkedRequest.cpp
 RESPONSE    	=   httpMethods.cpp \
+					getMethod.cpp \
 					cgi.cpp \
 					postMultiPartForm.cpp \
 					postText.cpp \
