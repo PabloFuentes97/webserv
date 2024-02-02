@@ -1,3 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-print("Hello world")
+print("<html><body>Hello world</body></html>")
+
+exit (0)

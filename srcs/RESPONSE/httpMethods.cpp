@@ -166,6 +166,7 @@ void ResponseToMethod(client *client)
 	if (client->request.cgi)
 	{
 		CGIForward(client);
+		client->state = 3;
 		return ;
 	}
 

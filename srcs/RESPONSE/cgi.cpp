@@ -7,10 +7,6 @@ char **getCgiEnv(std::string path, client* client) {
     
     std::string scriptName;;
     scriptName = "SCRIPT_NAME=" + path.substr(0, path.find('.') + 3);
-    /*
-    el final en .p por algún motivo da error 400 y no 404 xro no es mío eso
-    crear el script del json a ser posible y si no un par de ejemplos generales
-    */
     env.push_back(scriptName);
 
     std::string requestedMethod = "REQUEST_METHOD=" + client->request.method;
@@ -78,22 +74,22 @@ void CGIForward(client *client)
     //redirs.push_back("root");
     path = getPathFileRequest(client, redirs);
     std::cout << "filePath: " << path << std::endl;
-    if (access(path.c_str(), F_OK) != 0)
-        throw (404);
+    if (access(path.c_str(), F_OK) != 0) {
+		std::cout << "entra" << std::endl;
+        throw (NOT_FOUND);
+	}
     if (access(path.c_str(), X_OK) != 0) {
         std::cout << "ACCESS" << std::endl;
-        throw (500);
+        throw (INTERNAL_SERVER_ERROR);
     }
     int pipes[2];
     int status;
     if (pipe(pipes) == -1)
-       throw (500);
+       throw (INTERNAL_SERVER_ERROR);
 
     pid_t exec_pid = fork();
-    if (exec_pid == -1) {
-        std::cout << "FORK" << std::endl;
-        throw (500);
-    }
+    if (exec_pid == -1) 
+        throw (INTERNAL_SERVER_ERROR);
     
     if (exec_pid == 0)
     {
@@ -102,18 +98,14 @@ void CGIForward(client *client)
         for (int i = 0; cgiEnv[i]; i++) {
             std::cout << "Array env var is: " << cgiEnv[i] << std::endl;
         }
-        if (close(pipes[0]) == -1) {
-            std::cout << "CLOSE" << std::endl;
-            throw (500);
-        }
-        if (dup2(pipes[1], STDOUT_FILENO) == -1) {
-            std::cerr << "DUP2" << std::endl;
-            throw (500);
-        }
+        if (close(pipes[0]) == -1) 
+            throw (INTERNAL_SERVER_ERROR);
+        if (dup2(pipes[1], STDOUT_FILENO) == -1)
+            throw (INTERNAL_SERVER_ERROR);
         if (execve(path.c_str(), NULL, cgiEnv) != 0) {
             std::cerr << strerror(errno) << std::endl;
             std::cerr << "EXECVE" << std::endl;
-            throw(500);
+            throw(INTERNAL_SERVER_ERROR);
         }
     }
     else if (exec_pid > 0) {
@@ -126,7 +118,7 @@ void CGIForward(client *client)
             if (now > ref + CGITIMEOUT)
             {
                 kill(exec_pid, SIGKILL);
-                throw (504); 
+                throw (GATEWAY_TIMEOUT); 
             }
         }
     }
@@ -134,10 +126,10 @@ void CGIForward(client *client)
         throw(502);
     std::cout << "Estoy en proceso padre" << std::endl;
     if (close(pipes[1]) == -1)
-        throw (500);
+        throw (INTERNAL_SERVER_ERROR);
     char    *readCGI = readFileSeLst(pipes[0]);
     if (close(pipes[0]) == -1)
-        throw (500);
+        throw (INTERNAL_SERVER_ERROR);
     std::string CGIstring = readCGI;
     free(readCGI);
     std::cout << "Fichero leído: " << CGIstring << std::endl;
@@ -147,7 +139,7 @@ void CGIForward(client *client)
     Response.body = CGIstring;
     Response.firstLine = getResponseHeader(client->request, Response.body);
     client->response.response = Response.firstLine + Response.body;
-
+	std::cout << "client response: " << client->response.response << std::endl;
     return ;
     
 }

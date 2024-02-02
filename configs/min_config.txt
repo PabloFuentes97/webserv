@@ -9,24 +9,11 @@ http{
         text/css                                         css;
         text/xml                                         xml;
     }
-
-    location    /del_prueba
-    {
-        root    hola;
-    }
-    location    /{
-        alias    documents/about.html;
-    }
-    location    /prueba
-    {
-        root    documents/;
-    }
-}
     server{
         server_name   serbre;
         listen        8080;
         limit_body_size 121212121;
-        timeout 10;
+        timeout 20;
         error_page    502 503 504  /50x.html;
 
         error_page    500  /50x.html;

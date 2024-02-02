@@ -3,7 +3,7 @@
 bool	strIsDigit(std::string &s)
 {
 	for (size_t i = 0; i < s.size(); i++)
-		if (s[i] < '0' || s[i] > '9')
+		if ((s[i] < '0' || s[i] > '9') && s[i] != '\r')
 			return (false);
 	return (true);
 }
@@ -62,9 +62,11 @@ void	loadRequest(HttpRequest *request)
 		}
     }
 
-	//CHECK CONTENT-LENGTH
-	if (!multiMapCheckValidValue(request->headers, "Content-Length", strIsDigit))
+	// //CHECK CONTENT-LENGTH
+	if (!multiMapCheckValidValue(request->headers, "Content-Length", strIsDigit)) {
+		std::cout << "aqui" << std::endl;
 		throw (BAD_REQUEST);
+	}
 	
 	for (itmap b = request->headers.begin(), e = request->headers.end(); b != e; b++)
 		std::cout << "Key: " << b->first << " | Value: " << b->second << std::endl;
