@@ -134,7 +134,6 @@ bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 		{
 			if (!validSubContextsCmp(root->context._name, tokens[initDirective].value))
 				return (false);
-			}
 			if (tokens[initDirective].value != "location" && i - initDirective != 1)
 			{
 				std::cout << "Contexto tiene número incorrecto de argumentos: " << i - initDirective << std::endl;
