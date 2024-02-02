@@ -23,8 +23,6 @@ std::string	getStatus(int status)
             return "411 Length Required";
         case PAYLOAD_TOO_LARGE:
             return "413 Payload Too Large"; //Request muy grande
-        case TOO_MANY_REQUESTS:
-            return "429 Too Many Request"; //Muchas
         case INTERNAL_SERVER_ERROR:
             return "500 Internal Server Error";
         case NOT_IMPLEMENTED:
