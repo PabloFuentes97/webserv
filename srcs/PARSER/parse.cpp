@@ -1,6 +1,6 @@
 #include "../../includes/webserv.hpp"
 
-bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &del) //comprobar también aquí que lo anterior a un delimitador es un str
+bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &del)
 {
 	std::fstream	readTokens(file);
 	if (readTokens.fail())
@@ -135,16 +135,9 @@ bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 			if (!validSubContextsCmp(root->context._name, tokens[initDirective].value))
 				return (false);
 			if (tokens[initDirective].value != "location" && i - initDirective != 1)
-			{
-				std::cout << "Contexto tiene número incorrecto de argumentos: " << i - initDirective << std::endl;
 				return (false);
-			}
 			if (tokens[initDirective].value == "location" && i - initDirective != 2)
-			{
-				std::cout << "Location tiene número incorrecto de argumentos: " << i - initDirective << std::endl;
-				return (false);
-			}
-				
+				return (false);				
 			child = new parseTree();
 			child->context._name = tokens[initDirective].value;
 			for (size_t start = initDirective + 1; start < i; start++)
@@ -179,11 +172,6 @@ bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 }
 void	freeParseTree(parseTree *root)
 {
-	/*if (root->childs.empty())
-	{
-		delete(root);
-		return ;
-	}*/
 	for (size_t i = 0; i < root->childs.size(); i++)
 		freeParseTree(root->childs[i]);
 	delete(root);
