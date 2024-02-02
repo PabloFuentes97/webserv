@@ -105,7 +105,7 @@ void CGIForward(client *client)
         if (execve(path.c_str(), NULL, cgiEnv) != 0) {
             std::cerr << strerror(errno) << std::endl;
             std::cerr << "EXECVE" << std::endl;
-            throw(INTERNAL_SERVER_ERROR);
+			throw (INTERNAL_SERVER_ERROR);
         }
     }
     else if (exec_pid > 0) {
@@ -123,7 +123,7 @@ void CGIForward(client *client)
         }
     }
     if (WEXITSTATUS(status) != 0)
-        throw(502);
+        throw(BAD_GATEWAY);
     std::cout << "Estoy en proceso padre" << std::endl;
     if (close(pipes[1]) == -1)
         throw (INTERNAL_SERVER_ERROR);
