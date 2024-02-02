@@ -80,7 +80,7 @@ void	postMultiPartForm(std::string &route, const char *body, std::string &bounda
 			}
 			filename = get_filename(fheader);
 			if (!access((route + filename).c_str(), F_OK))
-				throw(BAD_REQUEST);
+				throw(CONFLICT);
 			for (std::map<std::string, std::vector<char> >::iterator iter = files.begin(); iter != files.end(); iter++)
 				if (filename == iter->first)
 					throw(BAD_REQUEST);

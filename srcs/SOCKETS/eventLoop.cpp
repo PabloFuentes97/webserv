@@ -74,12 +74,13 @@ void	setEvent(pollfd *event, int _fd, short _event, short _revent)
 
 void	deleteClient(std::vector<client> &clients, client &c) //int i, int events_n
 {
-	close(c.fd);
+	if (close(c.fd) == -1)
+		std::cerr << "CLOSE FAIL\n";
 	setEvent(c.events[0], -1, 0, 0);
 	setEvent(c.events[1], -1, 0, 0);
 	std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), c);
 	clients.erase(it);
-	std::cerr << "Elimina cliente" << std::endl;
+	//std::cerr << "Elimina cliente" << std::endl;
 }
 
 size_t	getTimeSeconds()
@@ -131,7 +132,7 @@ int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers,
 		}
 		else
 		{
-			if (events_n < SOMAXCONN)
+			if (events_n < (int)(SOMAXCONN * 2 * ports->n))
 			{
 				setEvent(&events[events_n], accept_socket, poll_events[e], 0);
 				c.events[e] = &events[events_n];
@@ -151,7 +152,6 @@ int	readClient(std::vector<client> &clients, std::vector<parseTree *> servers, p
 	{
 		if (curr_client && curr_client->state < 2)
 		{
-			std::cout << "READ EVENT" << std::endl;
 			if (readEvent(curr_client))
 				deleteClient(clients, *curr_client);
 			else 
@@ -201,19 +201,18 @@ int	checkTimerExpired(std::vector<client> &clients)
 
 int	pollEvents(std::vector<parseTree *> &servers, t_ports *ports)
 {
-	pollfd	events[SOMAXCONN + 1];
+	pollfd	events[SOMAXCONN * 2 * ports->n];
 	int		events_n = ports->n;
 	std::vector<client>	clients;
-	bzero(events, sizeof(pollfd) * (SOMAXCONN + 1));
+	bzero(events, sizeof(pollfd) * (SOMAXCONN * 2 * ports->n));
 	for (size_t i = 0; i < ports->n; i++)
 		setEvent(&events[i], ports->fd[i], POLLIN, 0);
 	int	sign_events;
 	for (;;)
 	{
 		sign_events = poll(events, events_n, 0);
-        if (sign_events == -1) {
-            perror("poll failed: ");
-        }
+        if (sign_events == -1)
+            perror("POLL FAILED:");
 		if (sign_events > 0)
 		{
 			int	events_it = events_n;

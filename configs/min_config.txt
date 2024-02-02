@@ -13,17 +13,23 @@ http{
         server_name   serbre;
         listen        8080;
         limit_body_size 121212121;
-        timeout 20;
+        timeout 50;
         error_page    502 503 504  /50x.html;
 
         error_page    500  /50x.html;
 
         location        /documents
         {
-            autoindex on;
-            postdir   postfiles/;
-            alias 	documents/;
+            autoindex	on;
+            postdir		postfiles/;
+            alias		documents/;
         }
+		location	/upload
+		{
+			methods		POST;
+			postdir		uploads/;
+		}
+		location	/
         location    /cgi
         {
             cgi_pass    cgi/;
@@ -37,21 +43,6 @@ http{
             methods   GET POST DELETE;
             postdir   postfiles/;
             index   index.html index.htm;
-        }
-        location    /manolo
-        {
-            alias     documents/;
-            methods   GET POST;
-            postdir   postfiles/;
-            index index.html index.htm;
-        }
-        location      /pepe/juan{
-            root      jeje;
-            alias     documents/;
-        }
-        location      /pepe{
-            root      jejeje;
-            alias     manolo;
         }
     }
 }

@@ -23,10 +23,10 @@ int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
 		}
 		if (rep == true)
 		{
-			std::cout << "Port de server " << i << " es: " << id << std::endl;
+			std::cout << "SERVER PORT " << i << ": " << id << std::endl;
 			ports.id.push_back(id);
 			ports.fd.push_back(getServerSocket(&addr, id));
-			std::cout << "Socket de servidor " << i << " es: " << ports.fd.back() << std::endl;
+			std::cout << "SERVER SOCKET " << i << ": " << ports.fd.back() << std::endl;
 			bindAndListen(ports.fd[i], &addr);
 			ports.n++;
 		}

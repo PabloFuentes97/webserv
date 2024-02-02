@@ -43,10 +43,9 @@ void	loadRequest(HttpRequest *request)
     }
 	else
 		throw (BAD_REQUEST);
-	std::cout << std::endl << "#####METHOD: " << request->method << std::endl;
-	std::cout << std::endl << "URL: " << request->url << std::endl;
-	std::cout << std::endl << "QUERY: " << request->query << std::endl;
-	std::cout << std::endl << "PATH INFO: " << request->pathInfo << std::endl;
+
+	std::cout << "METHOD: " << request->method << std::endl;
+	std::cout << "URL: " << request->url << std::endl;
 
 	std::string	tokenKey;
 	std::string	tokenValue;
@@ -61,15 +60,8 @@ void	loadRequest(HttpRequest *request)
 			request->headers.insert(std::pair<std::string, std::string>(tokenKey, tokenValue));
 		}
     }
-
-	// //CHECK CONTENT-LENGTH
-	if (!multiMapCheckValidValue(request->headers, "Content-Length", strIsDigit)) {
-		std::cout << "aqui" << std::endl;
+	if (!multiMapCheckValidValue(request->headers, "Content-Length", strIsDigit))
 		throw (BAD_REQUEST);
-	}
-	
-	for (itmap b = request->headers.begin(), e = request->headers.end(); b != e; b++)
-		std::cout << "Key: " << b->first << " | Value: " << b->second << std::endl;
 }
 
 int find_str(const char *haystack, const char *needle, size_t i, size_t size, size_t nsize)
@@ -147,7 +139,6 @@ void	readHeader(struct client *client)
 		}
 		else
 		{
-			std::cout << "NO HAY CHUNKED, MIRAR CONTENT-LEN" << std::endl;
 			client->request.chunk.isChunked = false;
 			if (!isInMultiMapKey(client->request.headers, "Content-Length"))
 				throw (LENGTH_REQUIRED);
@@ -166,7 +157,6 @@ void	readBody(struct client *client)
 		readBodyChunked(client);
 	else
 	{
-		std::cout << "READ BODY, MIRAR CONTENT-LEN" << std::endl;
 		if (!isInMultiMapKey(client->request.headers, "Content-Length"))
 			throw (LENGTH_REQUIRED);
 		if (!multiMapCheckValidValue(client->request.headers, "Content-Length", strIsDigit))
@@ -178,10 +168,7 @@ void	readBody(struct client *client)
 			if (client->request.bufLen > contentLen)
 				throw (BAD_REQUEST);
 			if (client->request.bufLen == contentLen)
-			{
-				std::cerr << "LEIDO ENTERO\n";
 				client->state = 2;
-			}
 		}
 		else
 			client->state = 2;

@@ -51,14 +51,11 @@ std::string	getPathFileRequest(client *client, std::vector<std::string>	&redirs)
 	if (client->request.url[client->request.url.length() -1] == '/')
 		file = client->request.url.substr(locLen, client->request.url.length() - locLen + 1);
 	pathFile = getRedir(client, itm);
-	std::cout << "PATH: " << pathFile << std::endl;
 	return (pathFile);
 }
 
 void	postMethod(client *client)
 {
-	std::cout << "POST METHOD" << std::endl;
-
 	std::string filePath;
 	std::vector<std::string>	redirs;
 	redirs.push_back("postdir");
@@ -77,13 +74,13 @@ void	postMethod(client *client)
 		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
 	else
 		throw (BAD_REQUEST);
+	client->request.status = 201;
 	client->response.response = "HTTP/1.1 201 Created\r\n\r\n";
+	std::cout << std::endl << "RESPONSE HEADER IS: " << client->response.response << std::endl;
 }
 
 static void	deleteMethod(client *client)
 {
-	std::cout << "DELETE METHOD" << std::endl;
-
 	struct stat	st;
 	std::string filePath;
 	std::vector<std::string>	redirs;
@@ -101,7 +98,9 @@ static void	deleteMethod(client *client)
 		if (remove(filePath.c_str()) < 0)
 			throw(INTERNAL_SERVER_ERROR);
 	}
+	client->request.status = 200;
 	client->response.response = "HTTP/1.1 200 OK\r\n\r\n<html><body><h1>File deleted.</h1>\n</body>\n</html>\n";
+	std::cout << std::endl << "RESPONSE HEADER IS: " << client->response.response << std::endl;
 }
 
 static void	httpRedirect(client *client)
@@ -120,6 +119,7 @@ static void	httpRedirect(client *client)
 	std::string redirect = "Location: " + http + host + *redir + file;
 	response = "HTTP/1.1 301 Moved Permanently\r\n" + redirect + "\r\n\r\n";
 	client->response.response = response;
+	std::cout << std::endl << "RESPONSE HEADER IS: " << client->response.response << std::endl;
 	client->state = 3;
 }
 
@@ -149,8 +149,6 @@ static bool	checkBodySize(client *client)
 
 void ResponseToMethod(client *client)
 {
-	std::cout << "RESPONSE TO METHOD" << std::endl;
-
 	client->loc = matchLocation(client);
 	if (!client->loc)
 		throw (NOT_FOUND);
@@ -169,7 +167,6 @@ void ResponseToMethod(client *client)
 		client->state = 3;
 		return ;
 	}
-
 	switch(client->request.method_int)
 	{
 		case HttpRequest::GET : {getMethod(client); break ;}

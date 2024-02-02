@@ -29,7 +29,6 @@ bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &d
 					if (brackets < 0)
 						return (false);
 					end = i;
-					//si lo anterior no es un símbolo especial, que ya está añadido, sino una palabra "normal"
 					if (start != end)
 					{
 						token.value = tokenStr.substr(start, end - start);
@@ -48,16 +47,10 @@ bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &d
 			if (tokens.size() > 1)
 			{
 				if (tokens[tokens.size() - 2].value == "{" && tokens[tokens.size() - 1].value == "}")
-				{
-					std::cerr << "Error: contexto está vacío" << std::endl;
 					return (false);
-				}
 				if ((tokens[tokens.size() - 2].value == "{" || tokens[tokens.size() - 2].value == ";")
 						&& (tokens[tokens.size() - 1].value == ";"))
-				{
-					std::cerr << "Error: antes de punto y coma no hay directiva" << std::endl;
 					return (false);
-				}
 			}
 		}
 		if (flag == 0)
@@ -136,13 +129,10 @@ bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 	int	endDirective = 0;
 	for (size_t i = 0;  i < tokens.size(); i++)
 	{
-		if (tokens[i].value == "{") //tiene que abrir contexto y saltar al siguiente
+		if (tokens[i].value == "{")
 		{
 			if (!validSubContextsCmp(root->context._name, tokens[initDirective].value))
-			{
-				std::cout << "Subcontexto invalido" << std::endl;
 				return (false);
-			}
 			child = new parseTree();
 			child->context._name = tokens[initDirective].value;
 			for (size_t start = initDirective + 1; start < i; start++)
@@ -155,7 +145,7 @@ bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 			root = child;
 			initDirective = i + 1;
 		}
-		else if (tokens[i].value == "}") //tiene que cerrar contexto y volver al anterior
+		else if (tokens[i].value == "}")
 		{
 			if (tokens[i - 1].value != ";" && tokens[i - 1].value != "}")
 				return (false);
@@ -163,14 +153,11 @@ bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 			root = nodes.front();
 			initDirective = i + 1;
 		}
-		else if (tokens[i].value == ";") // final de directiva, añadir a lista
+		else if (tokens[i].value == ";")
 		{
 			endDirective = i;
 			if (!validDirectivesCmp(root->context._name, tokens[initDirective].value))
-			{
-				std::cout << "Directiva no está entre las posibles: " << tokens[initDirective].value << std::endl;
 				return (false);
-			}
 			for (int j = initDirective + 1; j < endDirective; j++)
 				root->context._dirs.insert(std::pair<std::string, std::string>(tokens[initDirective].value, tokens[j].value));
 			initDirective = i + 1;
@@ -180,16 +167,9 @@ bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 }
 void	freeParseTree(parseTree *root)
 {
-	if (root->childs.empty())
-	{
-		delete(root);
-		return ;
-	}
 	for (size_t i = 0; i < root->childs.size(); i++)
-	{
 		freeParseTree(root->childs[i]);
-		delete(root->childs[i]);
-	}
+	delete(root);
 }
 
 parseTree	*parseFile(char	*file)
@@ -203,7 +183,6 @@ parseTree	*parseFile(char	*file)
 	if (!parseContextTokens(root, tokens))
 	{
 		freeParseTree(root);
-		system("leaks -q webserv");
 		return (NULL);
 	}
 	return (root);
