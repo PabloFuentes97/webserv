@@ -25,18 +25,18 @@ void	postText(std::string &route, const char *body, size_t size)
 	}
 	for (std::map<std::string, std::string>::iterator iter = map.begin(); iter != map.end(); iter++)
 	{
-		if (iter->first == "file_name")
+		if (iter->first == "filename")
 		{
 			filename = iter->second;
 			break;
 		}
 	}
 	if (!access((route + filename).c_str(), F_OK))
-		throw (BAD_REQUEST);
+		throw (CONFLICT);
 	std::ofstream	newfile(route + filename, std::ios::binary | std::ios::trunc);
 	for (std::map<std::string, std::string>::iterator iter = map.begin(); iter != map.end(); iter++)
 	{
-		if (iter->first != "file_name")
+		if (iter->first != "filename")
 			newfile << iter->first << "=" << iter->second << "\n";
 	}
 }

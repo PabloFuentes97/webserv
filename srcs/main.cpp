@@ -23,11 +23,11 @@ int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
 		}
 		if (rep == true)
 		{
-			std::cout << "Port de server " << i << " es: " << id << std::endl;
+			std::cout << "SERVER PORT: " << id << std::endl;
 			ports.id.push_back(id);
 			ports.fd.push_back(getServerSocket(&addr, id));
-			std::cout << "Socket de servidor " << i << " es: " << ports.fd.back() << std::endl;
-			bindAndListen(ports.fd[i], &addr);
+			std::cout << "SERVER SOCKET: " << ports.fd.back() << std::endl;
+			bindAndListen(ports.fd.back(), &addr);
 			ports.n++;
 		}
 	}
@@ -46,7 +46,7 @@ int	main(int argc, char **argv) {
 	else if (argc == 1)
 	{
 		std::cout << "Using default config file" << std::endl;
-		file = "configs/min_config.txt";
+		file = "configs/config.txt";
 	}
 	else
 		file = argv[1];
@@ -66,7 +66,6 @@ int	main(int argc, char **argv) {
 	findNode(root, &http, "http");
 	if (!http)
 		return (4);
-
 	std::vector<parseTree*>	servers;
 	for (size_t i = 0; i < http->childs.size(); i++)
 	{

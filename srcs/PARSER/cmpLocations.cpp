@@ -49,15 +49,6 @@ std::vector<int_tuple>	setRangesDelRev(std::string &s, char del, int pos)
 		pos = find - 1;
 		for ( ; pos > 0 && s[pos] == del; pos--);
 	}
-	//IMPRIMIR RANGES
-	/*
-	for (size_t i = 0; i < rangesVec.size(); i++)
-	{
-		std::cout << "RANGE: START: " << rangesVec[i].i << " | END: " << rangesVec[i].e << std::endl;
-		for (int j = rangesVec[i].i; j <= rangesVec[i].e; j++)
-			std::cout << s[j];
-		std::cout << std::endl;
-	}*/
 	return (rangesVec);
 }
 

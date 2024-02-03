@@ -4,7 +4,6 @@ static void	getIndex(client *client)
 {
 	if (!isInMultiMapKey(client->loc->context._dirs, "index"))
 		return ;
-	std::cout << "INDEX" << std::endl;
 	itr itk = client->loc->context._dirs.equal_range("index");
 
 	std::string	path;
@@ -16,9 +15,9 @@ static void	getIndex(client *client)
 		path = getPathFileRequest(client, redirs) + itb->second;
 		if (!access(path.c_str(), F_OK | R_OK))
 		{
+			client->request.status = 200;
 			std::string body = getResponseBody(path);
 			client->response.response = getResponseHeader(client->request, body) + body;
-			client->request.status = 200;
 			return ;
 		}
 	}
@@ -29,12 +28,10 @@ static void	autoIndexListing(client *client)
 {
 	if (!isInMultiMapValue(client->loc->context._dirs, "autoindex", "on"))
 		return ;
-	std::cout << "AUTOINDEX" << std::endl;
 	std::vector<std::string>	redirsVec;
 	redirsVec.push_back("alias");
 	redirsVec.push_back("root");
 	std::string	path = getPathFileRequest(client, redirsVec);
-	std::cout << "Entro en autoindex" << std::endl;
 	DIR	*dir = opendir(path.c_str());
 	if (!dir)
 		throw (BAD_REQUEST);
@@ -48,7 +45,8 @@ static void	autoIndexListing(client *client)
 		{
 			body += "<a href=\"http://";
 			body += *(getMultiMapValue(client->request.headers, "Host"));
-			body += "/" + getMultiMapValueKeys(client->loc->context._dirs, redirs, 2);
+			//body += "/" + getMultiMapValueKeys(client->loc->context._dirs, redirs, 2);
+			body += client->loc->context._args[0] + '/';
 			body += elem->d_name;
 			if (elem->d_type == DT_DIR)
 				body += '/';
@@ -59,6 +57,7 @@ static void	autoIndexListing(client *client)
 		elem = readdir(dir);
 	}
 	body += "</body></html>";
+	std::cout << "BODY AUTOINDEX: " << body << std::endl;
 	closedir(dir);
 	client->request.status = 200;
 	client->response.response = getResponseHeader(client->request, body) + body;
@@ -75,7 +74,10 @@ static void pathIsDirectory(client *client)
 		{
 			f[i](client);
 			if (!client->response.response.empty())
+			{
+				client->request.status = 200;
 				return ;
+			}	
 		}
 	}
 	throw (BAD_REQUEST);
@@ -97,8 +99,6 @@ static void	pathIsFile(client *client, std::string &path)
 
 void	getMethod(client *client)
 {
-	std::cout << "GET METHOD" << std::endl;
-
 	std::vector<std::string>	redirs;
 	redirs.push_back("alias");
 	redirs.push_back("root");

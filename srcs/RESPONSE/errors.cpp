@@ -2,7 +2,6 @@
 
 std::string	getStatus(int status)
 {
-	std::cout << "REQUEST STATUS: " << status << std::endl;
 	switch (status) {
         case CREATED:
             return "201 Created";
@@ -24,8 +23,6 @@ std::string	getStatus(int status)
             return "411 Length Required";
         case PAYLOAD_TOO_LARGE:
             return "413 Payload Too Large"; //Request muy grande
-        case TOO_MANY_REQUESTS:
-            return "429 Too Many Request"; //Muchas
         case INTERNAL_SERVER_ERROR:
             return "500 Internal Server Error";
         case NOT_IMPLEMENTED:
@@ -41,7 +38,6 @@ std::string	getStatus(int status)
 
 std::string	getErrorPath(struct client *client, int error)
 {
-	std::cout << "ERROR: " << error << std::endl;
 	if (client->loc)
 	{
 		typedef std::multimap<std::string, std::string>::iterator itm;
@@ -74,9 +70,8 @@ void	getErrorResponse(struct client *client, int error)
 	{
 		body = getResponseBody(path);
 	}
-	catch(const int e)
+	catch(enum statusCodes e)
 	{
-		//client->request.status  = BAD_REQUEST;
 		body = "<html><body><h1>ERROR FILE NOT FOUND</h1></body></html>";
 	}
 	client->response.response = getResponseHeader(client->request, body) + body;
