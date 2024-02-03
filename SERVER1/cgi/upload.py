@@ -25,7 +25,7 @@ def copy_file_to_directory(file_path, destination_directory):
 
 # Example usage:
 absolute_path = os.environ.get('PATH_INFO', '')
-destination_directory = os.getcwd() + "/upload-cgi"
+destination_directory = os.getcwd() + "/SERVER1/cgi_upload"
 
 copy_file_to_directory(absolute_path, destination_directory)
 

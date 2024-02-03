@@ -161,6 +161,8 @@ bool	parseContextTokens(parseTree *root, std::vector<t_token> &tokens)
 		else if (tokens[i].value == ";")
 		{
 			endDirective = i;
+			if (i - initDirective == 1)
+				return (false);
 			if (!validDirectivesCmp(root->context._name, tokens[initDirective].value))
 				return (false);
 			for (int j = initDirective + 1; j < endDirective; j++)
@@ -175,6 +177,7 @@ void	freeParseTree(parseTree *root)
 	for (size_t i = 0; i < root->childs.size(); i++)
 		freeParseTree(root->childs[i]);
 	delete(root);
+	root = NULL;
 }
 
 parseTree	*parseFile(char	*file)

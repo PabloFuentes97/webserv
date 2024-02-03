@@ -8,9 +8,8 @@ http{
 
         location	/images
 		{
-			alias	SERVER1/images/;
-            autoindex on;
-			methods GET;
+			alias	SERVER1/docs/images/;
+			methods GET DELETE;
 		}
 		location        /docs
         {
@@ -20,27 +19,19 @@ http{
         }
 		location	/post
 		{
-			autoindex   on;
-            methods		GET POST;
-			alias		SERVER1/post/;
-			postdir		SERVER1/upload/;
+			methods		GET POST;
+			alias		SERVER1/docs/post/;
+			postdir		SERVER1/uploads/;
 		}
 		location	/downloads
 		{
 			methods GET DELETE;
+			alias	SERVER1/uploads/;
             autoindex on;
-			alias	SERVER1/upload/;
 		}
         location    /cgi
         {
-            methods     GET POST;
             cgi_pass    SERVER1/cgi/;
-        }
-        location    /cgi_form
-        {
-            autoindex on;
-            methods GET;
-            alias   SERVER1/cgi_form/;
         }
         location    /redirect
         {
@@ -66,15 +57,14 @@ http{
         }
 		location	/post
 		{
-			limit_body_size 100;
-            methods		POST;
+			methods		POST;
 			alias		SERVER2/docs;
-			postdir		SERVER2/upload/;
+			postdir		SERVER2/uploads/;
 		}
 		location	/downloads
 		{
 			methods GET DELETE;
-			alias	SERVER2/upload/;
+			alias	SERVER2/uploads/;
 		}
         location    /cgi
         {
@@ -107,12 +97,12 @@ http{
 		{
 			methods		GET POST;
 			alias		SERVER3/docs;
-			postdir		SERVER3/upload/;
+			postdir		SERVER3/postfiles/;
 		}
 		location	/downloads
 		{
 			methods GET DELETE;
-			alias	SERVER3/upload/;
+			alias	SERVER3/uploads/;
 		}
         location    /cgi
         {

@@ -27,7 +27,7 @@ $month += 1;
 my $formatted_time = sprintf("%04d-%02d-%02d %02d:%02d:%02d", $year, $month, $day, $hour, $min, $sec);
 
 
-my $output_file = "output.txt";
+my $output_file = "SERVER1/cgi_upload/visitlog.txt";
 open my $fh, '>>', $output_file or die "Cannot open $output_file: $!\n";
 
 print $fh "\n------\n\n";
@@ -37,4 +37,4 @@ foreach my $key (sort keys %params) {
 print $fh "TIME: $formatted_time\n";
 close $fh;
 
-print "Visit logged!\n";
+print "<html><body>Visit logged!\n</body></html>";

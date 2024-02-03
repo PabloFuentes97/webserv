@@ -1,3 +1,3 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-prin("Hello world")
+prin("<html><body>Hello world</body></html>")

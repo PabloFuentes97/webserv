@@ -29,6 +29,7 @@ static std::string	getRedir(struct client *client, itmap &redir)
 	}
 	if (i == 4)
 		throw (NOT_FOUND);
+	std::cout << "PATH IN DIRECTORY: " << path << std::endl;
 	return (path);
 }
 
@@ -121,7 +122,7 @@ static void	httpRedirect(client *client)
 	std::string file = client->request.url.substr(client->loc->context._args[0].length(),
 							client->request.url.length() - client->loc->context._args[0].length());
 	std::string body;
-	std::string redirect = "Location: " + http + host + *redir + file;
+	std::string redirect = "Location: " + http + host + '/' + *redir + file;
 	response = "HTTP/1.1 301 Moved Permanently\r\n" + redirect + "\r\n\r\n";
 	client->response.response = response;
 	std::cout << std::endl << "RESPONSE HEADER IS: " << client->response.response << std::endl;
@@ -138,6 +139,7 @@ static bool	checkMethods(client *client)
 			return (false);
 		return (true);
 	}
+	std::cout << "MÉTODO NO PERMITIDO EN LOCATION: " << client->request.method << std::endl;
 	return (false);
 }
 
@@ -157,6 +159,7 @@ void ResponseToMethod(client *client)
 	client->loc = matchLocation(client);
 	if (!client->loc)
 		throw (NOT_FOUND);
+	std::cout << "LOCATION: " << client->loc->context._args[0] << std::endl;
 	if (checkBodySize(client) == false)
 		throw (PAYLOAD_TOO_LARGE);
 	if (checkMethods(client) == false)
