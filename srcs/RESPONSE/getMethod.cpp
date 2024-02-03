@@ -45,7 +45,8 @@ static void	autoIndexListing(client *client)
 		{
 			body += "<a href=\"http://";
 			body += *(getMultiMapValue(client->request.headers, "Host"));
-			body += "/" + getMultiMapValueKeys(client->loc->context._dirs, redirs, 2);
+			//body += "/" + getMultiMapValueKeys(client->loc->context._dirs, redirs, 2);
+			body += client->loc->context._args[0] + '/';
 			body += elem->d_name;
 			if (elem->d_type == DT_DIR)
 				body += '/';
@@ -56,6 +57,7 @@ static void	autoIndexListing(client *client)
 		elem = readdir(dir);
 	}
 	body += "</body></html>";
+	std::cout << "BODY AUTOINDEX: " << body << std::endl;
 	closedir(dir);
 	client->request.status = 200;
 	client->response.response = getResponseHeader(client->request, body) + body;

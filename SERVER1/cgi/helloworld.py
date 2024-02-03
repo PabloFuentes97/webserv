@@ -1,5 +1,3 @@
 #!/usr/bin/env python3
 
-print("<html><body>Hello world</body></html>")
-
-exit (0)
+print("<html><body>Hello world!</body></html>")

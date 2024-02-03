@@ -1,9 +1,10 @@
 #!/usr/bin/perl
 
-print "Content-type: text/html\n\n";
-print "<font size=+1>Environment</font>\n";
+print"<html><body>"; 
+print "<h1>CGI environment\n</h1>";
 foreach (sort keys %ENV) {
+   print "<br>";
    print "<b>$_</b>: $ENV{$_}<br>\n";
 }
 
-1;
+print"</body></html>";
