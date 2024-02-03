@@ -75,8 +75,13 @@ void	postMethod(client *client)
 	else
 		throw (BAD_REQUEST);
 	client->request.status = 201;
+	redirs.clear();
+	redirs.push_back("alias");
+	redirs.push_back("root");
+	filePath = getPathFileRequest(client, redirs);
 	client->response.response = "HTTP/1.1 201 Created\r\n\r\n";
 	std::cout << std::endl << "RESPONSE HEADER IS: " << client->response.response << std::endl;
+	client->response.response += getResponseBody(filePath);
 }
 
 static void	deleteMethod(client *client)
