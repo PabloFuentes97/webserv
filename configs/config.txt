@@ -23,13 +23,13 @@ http{
 			autoindex   on;
             methods		GET POST;
 			alias		SERVER1/post/;
-			postdir		SERVER1/upload/;
+			postdir		SERVER1/post_upload/;
 		}
-		location	/downloads
+		location	/uploads
 		{
 			methods GET DELETE;
             autoindex on;
-			alias	SERVER1/upload/;
+			alias	SERVER1/post_upload/;
 		}
         location    /cgi
         {
@@ -69,16 +69,22 @@ http{
 			limit_body_size 100;
             methods		POST;
 			alias		SERVER2/docs;
-			postdir		SERVER2/upload/;
+			postdir		SERVER2/post_upload/;
 		}
-		location	/downloads
+		location	/uploads
 		{
 			methods GET DELETE;
-			alias	SERVER2/upload/;
+			alias	SERVER2/post_upload/;
 		}
         location    /cgi
         {
             cgi_pass    SERVER2/cgi/;
+        }
+		location    /cgi_form
+        {
+            autoindex on;
+            methods GET;
+            alias   SERVER2/cgi_form/;
         }
         location    /redirect
         {
@@ -106,17 +112,23 @@ http{
 		location	/post
 		{
 			methods		GET POST;
-			alias		SERVER3/docs;
-			postdir		SERVER3/upload/;
+			alias		SERVER3/post/;
+			postdir		SERVER3/post_upload/;
 		}
-		location	/downloads
+		location	/uploads
 		{
 			methods GET DELETE;
-			alias	SERVER3/upload/;
+			alias	SERVER3/post_upload/;
 		}
         location    /cgi
         {
             cgi_pass    SERVER3/cgi/;
+        }
+		location    /cgi_form
+        {
+            autoindex on;
+            methods GET;
+            alias   SERVER3/cgi_form/;
         }
         location    /redirect
         {

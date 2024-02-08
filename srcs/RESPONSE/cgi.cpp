@@ -35,13 +35,13 @@ char **getCgiEnv(std::string path, client* client) {
     
     arrayEnv = (char **)malloc(sizeof(char *) * (env.size() + 1));
     if (!arrayEnv)
-        exit(1);
+        throw(INTERNAL_SERVER_ERROR);
     size_t i = 0;
     for (std::vector<std::string>::iterator it = env.begin(); it != env.end(); it++)
     {
         arrayEnv[i] = strdup((char *)(*it).c_str());
         if (!arrayEnv[i])
-            exit(1);
+           throw(INTERNAL_SERVER_ERROR);
         i++;
     }
     arrayEnv[i] = NULL;
@@ -91,7 +91,6 @@ void CGIForward(client *client)
             if (now > ref + CGITIMEOUT)
             {
                 kill(exec_pid, SIGKILL);
- 
                 throw (GATEWAY_TIMEOUT); 
             }
         }
@@ -102,7 +101,6 @@ void CGIForward(client *client)
         throw (INTERNAL_SERVER_ERROR);
     char    *readCGI = readFileSeLst(pipes[0]);
     if (close(pipes[0]) == -1)
-        throw (INTERNAL_SERVER_ERROR);
         throw (INTERNAL_SERVER_ERROR);
     std::string CGIstring = readCGI;
     free(readCGI);

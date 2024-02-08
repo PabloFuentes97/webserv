@@ -27,7 +27,7 @@ $month += 1;
 my $formatted_time = sprintf("%04d-%02d-%02d %02d:%02d:%02d", $year, $month, $day, $hour, $min, $sec);
 
 
-my $output_file = "SERVER2/cgi_upload/visitlog.txt";
+my $output_file = "SERVER3/cgi_upload/visitlog.txt";
 open my $fh, '>>', $output_file or die "Cannot open $output_file: $!\n";
 
 print $fh "\n------\n\n";

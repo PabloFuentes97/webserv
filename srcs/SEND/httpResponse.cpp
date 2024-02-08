@@ -9,8 +9,9 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 	if (!body.empty()) {
 		line.append("Content-Length: ");
 		line.append(std::to_string((body).size()));
+		line.append("\r\n");
 	}
-	line.append("\r\n\r\n");
+	line.append("\r\n");
 	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
 	return (line);
 }
