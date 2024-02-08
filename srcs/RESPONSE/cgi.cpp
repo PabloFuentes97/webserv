@@ -76,6 +76,8 @@ void CGIForward(client *client)
             throw (INTERNAL_SERVER_ERROR);
         if (dup2(pipes[1], STDOUT_FILENO) == -1)
             throw (INTERNAL_SERVER_ERROR);
+		if (close(pipes[1] == -1))
+			throw (INTERNAL_SERVER_ERROR);
         if (execve(path.c_str(), NULL, cgiEnv) != 0)
 			throw (INTERNAL_SERVER_ERROR);
     }
@@ -89,6 +91,7 @@ void CGIForward(client *client)
             if (now > ref + CGITIMEOUT)
             {
                 kill(exec_pid, SIGKILL);
+ 
                 throw (GATEWAY_TIMEOUT); 
             }
         }
@@ -99,6 +102,7 @@ void CGIForward(client *client)
         throw (INTERNAL_SERVER_ERROR);
     char    *readCGI = readFileSeLst(pipes[0]);
     if (close(pipes[0]) == -1)
+        throw (INTERNAL_SERVER_ERROR);
         throw (INTERNAL_SERVER_ERROR);
     std::string CGIstring = readCGI;
     free(readCGI);
