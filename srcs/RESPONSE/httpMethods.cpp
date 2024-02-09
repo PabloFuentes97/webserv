@@ -72,7 +72,7 @@ void	postMethod(client *client)
 	else if (itm->second == "multipart/form-data")
 		callMultiPart(client, filePath);
 	else if (itm->second == "text/plain\r" || itm->second == "text/plain")
-		postText(filePath, client->request.buf.c_str(), client->request.bufLen);
+		postText(filePath, client->request.buf.c_str(), client->request.bufLen/* , fUncIon_paRa_sAcar-filenamehacheñseta(cliente url) */ /* std::string	filename */);
 	else
 		throw (BAD_REQUEST);
 	client->request.status = 201;
@@ -93,17 +93,11 @@ static void	deleteMethod(client *client)
 	redirs.push_back("alias");
 	redirs.push_back("root");
 	filePath = getPathFileRequest(client, redirs);
-
 	if (stat(filePath.c_str(), &st) == 0 && st.st_mode & S_IFDIR)
-    {
-		if (rmdir(filePath.c_str()) < 0)
-			throw(INTERNAL_SERVER_ERROR);
-	}
+		throw (BAD_REQUEST);
 	else
-	{
 		if (remove(filePath.c_str()) < 0)
 			throw(INTERNAL_SERVER_ERROR);
-	}
 	client->request.status = 200;
 	client->response.response = "HTTP/1.1 200 OK\r\n\r\n<html><body><h1>File deleted.</h1>\n</body>\n</html>\n";
 	std::cout << std::endl << "RESPONSE HEADER IS: " << client->response.response << std::endl;

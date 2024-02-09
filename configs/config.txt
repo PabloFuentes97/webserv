@@ -4,7 +4,6 @@ http{
         server_name   server1;
         listen        8080;
         timeout 10;
-        error_page    400 404  /40x.html;
 
         location	/images
 		{
@@ -20,6 +19,7 @@ http{
         }
 		location	/post
 		{
+			error_files    404  SERVER1/post/error404.html;
 			autoindex   on;
             methods		GET POST;
 			alias		SERVER1/post/;
@@ -47,6 +47,7 @@ http{
             redirect SERVER1/docs/;
         }
         location      /{
+        	error_files    404  SERVER1/docs/error404.html;
             alias      SERVER1/docs/;
             methods   GET;
             index   index.html index.htm;
