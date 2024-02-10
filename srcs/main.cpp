@@ -23,14 +23,15 @@ int	setPorts(t_ports &ports, std::vector<parseTree *> &servers)
 		}
 		if (rep == true)
 		{
-			std::cout << "SERVER PORT: " << id << std::endl;
+			std::cout << "\033[0;35mSERVER PORT: " << id << "\033[0m" << std::endl;
 			ports.id.push_back(id);
 			ports.fd.push_back(getServerSocket(&addr, id));
-			std::cout << "SERVER SOCKET: " << ports.fd.back() << std::endl;
+			std::cout << "\033[0;35mSERVER SOCKET: " << ports.fd.back() << "\033[0m" << std::endl;
 			bindAndListen(ports.fd.back(), &addr);
 			ports.n++;
 		}
 	}
+	std::cout << std::endl;
 	return (0);
 }
 
@@ -46,7 +47,7 @@ int	main(int argc, char **argv) {
 	else if (argc == 1)
 	{
 		std::cout << "Using default config file" << std::endl;
-		file = "configs/config.txt";
+		file = "configs/config_servers_difport.txt";
 	}
 	else
 		file = argv[1];
@@ -59,13 +60,16 @@ int	main(int argc, char **argv) {
 	parseTree	*root = parseFile((char *)file.c_str());
 	if (!root)
 	{
-		std::cout << "BAD CONFIG FILE " << std::endl;
+		std::cerr << "BAD CONFIG FILE" << std::endl;
 		return (3);
 	}	
 	parseTree	*http = NULL;
 	findNode(root, &http, "http");
 	if (!http)
+	{
+		std::cerr << "BAD CONFIG FILE" << std::endl;
 		return (4);
+	}
 	std::vector<parseTree*>	servers;
 	for (size_t i = 0; i < http->childs.size(); i++)
 	{

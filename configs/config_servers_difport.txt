@@ -3,7 +3,6 @@ http{
 	{
         server_name   server1;
         listen        8080;
-        timeout 10;
 
         location	/images
 		{
@@ -31,10 +30,15 @@ http{
             autoindex on;
 			alias	SERVER1/post_upload/;
 		}
-        location    /cgi
+        location    /cgi_get
         {
-            methods     GET POST;
-            cgi_pass    SERVER1/cgi/;
+            methods     GET;
+            cgi_pass    SERVER1/cgi_get/;
+        }
+		location    /cgi_post
+        {
+            methods     POST;
+            cgi_pass    SERVER1/cgi_post/;
         }
         location    /cgi_form
         {
@@ -44,7 +48,7 @@ http{
         }
         location    /redirect
         {
-            redirect SERVER1/docs/;
+            redirect /;
         }
         location      /{
         	error_files    404  SERVER1/docs/error404.html;
@@ -53,13 +57,18 @@ http{
             index   index.html index.htm;
         }
     }
-
 	server
 	{
         server_name   server2;
-        listen        8080;
-        timeout 10;
-        location        /docs
+        listen        4242;
+
+        location	/images
+		{
+			alias	SERVER2/images/;
+            autoindex on;
+			methods GET;
+		}
+		location        /docs
         {
             autoindex	on;
             methods 	GET;
@@ -67,21 +76,28 @@ http{
         }
 		location	/post
 		{
-			limit_body_size 100;
-            methods		POST;
-			alias		SERVER2/docs;
+			autoindex   on;
+            methods		GET POST;
+			alias		SERVER2/post/;
 			postdir		SERVER2/post_upload/;
 		}
 		location	/uploads
 		{
 			methods GET DELETE;
+            autoindex on;
 			alias	SERVER2/post_upload/;
 		}
-        location    /cgi
+        location    /cgi_get
         {
-            cgi_pass    SERVER2/cgi/;
+            methods     GET;
+            cgi_pass    SERVER2/cgi_get/;
         }
-		location    /cgi_form
+		location    /cgi_post
+        {
+            methods     POST;
+            cgi_pass    SERVER2/cgi_post/;
+        }
+        location    /cgi_form
         {
             autoindex on;
             methods GET;
@@ -89,7 +105,7 @@ http{
         }
         location    /redirect
         {
-            redirect SERVER2/docs/;
+            redirect /;
         }
         location      /{
             alias      SERVER2/docs/;
@@ -97,33 +113,39 @@ http{
             index   index.html index.htm;
         }
     }
-
 	server
 	{
         server_name   server3;
         listen        3000;
-        timeout 10;
+
         error_page    400 404  /40x.html;
         location        /images
         {
             autoindex	off;
             methods 	GET;
-            alias		SERVER3/docs/images/;
+            alias		SERVER3/images/;
         }
 		location	/post
 		{
 			methods		GET POST;
 			alias		SERVER3/post/;
 			postdir		SERVER3/post_upload/;
+			autoindex on;
 		}
 		location	/uploads
 		{
 			methods GET DELETE;
 			alias	SERVER3/post_upload/;
 		}
-        location    /cgi
+        location    /cgi_get
         {
-            cgi_pass    SERVER3/cgi/;
+            methods     GET;
+            cgi_pass    SERVER3/cgi_get/;
+        }
+		location    /cgi_post
+        {
+            methods     POST;
+            cgi_pass    SERVER3/cgi_post/;
         }
 		location    /cgi_form
         {
@@ -133,7 +155,7 @@ http{
         }
         location    /redirect
         {
-            redirect SERVER3/docs/;
+            redirect /;
         }
         location      /{
             alias      SERVER3/docs/;

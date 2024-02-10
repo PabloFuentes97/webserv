@@ -41,6 +41,27 @@ parseTree *findServerByClient(std::vector<parseTree *> servers, struct client *c
 			}
 		}
 	}
+	//Busca por host
+	ith = client->request.headers.find("Host");
+	if (ith != client->request.headers.end())
+	{
+		std::stringstream hostSS(ith->second);
+		std::string host;
+		getline(hostSS, host, ':');
+		for (size_t i = 0; i < servers.size(); i++)
+		{
+			
+			it its = servers[i]->context._dirs.find("server_name");
+			it itp = servers[i]->context._dirs.find("listen");
+			if (its != servers[i]->context._dirs.end()
+				&& itp != servers[i]->context._dirs.end())
+			{
+				if (host == its->second
+						&& atoi(itp->second.c_str()) == client->portID)
+					return (servers[i]);
+			}
+		}
+	}
 	//Busca por puerto
 	for (size_t i = 0; i < servers.size(); i++)
 	{
@@ -80,7 +101,6 @@ void	deleteClient(std::vector<client> &clients, client &c) //int i, int events_n
 	setEvent(c.events[1], -1, 0, 0);
 	std::vector<client>::iterator	it = std::find(clients.begin(), clients.end(), c);
 	clients.erase(it);
-	//std::cerr << "Elimina cliente" << std::endl;
 }
 
 size_t	getTimeSeconds()
@@ -120,6 +140,7 @@ int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers,
 	client c;
 	setClient(c, accept_socket, findPortbySocket(ports, socket), servers);
 	clients.push_back(c);
+	std::cout << "\033[0;33mNEW CLIENT | FD: " << c.fd << "\033[0m" << std::endl;
 	short	poll_events[2] = {POLLIN, POLLOUT};
 	for (int e = 0; e < 2; e++)
 	{
@@ -128,7 +149,6 @@ int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers,
 		{
 			setEvent(event, accept_socket, poll_events[e], 0);
 			c.events[e] = event;
-			std::cout << "NEW CLIENT | FD: " << event->fd << " | EVENTS: " << event->events << std::endl;
 		}
 		else
 		{
@@ -136,8 +156,6 @@ int	createClient(std::vector<client> &clients, std::vector<parseTree *> servers,
 			{
 				setEvent(&events[events_n], accept_socket, poll_events[e], 0);
 				c.events[e] = &events[events_n];
-				std::cout << "NEW CLIENT | FD: " << events[events_n].fd << " | EVENTS: " << events[events_n]
-					.events << std::endl;
 				events_n++;
 			}
 		}

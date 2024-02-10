@@ -5,7 +5,7 @@ LREDB   =   \033[1;31m
 GREEN   =   \033[1;32m
 LGREEN  =   \033[1;92m
 PINK    =   \033[1;95m
-YELLOW  =   \033[1;35m
+YELLOW  =   \033[1;33m
 LBLUE   =   \033[1;34m
 TITLE   =   \033[1;36m
 # Compile variables
@@ -18,7 +18,7 @@ NAME            =   webserv
 DATA_STRUCTURES = 	seLst.cpp \
 					multimapFuncs.cpp
 PARSER   		=   parse.cpp \
-					binaryInsert.cpp \
+					insertLoc.cpp \
 					cmpLocations.cpp
 SOCKETS   		=   socketConnection.cpp \
 					eventLoop.cpp

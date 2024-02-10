@@ -15,6 +15,7 @@ static void	getIndex(client *client)
 		path = getPathFileRequest(client, redirs) + itb->second;
 		if (!access(path.c_str(), F_OK | R_OK))
 		{
+			std::cout << "\033[0;33mPATH IN DIRECTORY: " << path << "\033[0m" << std::endl;
 			client->request.status = 200;
 			std::string body = getResponseBody(path);
 			client->response.response = getResponseHeader(client->request, body) + body;
@@ -32,6 +33,7 @@ static void	autoIndexListing(client *client)
 	redirsVec.push_back("alias");
 	redirsVec.push_back("root");
 	std::string	path = getPathFileRequest(client, redirsVec);
+	std::cout << "\033[0;33mPATH IN DIRECTORY: " << path << "\033[0m" << std::endl;
 	DIR	*dir = opendir(path.c_str());
 	if (!dir)
 		throw (BAD_REQUEST);
@@ -45,7 +47,6 @@ static void	autoIndexListing(client *client)
 		{
 			body += "<a href=\"http://";
 			body += *(getMultiMapValue(client->request.headers, "Host"));
-			//body += "/" + getMultiMapValueKeys(client->loc->context._dirs, redirs, 2);
 			body += client->loc->context._args[0] + '/';
 			body += elem->d_name;
 			if (elem->d_type == DT_DIR)
@@ -57,7 +58,6 @@ static void	autoIndexListing(client *client)
 		elem = readdir(dir);
 	}
 	body += "</body></html>";
-	std::cout << "BODY AUTOINDEX: " << body << std::endl;
 	closedir(dir);
 	client->request.status = 200;
 	client->response.response = getResponseHeader(client->request, body) + body;
@@ -90,6 +90,7 @@ static void	pathIsFile(client *client, std::string &path)
 	if (access(path.c_str(), R_OK) != 0)
 		throw (FORBIDDEN);
 
+	std::cout << "\033[0;33mPATH IN DIRECTORY: " << path << "\033[0m" << std::endl;
 	HttpResponse Response;
 	client->request.status = 200;
 	Response.body = getResponseBody(path);

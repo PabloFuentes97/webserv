@@ -1,0 +1,117 @@
+http{
+    server
+	{
+        server_name   server1;
+        listen        8080;
+
+        location	/images
+		{
+			alias	SERVER1/images/;
+            autoindex on;
+			methods GET;
+		}
+		location        /docs
+        {
+            autoindex	on;
+            methods 	GET;
+            alias		SERVER1/docs/;
+        }
+		location	/post
+		{
+			error_files    404  SERVER1/post/error404.html;
+			autoindex   on;
+            methods		GET POST;
+			alias		SERVER1/post/;
+			postdir		SERVER1/post_upload/;
+		}
+		location	/uploads
+		{
+			methods GET DELETE;
+            autoindex on;
+			alias	SERVER1/post_upload/;
+		}
+		location    /cgi_get
+        {
+            methods     GET;
+            cgi_pass    SERVER1/cgi_get/;
+        }
+		location    /cgi_post
+        {
+            methods     POST;
+            cgi_pass    SERVER1/cgi_post/;
+        }
+        location    /cgi_form
+        {
+            autoindex on;
+            methods GET;
+            alias   SERVER1/cgi_form/;
+        }
+        location    /redirect
+        {
+            redirect /;
+        }
+        location      /{
+        	error_files    404  SERVER1/docs/error404.html;
+            alias      SERVER1/docs/;
+            methods   GET;
+            index   index.html index.htm;
+        }
+    }
+	server
+	{
+        server_name   server2;
+        listen        8080;
+
+        location	/images
+		{
+			alias	SERVER2/images/;
+            autoindex on;
+			methods GET;
+		}
+		location        /docs
+        {
+            autoindex	on;
+            methods 	GET;
+            alias		SERVER2/docs/;
+        }
+		location	/post
+		{
+			autoindex   on;
+            methods		GET POST;
+			alias		SERVER2/post/;
+			postdir		SERVER2/post_upload/;
+		}
+		location	/uploads
+		{
+			methods GET DELETE;
+            autoindex on;
+			alias	SERVER2/post_upload/;
+		}
+		location    /cgi_get
+        {
+            methods     GET;
+            cgi_pass    SERVER2/cgi_get/;
+        }
+		location    /cgi_post
+        {
+            methods     POST;
+            cgi_pass    SERVER2/cgi_post/;
+        }
+        location    /cgi_form
+        {
+            autoindex on;
+            methods GET;
+            alias   SERVER2/cgi_form/;
+        }
+        location    /redirect
+        {
+            redirect /;
+        }
+        location      /{
+            alias      SERVER2/docs/;
+            methods   GET;
+            index   index.html index.htm;
+        }
+    }
+}
+

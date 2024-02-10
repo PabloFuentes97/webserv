@@ -5,6 +5,7 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 	std::string line = "HTTP/1.1 ";
 	line.append(getStatus(currentRequest.status));
 	line.append("\r\n");
+	std::cout << std::endl << "\033[0;32mRESPONSE HEADER IS: " << line << "\033[0m" << std::endl;
 	line.append("Set-Cookie: hello=cookies\r\n");
 	if (!body.empty()) {
 		line.append("Content-Length: ");
@@ -12,7 +13,6 @@ std::string getResponseHeader(HttpRequest &currentRequest, std::string &body) {
 		line.append("\r\n");
 	}
 	line.append("\r\n");
-	std::cout << std::endl << "RESPONSE HEADER IS: " << line << std::endl;
 	return (line);
 }
 

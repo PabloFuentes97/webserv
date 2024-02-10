@@ -3,14 +3,10 @@
 use strict;
 use warnings;
 
-my $query_string = $ENV{'QUERY_STRING'};
-
-unless ($query_string) {
-    die "No query string found in CGI environment.\n";
-}
+my $content_body = $ENV{'CONTENT_BODY'};
 
 my %params;
-my @pairs = split(/&/, $query_string);
+my @pairs = split(/&/, $content_body);
 foreach my $pair (@pairs) {
     my ($key, $value) = split(/=/, $pair);
     $value = '' unless defined $value;
@@ -27,8 +23,8 @@ $month += 1;
 my $formatted_time = sprintf("%04d-%02d-%02d %02d:%02d:%02d", $year, $month, $day, $hour, $min, $sec);
 
 
-my $output_file = "SERVER1/cgi_upload/visitlog.txt";
-open my $fh, '>>', $output_file or die "Cannot open $output_file: $!\n";
+my $output_file = "SERVER2/cgi_upload/visitlog.txt";
+open my $fh, '>>', $output_file or exit (1);
 
 print $fh "\n------\n\n";
 foreach my $key (sort keys %params) {

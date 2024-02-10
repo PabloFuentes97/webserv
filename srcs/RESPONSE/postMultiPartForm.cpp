@@ -23,15 +23,16 @@ size_t locate(const char *haystack, const char *needle, size_t i, size_t size, s
 	return (-1);
 }
 
-std::string	get_filename(std::vector<char> &header)
+static std::string	get_filename(std::vector<char> &header)
 {
 	std::string	filename;
 	char cheader[header.size()];
 	for (size_t i = 0; i < header.size(); i++)
 		cheader[i] = header[i];
-	size_t start = locate(cheader, "filename=\"", 0, header.size(), 10) + 10;
+	size_t start = locate(cheader, "filename=\"", 0, header.size(), 10);
 	if (start == (size_t)-1)
 		throw (BAD_REQUEST);
+	start += 10;
 	while (start < header.size() && header[start] != '\"')
 	{
 		filename += cheader[start];
@@ -42,7 +43,7 @@ std::string	get_filename(std::vector<char> &header)
 	return (filename);
 }
 
-void	create_files(std::map<std::string, std::vector<char> >files, std::string route)
+static void	create_files(std::map<std::string, std::vector<char> >files, std::string route)
 {
 	for (std::map<std::string, std::vector<char> >::iterator iter = files.begin(); iter != files.end(); iter++)
 	{
@@ -53,7 +54,7 @@ void	create_files(std::map<std::string, std::vector<char> >files, std::string ro
 	}
 }
 
-void	postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size)
+static void	postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size)
 {
 	std::map<std::string, std::vector<char> >	files;
 	std::vector<char>	fheader;

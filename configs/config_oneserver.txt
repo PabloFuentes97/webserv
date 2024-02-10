@@ -3,11 +3,12 @@ http{
 	{
         server_name   server1;
         listen        8080;
-		
-		location	/images
+
+        location	/images
 		{
-			alias	SERVER1/docs/images/;
-			methods GET DELETE;
+			alias	SERVER1/images/;
+            autoindex on;
+			methods GET;
 		}
 		location        /docs
         {
@@ -17,17 +18,19 @@ http{
         }
 		location	/post
 		{
-			methods		GET POST;
-			alias		SERVER1/docs/post/;
-			postdir		SERVER1/uploads/;
+			error_files	404  SERVER1/post/error404.html;
+			autoindex   on;
+            methods		GET POST;
+			alias		SERVER1/post/;
+			postdir		SERVER1/post_upload/;
 		}
-		location	/downloads
+		location	/uploads
 		{
 			methods GET DELETE;
-			alias	SERVER1/uploads/;
             autoindex on;
+			alias	SERVER1/post_upload/;
 		}
-		location    /cgi_get
+        location    /cgi_get
         {
             methods     GET;
             cgi_pass    SERVER1/cgi_get/;
@@ -37,14 +40,21 @@ http{
             methods     POST;
             cgi_pass    SERVER1/cgi_post/;
         }
+        location    /cgi_form
+        {
+            autoindex on;
+            methods GET;
+            alias   SERVER1/cgi_form/;
+        }
         location    /redirect
         {
             redirect SERVER1/docs/;
         }
         location      /{
-            alias		SERVER1/docs/;
+        	error_files    404  SERVER1/docs/error404.html;
+            alias      SERVER1/docs/;
             methods   GET;
-        	index   index.html index.htm;
+            index   index.html index.htm;
         }
-	}
+    }
 }

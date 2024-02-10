@@ -13,22 +13,21 @@ char **getCgiEnv(std::string path, client* client) {
     env.push_back(requestedMethod);
 
     std::string contentLength = "CONTENT_LENGTH=0";
-    size_t contentLengthVal = 0;
 
     if (client->request.method == "POST")
     {
-        std::string *contentLengthStr = getMultiMapValue(client->request.headers, "Content-Length");
-        if (contentLengthStr)
-        {
-            contentLengthVal = atoi((*getMultiMapValue(client->request.headers, "Content-Length")).c_str());
-            contentLength = "CONTENT_LENGTH=" + *contentLengthStr;
-        }
- 
-        client->request.query = client->request.buf.substr(0, contentLengthVal);
+    	contentLength = "CONTENT_LENGTH=" + std::to_string(client->request.bufLen);
+        client->request.query = client->request.buf.substr(0, client->request.bufLen);
+		std::string contentBody = "CONTENT_BODY=" + client->request.query;
+		env.push_back(contentBody);
+		env.push_back(contentLength);
     }
-    std::string queryString = "QUERY_STRING=" + client->request.query;
-    env.push_back(queryString);
-    env.push_back(contentLength);
+	else
+	{
+    	std::string queryString = "QUERY_STRING=" + client->request.query;
+    	env.push_back(queryString);
+		env.push_back(contentLength);
+	}
     
     std::string pathInfo = "PATH_INFO=" + client->request.pathInfo;
     env.push_back(pathInfo);
@@ -73,13 +72,13 @@ void CGIForward(client *client)
     {
         char **cgiEnv = getCgiEnv(path, client);
         if (close(pipes[0]) == -1) 
-            throw (INTERNAL_SERVER_ERROR);
+           exit (-1);
         if (dup2(pipes[1], STDOUT_FILENO) == -1)
-            throw (INTERNAL_SERVER_ERROR);
+            exit (-1);
 		if (close(pipes[1] == -1))
-			throw (INTERNAL_SERVER_ERROR);
-        if (execve(path.c_str(), NULL, cgiEnv) != 0)
-			throw (INTERNAL_SERVER_ERROR);
+			exit (-1);
+        if (execve(path.c_str(), NULL, cgiEnv) == -1)
+			exit (-1);
     }
     else if (exec_pid > 0) {
 
@@ -95,7 +94,9 @@ void CGIForward(client *client)
             }
         }
     }
-    if (WEXITSTATUS(status) != 0)
+	if (WEXITSTATUS(status) == 2)
+        throw(BAD_REQUEST);
+	else if (WEXITSTATUS(status) != 0)
         throw(BAD_GATEWAY);
     if (close(pipes[1]) == -1)
         throw (INTERNAL_SERVER_ERROR);

@@ -26,7 +26,6 @@
 #define MAX_SE_ELEM 500000
 #define MAX_READ 200000
 #define BUF_SIZE 200000
-#define PORT 8080
 #define CGITIMEOUT 3
 
 enum statusCodes {CREATED = 201,
@@ -87,13 +86,13 @@ struct HttpResponse {
 };
 
 typedef struct	chunk{
-	bool		isChunked; // If true the request body is chunk encoded
-	bool		complete; // If true DeChunking complete
-	bool		readingSize; // If true we are currently reading the HEX value of the chunk size
-	size_t		size; // Size of the current chunk
-	size_t		index; // Extra bytes from the body that are not content (necesarios para mirar max body length)
-	std::string	stringHex; // String of the HEX value of the chunk size
-	std::string	buf; // Content
+	bool		isChunked;
+	bool		complete;
+	bool		readingSize;
+	size_t		size;
+	size_t		index;
+	std::string	stringHex;
+	std::string	buf;
 }	chunk;
 
 typedef struct HttpRequest {
@@ -105,7 +104,7 @@ typedef struct HttpRequest {
     std::string method;
 	int			method_int;
 	typedef enum methods{GET, POST, PUT, DELETE} methods;
-    std::string url; //version
+    std::string url;
 	std::string query;
 	std::string pathInfo;
     std::multimap<std::string, std::string> headers;
@@ -212,8 +211,7 @@ void	readBodyChunked(struct client *client);
 parseTree	*matchLocation(struct client *client);
 void		getMethod(client *client);
 void		callMultiPart(struct client *client, std::string &path);
-void		postMultiPartForm(std::string &route, const char *body, std::string &boundary, size_t size);
-void		postText(std::string &route, const char *body, size_t size);
+void		postText(std::string &route, client &client);
 void		postUrlEncoded(std::string &route, const char *body, size_t size);
 
 //LOCATE

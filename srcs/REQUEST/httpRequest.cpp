@@ -44,8 +44,8 @@ void	loadRequest(HttpRequest *request)
 	else
 		throw (BAD_REQUEST);
 
-	std::cout << "METHOD: " << request->method << std::endl;
-	std::cout << "URL: " << request->url << std::endl;
+	std::cout << "\033[0;33mMETHOD: " << request->method << std::endl;
+	std::cout << "URL: " << request->url << "\033[0m" << std::endl;
 
 	std::string	tokenKey;
 	std::string	tokenValue;

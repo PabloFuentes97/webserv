@@ -11,7 +11,6 @@ bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &d
 	int	start;
 	int	end;
 	int	flag;
-	int	brackets = 0;
 	while (readTokens >> tokenStr)
 	{	
 		start = 0;
@@ -21,14 +20,9 @@ bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &d
 		{
 			for (size_t j = 0; j < del.length(); j++)
 			{
+				end = i;
 				if (tokenStr[i] == del[j])
 				{
-					if (del[j] == '{')
-						brackets++;
-					else if (del[j] == '}')
-						brackets--;
-					if (brackets < 0)
-						return (false);
 					end = i;
 					if (start != end)
 					{
@@ -54,14 +48,43 @@ bool	tokenizeFile(const char *file, std::vector<t_token> &tokens, std::string &d
 					return (false);
 			}
 		}
-		if (flag == 0)
+		if ((size_t)start != tokenStr.length())
+		{
+			token.value = tokenStr.substr(start, end - start + 1);
+			token.type = 0;
+			tokens.push_back(token);
+		}
+		else if (flag == 0)
 		{
 			token.value = tokenStr;
+			token.type = 0;
 			tokens.push_back(token);
 		}
 	}
-	if (brackets != 0)
+	return (true);
+}
+
+
+bool	validBrackets(std::vector<t_token> &tokens)
+{
+	int	brackets = 0;
+	for (size_t i = 0; i < tokens.size(); i++)
+	{
+		if (tokens[i].type == 1 || tokens[i].type == 2)
+		{
+			if (tokens[i].type == 1)
+				brackets++;
+			else if (tokens[i].type == 2)
+				brackets--;
+			if (brackets < 0)
+				return (false);
+			if (brackets == 0 && i != tokens.size() - 1)
+				return (false);
+		}
+	}
+	if (brackets > 0)
 		return (false);
+	
 	return (true);
 }
 
@@ -185,6 +208,8 @@ parseTree	*parseFile(char	*file)
 	std::string	del = "{};=";
 	std::vector<t_token>	tokens;
 	if (!tokenizeFile(file, tokens, del))
+		return (NULL);
+	if (!validBrackets(tokens))
 		return (NULL);
 	parseTree	*root = new parseTree();
 	root->context._name = "main";
