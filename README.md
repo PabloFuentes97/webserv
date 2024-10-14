@@ -1,4 +1,4 @@
-Implementación de servidor web HTTP para contenido estático, tomando como referencia principal NGINX.
+Implementación en C++ de servidor web HTTP para contenido estático, tomando a NGINX como referencia principal.
 
 - Lectura y validación de fichero de configuración y conversión a estructura de datos interna.
 - Bucle de eventos asíncrono (librería poll): creación de clientes, lectura y procesamiento de solicitudes y envío de respuestas.
